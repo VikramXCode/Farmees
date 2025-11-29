@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { offlineAIService, OfflineAIResponse } from './offlineAIService';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = '/api';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';

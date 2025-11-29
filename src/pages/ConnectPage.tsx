@@ -157,7 +157,7 @@ export default function ConnectPage() {
       }
       setIsLoading(true);
       try {
-  const baseUrl = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || 'http://localhost:3001/api';
+  const baseUrl = '/api';
         // Attempt to fetch from backend if available; otherwise keep empty lists
         if (baseUrl) {
           const district = encodeURIComponent(resolvedDistrict);
@@ -196,7 +196,7 @@ export default function ConnectPage() {
 
   const submitPestReport = async () => {
     try {
-  const baseUrl = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || 'http://localhost:3001/api';
+  const baseUrl = '/api';
       if (!baseUrl || !user) return;
       const body = {
         userId: user.id,

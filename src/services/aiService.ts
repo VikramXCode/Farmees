@@ -17,7 +17,7 @@ class AIService {
     const viteEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
   this.useOllama = String(viteEnv.VITE_USE_OLLAMA || '').toLowerCase() === 'true';
   this.useGroq = String(viteEnv.VITE_USE_GROQ || '').toLowerCase() === 'true';
-  this.apiBase = viteEnv.VITE_API_URL || 'http://localhost:3001/api';
+  this.apiBase = viteEnv.VITE_API_URL || '/api';
     this.ollamaUrl = viteEnv.VITE_OLLAMA_URL || 'http://localhost:11434';
     this.ollamaModel = viteEnv.VITE_OLLAMA_MODEL || 'llama2:latest';
   }

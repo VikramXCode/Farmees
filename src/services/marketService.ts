@@ -91,7 +91,7 @@ export async function fetchKeralaMarketDataBackend(commodity?: string): Promise<
   try {
     const params: any = {};
     if (commodity) params.commodity = commodity;
-    const base = (typeof window !== 'undefined') ? '' : 'http://localhost:3001';
+    const base = '';
     const url = `${base}/api/market/kerala`;
     const resp = await axios.get(url, { params });
     const data = resp.data;

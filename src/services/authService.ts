@@ -1,5 +1,5 @@
 // Auth Service: Handles signup and signin API calls
-const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || 'http://localhost:3001/api';
+const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
 
 export async function signup(name: string, phone: string, password: string) {
   const res = await fetch(`${API_BASE_URL}/auth/signup`, {
