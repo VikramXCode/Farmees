@@ -4,10 +4,11 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
-// Storage config for soil reports
-const uploadDir = path.join(__dirname, '..', 'uploads', 'soil_reports');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+// Use /tmp on Vercel (serverless), local uploads dir otherwise
+const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads', 'soil_reports') : path.join(__dirname, '..', 'uploads', 'soil_reports');
+try { if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true }); } catch (e) { console.warn('Could not create upload dir:', e.message); }
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {

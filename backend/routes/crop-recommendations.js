@@ -7,13 +7,14 @@ const Land = require('../models/Land');
 const SoilReport = require('../models/SoilReport');
 const groqService = require('../services/groqService');
 
+const os = require('os');
+
 // Configure multer for audio file uploads
 const audioStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '../uploads/audio');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    // Use /tmp on Vercel (serverless), local uploads dir otherwise
+    const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads', 'audio') : path.join(__dirname, '../uploads/audio');
+    try { if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true }); } catch (e) { console.warn('Could not create upload dir:', e.message); }
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
