@@ -1,0 +1,6 @@
+{
+  "results": [
+    { "name": "Aphid", "score": 0.87, "common_name": "Aphid", "description": "Small sap-sucking insects." },
+    { "name": "Thrips", "score": 0.12, "common_name": "Thrips", "description": "Tiny slender insects." }
+  ]
+}

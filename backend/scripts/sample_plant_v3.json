@@ -1,0 +1,111 @@
+{
+  "access_token": "rXwnJ00XK6EuRD8",
+  "model_version": "plant_id:5.0.0",
+  "custom_id": null,
+  "input": {
+    "latitude": null,
+    "longitude": null,
+    "health": "only",
+    "images": [
+      "https://plant.id/media/imgs/01f85494e6894bdd897bb2af258a6d10.jpg"
+    ],
+    "datetime": "2025-09-17T04:17:15.992586+00:00"
+  },
+  "result": {
+    "is_healthy": {
+      "binary": false,
+      "threshold": 0.525,
+      "probability": 0.013954222202301025
+    },
+    "is_plant": {
+      "probability": 0.9991678,
+      "threshold": 0.5,
+      "binary": true
+    },
+    "disease": {
+      "suggestions": [
+        {
+          "id": "8c14a992fb987a96",
+          "name": "Viruses",
+          "probability": 0.3796,
+          "redundant": true,
+          "details": {
+            "local_name": "Viruses",
+            "description": "Viral diseases are infectious disorders caused by small intracellular parasites, which need host cells to survive. Viruses are usually transmitted by insects and mites to plants. Some viruses are serious plant pathogens such as the rose rosette virus or tobacco rattle virus.",
+            "url": "https://en.wikipedia.org/wiki/Virus",
+            "treatment": {
+              "biological": [
+                "If possible remove and destroy the infected plant. Burn it or toss it into the garbage. Do not compost."
+              ],
+              "prevention": [
+                "Eliminate potential disease carriers (e.g. thrips, aphids and leafhoppers).",
+                "Disinfect tools, infected flower pots, and hands to avoid disease transmission."
+              ]
+            },
+            "classification": [],
+            "common_names": null,
+            "cause": null,
+            "language": "en",
+            "entity_id": "8c14a992fb987a96"
+          }
+        },
+        {
+          "id": "765b06482c4e4ae9",
+          "name": "nutrient deficiency",
+          "probability": 0.2178,
+          "details": {
+            "local_name": "nutrient deficiency",
+            "description": "Nutrient deficiency is caused by a lack of macronutrients or micronutrients essential for the plant. This can be caused by insufficient amounts of nutrients in the soil or unsuitable conditions for nutrients uptake.",
+            "url": "https://www.missouribotanicalgarden.org/gardens-gardening/your-garden/help-for-the-home-gardener/advice-tips-resources/pests-and-problems/environmental/nutrients.aspx",
+            "treatment": {
+              "chemical": [
+                "Apply missing nutrients to the plant foliage (suitable for quick help). Follow the instructions on the chosen product to prevent excessive fertilizer usage.",
+                "Apply missing nutrients to the soil (suitable for long-term help). Follow the instructions on the chosen product to prevent excessive fertilizer usage."     
+              ],
+              "biological": [
+                "Replant the plant into fresh soil rich in nutrients.",
+                "Add manure or compost to the soil."
+              ],
+              "prevention": [
+                "Apply fertilizer regularly. Fertilizing is especially important during spring and summer.",
+                "Change the soil regularly. Plants should be repotted when the soil is compacted, depleted of nutrients, and no longer retains water.",
+                "Choose suitable neighboring plants. Plants with similar nutrient requirements should not be planted close to each other."
+              ]
+            },
+            "classification": [
+              "Abiotic",
+              "nutrient-related issue"
+            ],
+            "common_names": null,
+            "cause": null,
+            "language": "en",
+            "entity_id": "765b06482c4e4ae9"
+          }
+        }
+      ],
+      "question": {
+        "text": "Are the leaves deformed, curled, or twisted?",
+        "translation": "Are the leaves deformed, curled, or twisted?",
+        "options": {
+          "yes": {
+            "suggestion_index": 0,
+            "entity_id": "8c14a992fb987a96",
+            "name": "Viruses",
+            "translation": "Yes"
+          },
+          "no": {
+            "suggestion_index": 1,
+            "entity_id": "765b06482c4e4ae9",
+            "name": "nutrient deficiency",
+            "translation": "No"
+          }
+        }
+      }
+    }
+  },
+  "status": "COMPLETED",
+  "sla_compliant_client": true,
+  "sla_compliant_system": true,
+  "created": 1758082635.992586,
+  "completed": 1758082636.351047
+}

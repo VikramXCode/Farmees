@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Asha Nair",
+    "designation": "Agriculture Officer",
+    "district": "Ernakulam",
+    "state": "Kerala",
+    "email": "asha.nair@agri.example.in",
+    "phone": "+91-98765-00001",
+    "officeAddress": "Krishi Bhavan, Ernakulam",
+    "coverage": { "districts": ["Ernakulam", "Kottayam"], "states": ["Kerala"] }
+  },
+  {
+    "name": "Rahul Verma",
+    "designation": "Senior Agri Officer",
+    "district": "Thiruvananthapuram",
+    "state": "Kerala",
+    "email": "rahul.verma@agri.example.in",
+    "phone": "+91-98765-00002",
+    "officeAddress": "Krishi Bhavan, Thiruvananthapuram",
+    "coverage": { "districts": ["Thiruvananthapuram", "Kollam"], "states": ["Kerala"] }
+  },
+  {
+    "name": "Meera Iyer",
+    "designation": "State Nodal Officer",
+    "district": "",
+    "state": "Kerala",
+    "email": "meera.iyer@agri.example.in",
+    "phone": "+91-98765-00003",
+    "officeAddress": "State Agriculture Dept, Kerala",
+    "coverage": { "states": ["Kerala"] }
+  }
+]

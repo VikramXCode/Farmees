@@ -1,0 +1,104 @@
+{
+  "name": "FarmEase - Smart Farming Made Easy",
+  "short_name": "FarmEase",
+  "description": "AI-powered farming assistant with crop recommendations, disease diagnosis, and farmer community",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0fdf4",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["agriculture", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Land",
+      "short_name": "Add Land",
+      "description": "Add a new land to your farm",
+      "url": "/?action=add-land",
+      "icons": [
+        {
+          "src": "/shortcut-add-land.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Crop Recommendation",
+      "short_name": "Crop Rec",
+      "description": "Get crop recommendations for your lands",
+      "url": "/?action=crop-rec",
+      "icons": [
+        {
+          "src": "/shortcut-crop-rec.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Disease Diagnosis",
+      "short_name": "Diagnosis",
+      "description": "Diagnose crop diseases and pests",
+      "url": "/?action=disease",
+      "icons": [
+        {
+          "src": "/shortcut-disease.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Weather Forecast",
+      "short_name": "Weather",
+      "description": "Check weather forecast for your lands",
+      "url": "/?action=weather",
+      "icons": [
+        {
+          "src": "/shortcut-weather.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
+}
