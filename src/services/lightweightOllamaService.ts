@@ -35,6 +35,7 @@ class LightweightOllamaService {
   private maxCacheSize: number = 100;
   private language: string = 'english';
   private backendTimeoutMs: number = 8000;
+  private isProduction: boolean = false;
 
   // Recommended models in order of preference (smallest to largest)
   private recommendedModels = [
@@ -46,7 +47,15 @@ class LightweightOllamaService {
   ];
 
   constructor() {
-    this.detectOllamaUrl();
+    // Detect if running on production (Vercel, etc.) - skip Ollama in production
+    this.isProduction = typeof window !== 'undefined' && 
+      (window.location.hostname.includes('vercel.app') || 
+       window.location.hostname.includes('.vercel.') ||
+       (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')));
+    
+    if (!this.isProduction) {
+      this.detectOllamaUrl();
+    }
     this.loadLanguage();
   }
 
@@ -73,6 +82,12 @@ class LightweightOllamaService {
 
   async initialize(): Promise<boolean> {
     if (this.isInitialized) return true;
+    
+    // Skip Ollama initialization in production (Vercel, etc.)
+    if (this.isProduction) {
+      console.log('Ollama: Skipping initialization in production environment');
+      return false;
+    }
 
     try {
       // Check if Ollama is available
