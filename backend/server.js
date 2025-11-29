@@ -4,12 +4,22 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+// Only load dotenv in non-Vercel environments (Vercel uses dashboard env vars)
+if (!process.env.VERCEL) {
+  require('dotenv').config({ path: path.join(__dirname, '.env') });
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/farmease';
 let connectionPromise = null;
+
+// Debug logging for Vercel
+if (process.env.VERCEL) {
+  console.log('Running on Vercel');
+  console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+}
 
 // Middlewares
 app.use(cors());
@@ -29,19 +39,27 @@ async function connectToDatabase() {
 }
 
 if (process.env.VERCEL) {
-  app.use(async (_req, _res, next) => {
+  app.use(async (req, res, next) => {
     try {
       await connectToDatabase();
       next();
     } catch (err) {
-      next(err);
+      console.error('Database connection error:', err.message);
+      res.status(500).json({ error: 'Database connection failed', details: err.message });
     }
   });
 }
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'farmease-backend', time: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  res.json({ 
+    status: 'ok', 
+    service: 'farmease-backend', 
+    time: new Date().toISOString(),
+    database: dbStatus,
+    mongoUri: process.env.MONGODB_URI ? 'configured' : 'missing'
+  });
 });
 
 // Routes
