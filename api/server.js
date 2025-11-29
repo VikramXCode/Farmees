@@ -1,11 +1,10 @@
-'use strict';
+// Vercel Serverless Function Entry Point (ESM)
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import { createRequire } from 'module';
 
-// Vercel Serverless Function Entry Point
-// This file must use CommonJS syntax
-
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
+const require = createRequire(import.meta.url);
 
 const app = express();
 
@@ -54,7 +53,7 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-// Import routes from backend
+// Import routes from backend (using createRequire for CommonJS modules)
 app.use('/api/lands', require('../backend/routes/lands'));
 app.use('/api/ai-interactions', require('../backend/routes/ai-interactions'));
 app.use('/api/recommendations', require('../backend/routes/recommendations'));
@@ -86,4 +85,4 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
-module.exports = app;
+export default app;

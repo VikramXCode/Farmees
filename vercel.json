@@ -3,14 +3,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/server.cjs": {
+    "api/server.js": {
       "includeFiles": "backend/**"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/server.cjs"
+      "destination": "/api/server.js"
     },
     {
       "source": "/((?!api/).*)",
