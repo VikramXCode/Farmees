@@ -6,6 +6,14 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   phone: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  role: { 
+    type: String, 
+    enum: ['farmer', 'coordinator'], 
+    default: 'farmer' 
+  },
+  isDemo: { type: Boolean, default: false },
+  district: { type: String },
+  area: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

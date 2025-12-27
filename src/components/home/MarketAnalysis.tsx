@@ -85,9 +85,10 @@ export default function MarketAnalysis() {
         if (cancelled) return;
         processRecords(records);
       } catch (e: any) {
-        setError(e?.message || 'Failed to load market data');
+        if (e.name === 'AbortError') return;
+        if (!cancelled) setError(e?.message || 'Failed to load market data');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { landService } from '../services/landService';
 import type { LandData } from '../types/land';
 import { useAuth } from './AuthContext';
@@ -29,6 +29,8 @@ interface FarmContextType {
   lands: Land[];
   selectedLandId: string | null;
   reminders: Reminder[];
+  isLoading: boolean;
+  loadError: string | null;
   addLand: (land: Omit<Land, 'id'>) => Promise<string>;
   updateLand: (landId: string, updates: Partial<Land>) => Promise<void>;
   deleteLand: (landId: string) => Promise<void>;
@@ -41,43 +43,81 @@ const FarmContext = createContext<FarmContextType | undefined>(undefined);
 
 export function FarmProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const userId = user?.id || null;
   const [lands, setLands] = useState<Land[]>([]);
   const [selectedLandId, setSelectedLandId] = useState<string | null>(null);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const loadSeqRef = useRef(0);
+  const prevLandsHash = useRef<string>('');
 
   // Load lands for the logged-in user
   useEffect(() => {
+    let isMounted = true;
+    const seq = ++loadSeqRef.current;
+
     const loadUserLands = async () => {
-      if (!user || !user.id) {
-        setLands([]);
-        setSelectedLandId(null);
+      if (!userId) {
+        if (isMounted) {
+          setLands([]);
+          prevLandsHash.current = '';
+          setSelectedLandId(null);
+          setIsLoading(false);
+          setLoadError(null);
+        }
         return;
       }
+
+      if (isMounted) {
+        setIsLoading(true);
+        setLoadError(null);
+      }
+
       try {
-        const userLands: LandData[] = await landService.getAllUserLands(user.id);
-        const mapped: Land[] = userLands.map(ld => ({
-          id: ld.landId || ld._id || '',
-          name: ld.name,
-          location: ld.location,
-          currentCrop: ld.currentCrop,
-          waterAvailability: ld.waterAvailability,
-          soilType: ld.soilType
-        }));
-        setLands(mapped);
-        if (mapped.length > 0) {
-          setSelectedLandId(mapped[0].id);
-        } else {
-          setSelectedLandId(null);
+        const userLands: LandData[] = await landService.getAllUserLands(userId);
+
+        if (isMounted && loadSeqRef.current === seq) {
+          const mapped: Land[] = userLands.map(ld => ({
+            id: ld.landId || ld._id || '',
+            name: ld.name,
+            location: ld.location,
+            currentCrop: ld.currentCrop,
+            waterAvailability: ld.waterAvailability,
+            soilType: ld.soilType
+          }));
+
+          const newHash = JSON.stringify(mapped);
+          if (newHash !== prevLandsHash.current) {
+            setLands(mapped);
+            prevLandsHash.current = newHash;
+
+            if (mapped.length > 0 && !selectedLandId) {
+              setSelectedLandId(mapped[0].id);
+            } else if (mapped.length === 0 && selectedLandId) {
+              setSelectedLandId(null);
+            }
+          }
         }
-      } catch (err) {
-        console.error('Failed to load user lands', err);
-        setLands([]);
-        setSelectedLandId(null);
+      } catch (err: any) {
+        console.error('Failed to load user lands:', err);
+        if (isMounted && loadSeqRef.current === seq) {
+          // Do not clear lands on error to prevent flashing or loops. Just set error.
+          setLoadError(err?.message || 'Failed to load lands');
+        }
+      } finally {
+        if (isMounted && loadSeqRef.current === seq) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadUserLands();
-  }, [user]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   const addLand = async (landData: Omit<Land, 'id'>): Promise<string> => {
     // Create a persistent record in backend then reflect in UI
@@ -147,15 +187,15 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           waterAvailability: updates.waterAvailability,
         });
       }
-      
+
       // Update in local state
-      setLands(prev => prev.map(land => 
+      setLands(prev => prev.map(land =>
         land.id === landId ? { ...land, ...updates } : land
       ));
     } catch (err) {
       console.error('Failed to update land', err);
       // Fallback to local update
-      setLands(prev => prev.map(land => 
+      setLands(prev => prev.map(land =>
         land.id === landId ? { ...land, ...updates } : land
       ));
     }
@@ -165,10 +205,10 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     try {
       // Delete from backend
       await landService.deleteLandData(landId);
-      
+
       // Remove from local state
       setLands(prev => prev.filter(land => land.id !== landId));
-      
+
       // Clear selection if deleted land was selected
       if (selectedLandId === landId) {
         setSelectedLandId(null);
@@ -210,6 +250,8 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       lands,
       selectedLandId,
       reminders,
+      isLoading,
+      loadError,
       addLand,
       updateLand,
       deleteLand,

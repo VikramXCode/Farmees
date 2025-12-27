@@ -19,6 +19,24 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Get all lands for a user (MUST come before /:landId)
+router.get('/user/:userId', async (req, res) => {
+  try {
+    console.log('Fetching lands for user:', req.params.userId);
+    // In demo mode, only return demo lands
+    const filter = req.isDemo 
+      ? { userId: req.params.userId, isActive: true, isDemo: true }
+      : { userId: req.params.userId, isActive: true, isDemo: { $ne: true } };
+    
+    const lands = await Land.find(filter).sort({ updatedAt: -1 });
+    console.log(`Found ${lands.length} lands for user ${req.params.userId}:`, lands.map(l => ({id: l.landId, name: l.name})));
+    res.json(lands);
+  } catch (error) {
+    console.error('Error fetching user lands:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get land data by ID
 router.get('/:landId', async (req, res) => {
   try {
@@ -28,20 +46,6 @@ router.get('/:landId', async (req, res) => {
     }
     res.json(land);
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get all lands for a user
-router.get('/user/:userId', async (req, res) => {
-  try {
-    console.log('Fetching lands for user:', req.params.userId);
-    const lands = await Land.find({ userId: req.params.userId, isActive: true })
-      .sort({ updatedAt: -1 });
-    console.log(`Found ${lands.length} lands for user ${req.params.userId}:`, lands.map(l => ({id: l.landId, name: l.name})));
-    res.json(lands);
-  } catch (error) {
-    console.error('Error fetching user lands:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -61,7 +65,8 @@ router.put('/:landId', async (req, res) => {
     
     res.json(land);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Update error:', error);
+    return res.status(400).json({ error: error?.message || 'Update failed' });
   }
 });
 

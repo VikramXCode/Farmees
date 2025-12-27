@@ -2,15 +2,15 @@ export interface Scheme {
   id: string;
   name: {
     en: string;
-    ml: string;
+    ta: string;
   };
   description: {
     en: string;
-    ml: string;
+    ta: string;
   };
   scheme: {
     en: string;
-    ml: string;
+    ta: string;
   };
   component: string;
   eligibility: string;

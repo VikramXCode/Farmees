@@ -1,6 +1,5 @@
 import { Plus, Lightbulb, Bug, TrendingUp, Cloud, FileText } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import ConnectivityToggle from '../ConnectivityToggle';
 
 interface NavbarSectionProps {
   activeSection: string;
@@ -42,9 +41,8 @@ export default function NavbarSection({ activeSection, setActiveSection }: Navba
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
       {/* Navigation Bar */}
       <div className="bg-gradient-to-r from-green-600 to-green-500 p-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3">
           <div className="text-white/90 text-sm">FarmEase</div>
-          <ConnectivityToggle />
         </div>
         <div className="flex space-x-2 overflow-x-auto">
           {sections.map((section) => (
@@ -78,7 +76,11 @@ export default function NavbarSection({ activeSection, setActiveSection }: Navba
       )}
 
       {/* Dynamic Content */}
-      {renderContent()}
+      {activeSection && (
+        <div className="p-6">
+          {renderContent()}
+        </div>
+      )}
     </div>
   );
 }

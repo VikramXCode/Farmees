@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useConnectivity } from '../../contexts/ConnectivityContext';
 import { createEscalation } from '../../services/escalationService';
 
 type Props = {
@@ -11,7 +10,6 @@ type Props = {
 export default function EscalateButton({ userId, landId, getQueryContext }: Props) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const { online } = useConnectivity();
 
   const onClick = async () => {
     try {
@@ -30,12 +28,9 @@ export default function EscalateButton({ userId, landId, getQueryContext }: Prop
 
   return (
     <div className="mt-2">
-      <button onClick={onClick} disabled={loading || !online} className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-60 disabled:cursor-not-allowed">
-        {loading ? 'Escalating…' : (online ? 'Escalate to Agri Officer' : 'Go Online to Escalate')}
+      <button onClick={onClick} disabled={loading} className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-60 disabled:cursor-not-allowed">
+        {loading ? 'Escalating…' : 'Escalate to Agri Officer'}
       </button>
-      {!online && (
-        <div className="text-xs mt-2 text-amber-700">Offline mode: escalation requires internet</div>
-      )}
       {message && <div className="text-sm mt-2 text-green-700">{message}</div>}
     </div>
   );

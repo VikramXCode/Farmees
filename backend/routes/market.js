@@ -3,53 +3,14 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const { isDemoUser, DEMO_MARKET_DATA } = require('../middleware/demoMode');
 
 const router = express.Router();
 
 // Deterministic fallback dataset so the UI can still render meaningful
 // Kerala market intel when the CSV feed is absent in dev/demo setups.
-const fallbackSeedData = [
-  { commodity: 'Wheat', market: 'Ernakulam (Kalamassery)', district: 'Ernakulam', basePrice: 2680 },
-  { commodity: 'Wheat (Lokwan)', market: 'Thrissur (Chalakudy)', district: 'Thrissur', basePrice: 2760 },
-  { commodity: 'Rice (Matta)', market: 'Palakkad', district: 'Palakkad', basePrice: 3020 },
-  { commodity: 'Banana (Nendran)', market: 'Kozhikode', district: 'Kozhikode', basePrice: 2840 },
-  { commodity: 'Coconut', market: 'Thrissur', district: 'Thrissur', basePrice: 9050 },
-  { commodity: 'Black Pepper', market: 'Idukki (Kattappana)', district: 'Idukki', basePrice: 59800 },
-  { commodity: 'Cardamom', market: 'Pathanamthitta (Konni)', district: 'Pathanamthitta', basePrice: 101200 },
-  { commodity: 'Ginger (Green)', market: 'Wayanad (Sulthan Bathery)', district: 'Wayanad', basePrice: 14800 },
-  { commodity: 'Arecanut', market: 'Kasaragod', district: 'Kasaragod', basePrice: 35200 },
-  { commodity: 'Rubber (RSS-4)', market: 'Kottayam', district: 'Kottayam', basePrice: 17400 },
-  { commodity: 'Vegetable (Tomato)', market: 'Alappuzha', district: 'Alappuzha', basePrice: 3820 },
-  { commodity: 'Cocoa Beans', market: 'Malappuram', district: 'Malappuram', basePrice: 22600 },
-  { commodity: 'Tapioca', market: 'Thiruvananthapuram', district: 'Thiruvananthapuram', basePrice: 2360 }
-];
-
-const fallbackKeralaMarketData = buildFallbackMarketData();
-
-function buildFallbackMarketData() {
-  const today = new Date();
-  return fallbackSeedData.map((seed, index) => {
-    const swingPct = 5 + (index % 4); // 5% - 8%
-    const trendFactor = ((index * 37) % 9) - 4; // -4 to +4
-    const modalPrice = Math.max(0, Math.round(seed.basePrice * (1 + trendFactor / 100)));
-    const swing = Math.round((seed.basePrice * swingPct) / 100);
-    const minPrice = Math.max(0, modalPrice - Math.round(swing * 0.6));
-    const maxPrice = modalPrice + Math.round(swing * 0.6);
-    const arrivalDate = new Date(today);
-    arrivalDate.setDate(today.getDate() - index);
-
-    return {
-      commodity: seed.commodity,
-      market: seed.market,
-      district: seed.district,
-      min_price: minPrice,
-      max_price: maxPrice,
-      modal_price: modalPrice,
-      price_unit: 'per quintal',
-      arrival_date: arrivalDate.toISOString().slice(0, 10)
-    };
-  });
-}
+// Fallback data removed as per "Remove all mock data" requirement.
+const fallbackKeralaMarketData = [];
 
 function parseCsv(text) {
   const rows = [];
@@ -135,6 +96,11 @@ function normalizeRecords(rows, commodityFilter) {
 
 router.get('/kerala', async (req, res) => {
   try {
+    // Check if demo mode
+    if (req.isDemo) {
+      return res.json({ success: true, data: DEMO_MARKET_DATA });
+    }
+
     const csvPath = process.env.MARKET_CSV_PATH || path.join(__dirname, '..', 'data', 'today_market.csv');
     const commodityFilter = req.query.commodity;
 

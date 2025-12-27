@@ -42,6 +42,7 @@ export default function FarmAnalyticsDashboard({ onRecommendationRequest }: Farm
   const selectedLand = lands.find(land => land.id === selectedLandId);
 
   useEffect(() => {
+    let cancelled = false;
     const loadAnalytics = async () => {
       if (!selectedLandId) {
         setAnalytics(null);
@@ -63,10 +64,12 @@ export default function FarmAnalyticsDashboard({ onRecommendationRequest }: Farm
           landData = await landService.getMockLandData(selectedLandId);
         }
         
+        if (cancelled) return;
         const analyticsData = generateAnalytics(landData);
         setAnalytics(analyticsData);
       } catch (error) {
         console.error('Error loading analytics:', error);
+        if (cancelled) return;
         // Create minimal mock analytics if everything fails
         setAnalytics({
           landData: null,
@@ -79,11 +82,12 @@ export default function FarmAnalyticsDashboard({ onRecommendationRequest }: Farm
           insights: ['stable_weather']
         });
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadAnalytics();
+    return () => { cancelled = true; };
   }, [selectedLandId]);
 
   const generateAnalytics = (landData: LandData): AnalyticsData => {

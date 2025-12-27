@@ -25,6 +25,10 @@ if (process.env.VERCEL) {
 app.use(cors());
 app.use(express.json());
 
+// Demo mode middleware - must come after json parsing
+const { demoModeMiddleware } = require('./middleware/demoMode');
+app.use(demoModeMiddleware);
+
 async function connectToDatabase() {
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
@@ -81,12 +85,23 @@ app.use('/api/escalations', require('./routes/escalations'));
 app.use('/api/alerts', require('./routes/alerts'));
 app.use('/api/market', require('./routes/market'));
 app.use('/api/connect', require('./routes/connect'));
+app.use('/api/labour', require('./routes/labour'));
 
 async function startServer() {
   try {
     await connectToDatabase();
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`API listening on http://localhost:${PORT}`);
+    });
+
+    server.on('error', (err) => {
+      if (err && err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Stop the existing server, then retry.`);
+        console.error(`Windows quick fix: Get-NetTCPConnection -LocalPort ${PORT} -State Listen | Select OwningProcess | Stop-Process -Id {PID} -Force`);
+        process.exit(1);
+      }
+      console.error('Server listen error:', err);
+      process.exit(1);
     });
   } catch (err) {
     console.error('Failed to start server:', err);

@@ -3,6 +3,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const Groq = require('groq-sdk');
 const { getEnvKeys, shouldRotate } = require('../utils/apiKeys');
+const { DEMO_AI_CHAT_RESPONSES } = require('../middleware/demoMode');
 
 const router = express.Router();
 
@@ -13,6 +14,24 @@ if (!groqKeys.length && process.env.GROQ_API_KEY) {
 
 router.post('/generate', async (req, res) => {
   try {
+    // Demo mode - return mock AI responses
+    if (req.isDemo) {
+      const { input } = req.body || {};
+      const inputLower = (input || '').toLowerCase();
+      
+      // Find matching demo response
+      const match = DEMO_AI_CHAT_RESPONSES.find(r => inputLower.includes(r.question));
+      if (match) {
+        return res.json({ success: true, text: match.response });
+      }
+      
+      // Default demo response
+      return res.json({ 
+        success: true, 
+        text: 'I can help you with irrigation, pest control, and fertilizer recommendations for your rice field. What specific information do you need?' 
+      });
+    }
+
     const { input, systemPrompt, context, model } = req.body || {};
     if (!input || typeof input !== 'string') {
       return res.status(400).json({ success: false, error: 'input is required' });

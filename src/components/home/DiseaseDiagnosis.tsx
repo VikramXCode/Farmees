@@ -49,24 +49,25 @@ export default function DiseaseDiagnosis() {
     }
   };
 
-  const handleAnalyzeImage = () => {
+  const handleAnalyzeImage = async () => {
     if (!uploadedFile) return;
 
     setIsAnalyzing(true);
 
-    const form = new FormData();
-    form.append('image', uploadedFile);
+    try {
+      const form = new FormData();
+      form.append('image', uploadedFile);
 
-  const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
-  fetch(`${API_BASE_URL}/diseases/identify`, {
-      method: 'POST',
-      body: form
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(await res.text());
-        return res.json();
-      })
-        .then((data) => {
+      const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
+      const res = await fetch(`${API_BASE_URL}/diseases/identify`, {
+        method: 'POST',
+        body: form
+      });
+      
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      
+      {
           // Expecting { diseaseSuggestions: [...], plantSuggestions: [...], imagePath }
   // We compute topResult directly and don't keep full lists
           // Choose the highest probability disease if present, otherwise top plant suggestion
@@ -90,33 +91,35 @@ export default function DiseaseDiagnosis() {
             setAnalysisText('');
           }
           setAnalysisComplete(true);
-      })
-      .catch((err) => {
-        console.error(err);
-        setAnalysisText('Unable to analyze image right now.');
-        setAnalysisComplete(true);
-      })
-      .finally(() => setIsAnalyzing(false));
+      }
+    } catch (err) {
+      console.error(err);
+      setAnalysisText('Unable to analyze image right now.');
+      setAnalysisComplete(true);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
-  const handleAnalyzePestImage = () => {
+  const handleAnalyzePestImage = async () => {
     if (!uploadedFile) return;
 
     setIsAnalyzing(true);
 
-    const form = new FormData();
-    form.append('image', uploadedFile);
+    try {
+      const form = new FormData();
+      form.append('image', uploadedFile);
 
-  const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
-  fetch(`${API_BASE_URL}/pests/identify`, {
-      method: 'POST',
-      body: form
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(await res.text());
-        return res.json();
-      })
-      .then((data) => {
+      const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
+      const res = await fetch(`${API_BASE_URL}/pests/identify`, {
+        method: 'POST',
+        body: form
+      });
+      
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      
+      {
         // Expecting { pestSuggestions: [...] , imagePath }
         const pests = (data.pestSuggestions || data.pestSuggestions || []).slice();
         pests.sort((a: any, b: any) => (b.probability || 0) - (a.probability || 0));
@@ -130,13 +133,14 @@ export default function DiseaseDiagnosis() {
           setAnalysisText('No confident pest suggestions returned.');
         }
         setAnalysisComplete(true);
-      })
-      .catch((err) => {
-        console.error(err);
-        setAnalysisText('Unable to analyze pest image right now.');
-        setAnalysisComplete(true);
-      })
-      .finally(() => setIsAnalyzing(false));
+      }
+    } catch (err) {
+      console.error(err);
+      setAnalysisText('Unable to analyze pest image right now.');
+      setAnalysisComplete(true);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleAnalyzeDescription = async () => {

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from './api';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
@@ -27,16 +27,16 @@ export interface Officer {
 }
 
 export async function createEscalation(payload: Escalation) {
-  const { data } = await axios.post(`${API_BASE}/api/escalations`, payload);
+  const { data } = await api.post(`${API_BASE}/api/escalations`, payload);
   return data;
 }
 
 export async function listEscalations(params?: { userId?: string; status?: string }) {
-  const { data } = await axios.get(`${API_BASE}/api/escalations`, { params });
+  const { data } = await api.get(`${API_BASE}/api/escalations`, { params });
   return data;
 }
 
 export async function listOfficers(params?: { district?: string; state?: string; active?: boolean }) {
-  const { data } = await axios.get(`${API_BASE}/api/officers`, { params });
+  const { data } = await api.get(`${API_BASE}/api/officers`, { params });
   return data;
 }

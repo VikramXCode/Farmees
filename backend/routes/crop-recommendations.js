@@ -6,6 +6,7 @@ const path = require('path');
 const Land = require('../models/Land');
 const SoilReport = require('../models/SoilReport');
 const groqService = require('../services/groqService');
+const { isDemoUser, DEMO_CROP_RECOMMENDATION } = require('../middleware/demoMode');
 
 const os = require('os');
 
@@ -113,10 +114,12 @@ router.post('/ai-generate', async (req, res) => {
 
   } catch (error) {
     console.error('AI crop recommendation generation error:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate AI crop recommendation',
-      details: error.message 
-    });
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Failed to generate AI crop recommendation',
+        details: error.message 
+      });
+    }
   }
 });
 

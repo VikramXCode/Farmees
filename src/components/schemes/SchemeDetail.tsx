@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { ArrowLeft, ExternalLink, Shield, TrendingUp, DollarSign, FileText, User, MapPin, Phone, Globe } from 'lucide-react';
 import { Scheme } from '../../types/schemes';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -25,8 +25,8 @@ const categoryColorMap = {
 
 export default function SchemeDetail({ scheme, onBack }: SchemeDetailProps) {
   const { language, t } = useLanguage();
-  const lang = language === 'malayalam' ? 'ml' : 'en';
-  
+  const lang = language === 'tamil' ? 'ta' : 'en';
+
   const IconComponent = iconMap[scheme.icon as keyof typeof iconMap] || Shield;
   const categoryColor = categoryColorMap[scheme.category] || 'bg-gray-100 text-gray-800 border-gray-200';
 
@@ -121,14 +121,14 @@ export default function SchemeDetail({ scheme, onBack }: SchemeDetailProps) {
             <div className="card-elevated">
               <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <button 
+                <button
                   onClick={handleApplyOnline}
                   className="w-full btn-primary flex items-center justify-center space-x-2"
                 >
                   <span>{t('apply_online')}</span>
                   <ExternalLink className="w-4 h-4" />
                 </button>
-                <button 
+                <button
                   onClick={() => window.open('tel:' + scheme.contact, '_self')}
                   className="w-full btn-outline flex items-center justify-center space-x-2"
                 >
@@ -153,7 +153,7 @@ export default function SchemeDetail({ scheme, onBack }: SchemeDetailProps) {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Globe className="w-4 h-4 text-gray-400" />
-                  <a 
+                  <a
                     href={scheme.online_url}
                     target="_blank"
                     rel="noopener noreferrer"

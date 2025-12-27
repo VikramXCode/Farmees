@@ -32,16 +32,16 @@ class SchemesService {
   /**
    * Search schemes by name or description
    */
-  searchSchemes(query: string, language: 'en' | 'ml' = 'en'): Scheme[] {
+  searchSchemes(query: string, language: 'en' | 'ta' = 'en'): Scheme[] {
     const searchTerm = query.toLowerCase();
     return this.schemes.filter(scheme => {
       const name = scheme.name[language].toLowerCase();
       const description = scheme.description[language].toLowerCase();
       const eligibility = scheme.eligibility.toLowerCase();
-      
-      return name.includes(searchTerm) || 
-             description.includes(searchTerm) || 
-             eligibility.includes(searchTerm);
+
+      return name.includes(searchTerm) ||
+        description.includes(searchTerm) ||
+        eligibility.includes(searchTerm);
     });
   }
 
@@ -56,21 +56,21 @@ class SchemesService {
   /**
    * Get scheme name by language
    */
-  getSchemeName(scheme: Scheme, language: 'en' | 'ml'): string {
+  getSchemeName(scheme: Scheme, language: 'en' | 'ta'): string {
     return scheme.name[language];
   }
 
   /**
    * Get scheme description by language
    */
-  getSchemeDescription(scheme: Scheme, language: 'en' | 'ml'): string {
+  getSchemeDescription(scheme: Scheme, language: 'en' | 'ta'): string {
     return scheme.description[language];
   }
 
   /**
    * Get scheme title by language
    */
-  getSchemeTitle(scheme: Scheme, language: 'en' | 'ml'): string {
+  getSchemeTitle(scheme: Scheme, language: 'en' | 'ta'): string {
     return scheme.scheme[language];
   }
 }

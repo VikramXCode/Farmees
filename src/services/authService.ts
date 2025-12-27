@@ -1,22 +1,42 @@
 // Auth Service: Handles signup and signin API calls
+import { getApiHeaders } from './api';
+
 const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
 
-export async function signup(name: string, phone: string, password: string) {
+export async function signup(name: string, phone: string, password: string, role: string = 'farmer') {
   const res = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, phone, password })
+    headers: getApiHeaders(),
+    body: JSON.stringify({ name, phone, password, role })
   });
-  if (!res.ok) throw new Error((await res.json()).error || 'Signup failed');
+  if (!res.ok) {
+    let errorMsg = 'Signup failed';
+    try {
+      const data = await res.json();
+      errorMsg = data.error || errorMsg;
+    } catch {
+      // Response not JSON, use default message
+    }
+    throw new Error(errorMsg);
+  }
   return await res.json();
 }
 
 export async function signin(phone: string, password: string) {
   const res = await fetch(`${API_BASE_URL}/auth/signin`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getApiHeaders(),
     body: JSON.stringify({ phone, password })
   });
-  if (!res.ok) throw new Error((await res.json()).error || 'Signin failed');
+  if (!res.ok) {
+    let errorMsg = 'Signin failed';
+    try {
+      const data = await res.json();
+      errorMsg = data.error || errorMsg;
+    } catch {
+      // Response not JSON, use default message
+    }
+    throw new Error(errorMsg);
+  }
   return await res.json();
 }

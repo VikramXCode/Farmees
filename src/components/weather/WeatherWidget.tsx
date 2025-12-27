@@ -82,7 +82,8 @@ export default function WeatherWidget({
 
   useEffect(() => {
     fetchWeatherData();
-  }, [landId, coordinates?.lat, coordinates?.lon, location]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [landId, coordinates?.lat, coordinates?.lon]);
 
   const getWeatherIcon = (condition: string, isDay: boolean = true) => {
     const iconProps = { className: "w-8 h-8" };

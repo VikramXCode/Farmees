@@ -1,6 +1,7 @@
 // MongoDB service for land-specific data management
 
 import { LandData, AIInteraction, LandRecommendation } from '../types/land';
+import { getApiHeaders } from './api';
 
 class LandService {
   private baseUrl = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
@@ -9,9 +10,7 @@ class LandService {
   async createLandData(landData: Omit<LandData, '_id' | 'createdAt' | 'updatedAt'>): Promise<LandData> {
     const response = await fetch(`${this.baseUrl}/lands`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getApiHeaders(),
       body: JSON.stringify({
         ...landData,
         createdAt: new Date().toISOString(),
@@ -28,7 +27,9 @@ class LandService {
   }
 
   async getLandData(landId: string): Promise<LandData | null> {
-    const response = await fetch(`${this.baseUrl}/lands/${landId}`);
+    const response = await fetch(`${this.baseUrl}/lands/${landId}`, {
+      headers: getApiHeaders()
+    });
     
     if (response.status === 404) {
       return null;
@@ -44,9 +45,7 @@ class LandService {
   async updateLandData(landId: string, updates: Partial<LandData>): Promise<LandData> {
     const response = await fetch(`${this.baseUrl}/lands/${landId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getApiHeaders(),
       body: JSON.stringify({
         ...updates,
         updatedAt: new Date().toISOString(),
@@ -61,18 +60,35 @@ class LandService {
   }
 
   async getAllUserLands(userId: string): Promise<LandData[]> {
-    const response = await fetch(`${this.baseUrl}/lands/user/${userId}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch user lands');
-    }
+    try {
+      const response = await fetch(`${this.baseUrl}/lands/user/${userId}`, {
+        headers: getApiHeaders(),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user lands');
+      }
 
-    return response.json();
+      return response.json();
+    } catch (error: any) {
+      clearTimeout(timeout);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - slow connection detected. Please try again later.');
+      }
+      throw error;
+    }
   }
 
   async deleteLandData(landId: string): Promise<void> {
     const response = await fetch(`${this.baseUrl}/lands/${landId}`, {
       method: 'DELETE',
+      headers: getApiHeaders(),
     });
 
     if (!response.ok) {
@@ -145,9 +161,7 @@ class LandService {
   async saveAIInteraction(interaction: Omit<AIInteraction, '_id'>): Promise<AIInteraction> {
     const response = await fetch(`${this.baseUrl}/ai-interactions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getApiHeaders(),
       body: JSON.stringify(interaction),
     });
 
@@ -159,7 +173,9 @@ class LandService {
   }
 
   async getAIInteractions(landId: string, limit: number = 10): Promise<AIInteraction[]> {
-    const response = await fetch(`${this.baseUrl}/ai-interactions/land/${landId}?limit=${limit}`);
+    const response = await fetch(`${this.baseUrl}/ai-interactions/land/${landId}?limit=${limit}`, {
+      headers: getApiHeaders()
+    });
     
     if (!response.ok) {
       throw new Error('Failed to fetch AI interactions');
@@ -172,9 +188,7 @@ class LandService {
   async createRecommendation(recommendation: Omit<LandRecommendation, '_id' | 'createdAt' | 'updatedAt'>): Promise<LandRecommendation> {
     const response = await fetch(`${this.baseUrl}/recommendations`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getApiHeaders(),
       body: JSON.stringify({
         ...recommendation,
         createdAt: new Date().toISOString(),
@@ -190,7 +204,9 @@ class LandService {
   }
 
   async getRecommendations(landId: string): Promise<LandRecommendation[]> {
-    const response = await fetch(`${this.baseUrl}/recommendations/land/${landId}`);
+    const response = await fetch(`${this.baseUrl}/recommendations/land/${landId}`, {
+      headers: getApiHeaders()
+    });
     
     if (!response.ok) {
       throw new Error('Failed to fetch recommendations');
@@ -201,7 +217,9 @@ class LandService {
 
   // Analytics and Insights
   async getLandAnalytics(landId: string): Promise<any> {
-    const response = await fetch(`${this.baseUrl}/lands/${landId}/analytics`);
+    const response = await fetch(`${this.baseUrl}/lands/${landId}/analytics`, {
+      headers: getApiHeaders()
+    });
     
     if (!response.ok) {
       throw new Error('Failed to fetch land analytics');

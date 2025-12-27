@@ -1,139 +1,158 @@
 {
   "schemes": [
     {
-      "id": "calamity-relief",
+      "id": "pm-kisan-tn",
       "name": {
-        "en": "Calamity Relief Assistance",
-        "ml": "പ്രകൃതിക്ഷോഭ ദുരിതാശ്വാസ സഹായം"
+        "en": "PM-Kisan Samman Nidhi (Tamil Nadu)",
+        "ta": "பிரதம மந்திரி கிசான் சம்மான் நிதி"
       },
       "description": {
-        "en": "Under the Natural Calamity Relief Scheme, farmers can apply for compensation if crops are damaged due to natural calamities.",
-        "ml": "പ്രകൃതിക്ഷോഭത്തില്‍ വിളനാശം സംഭവിച്ചാല്‍ സംസ്ഥാന-കേന്ദ്ര സര്‍ക്കാരിന്റെ പ്രകൃതിക്ഷോഭ ദുരിതാശ്വാസ പദ്ധതിയുടെ അടിസ്ഥാനത്തില്‍ നഷ്ടപരിഹാരത്തിന് അപേക്ഷിക്കാം."
+        "en": "PM-KISAN is a central sector scheme with 100% funding from Government of India. It provides an income support of ₹6,000/- per year in three equal installments to small and marginal farmer families.",
+        "ta": "சிறு மற்றும் குறு விவசாயக் குடும்பங்களுக்கு ஆண்டுக்கு ரூ.6,000/- மூன்று தவணைகளாக வழங்கி அவர்களின் வருவாயைப் பெருக்கவும், வேளாண்மைச் செலவினங்களை மேற்கொள்ளவும் உதவும் மத்திய அரசு திட்டம்."
       },
       "scheme": {
-        "en": "Contingency Programme to meet Natural Calamities and Pests and Disease Endemic",
-        "ml": "പ്രകൃതിക്ഷോഭം, രോഗ കീട ബാധ എന്നിവയ്ക്കുള്ള താത്കാലിക പദ്ധതി"
+        "en": "Pradhan Mantri Kisan Samman Nidhi",
+        "ta": "பிரதம மந்திரி கிசான் சம்மான் நிதி"
       },
-      "component": {
-        "en": "Contingency Programme to meet Natural Calamities and Pests and Disease Endemic",
-        "ml": "പ്രകൃതിക്ഷോഭം, രോഗ കീട ബാധ എന്നിവയ്ക്കുള്ള താത്കാലിക പദ്ധതി"
-      },
-      "eligibility": "Farmers whose crops are damaged due to natural calamities.",
-      "how_to_avail": "Farmers registered on the AIMS portal can apply online.",
-      "contact": "കൃഷിഭവൻ",
-      "online_url": "https://aims.kerala.gov.in/cropinsurance",
-      "category": "insurance",
-      "icon": "shield"
-    },
-    {
-      "id": "farm-fresh-price",
-      "name": {
-        "en": "Kerala Farm Fresh Fruits and Vegetables Base Price Scheme",
-        "ml": "കേരള ഫാം ഫ്രഷ് പഴം-പച്ചക്കറി അടിസ്ഥാന വില പദ്ധതി"
-      },
-      "description": {
-        "en": "A base price is announced for fruits and vegetables to ensure that farmers are not affected by price fluctuations and receive fair benefits.",
-        "ml": "പഴം-പച്ചക്കറികൾക്ക് അടിസ്ഥാന വില പ്രഖ്യാപിച്ച് വില വ്യതിയാനങ്ങൾ കർഷകരെ ബാധിക്കാത്തവിധം ആനുകൂല്യം നൽകുന്നു."
-      },
-      "scheme": {
-        "en": "Kerala Farm Fresh Fruits and Vegetables Base Price Scheme",
-        "ml": "കേരള ഫാം ഫ്രഷ് പഴം-പച്ചക്കറി അടിസ്ഥാന വില പദ്ധതി"
-      },
-      "component": "",
-      "eligibility": "Farmers cultivating 16 types of fruits and vegetables.",
-      "how_to_avail": "Farmers registered on the AIMS portal can apply online.",
-      "contact": "കൃഷിഭവൻ",
-      "online_url": "https://aims.kerala.gov.in/cropinsurance",
-      "category": "pricing",
-      "icon": "trending-up"
-    },
-    {
-      "id": "paddy-royalty",
-      "name": {
-        "en": "Royalty for Owners of Cultivable Paddy Land",
-        "ml": "നെൽ വയലുടമകൾക്കുള്ള റോയൽറ്റി"
-      },
-      "description": {
-        "en": "Farmers who own cultivable paddy land can apply for a royalty benefit. The scheme provides ₹2,000 per hectare.",
-        "ml": "നെൽ കൃഷി യോഗ്യമായ നിലവകർക്കു ഹെക്ടറിന് 2000 രൂപ നിരക്കിൽ റോയൽറ്റി ആനുകൂല്യം ലഭിക്കുന്നു."
-      },
-      "scheme": {
-        "en": "Royalty for Owners of Cultivable Paddy Land",
-        "ml": "നെൽ കൃഷി യോഗ്യമായ നിലവകർക്കുള്ള റോയൽറ്റി പദ്ധതി"
-      },
-      "component": "",
-      "eligibility": "Owners of land suitable for paddy cultivation.",
-      "how_to_avail": "Farmers registered on the AIMS portal can apply online.",
-      "contact": "കൃഷിഭവൻ",
-      "online_url": "https://aims.kerala.gov.in/cropinsurance",
+      "component": "Income Support",
+      "eligibility": "All landholding farmers' families, subject to exclusion criteria (e.g., institutional landholders, tax payers).",
+      "how_to_avail": "Apply online via PM-KISAN portal or through Common Service Centers (CSCs). Aadhaar seeding is mandatory.",
+      "contact": "Assistant Director of Agriculture",
+      "online_url": "https://pmkisan.gov.in/",
       "category": "subsidy",
       "icon": "dollar-sign"
     },
     {
-      "id": "soil-health-card",
+      "id": "tn-crop-insurance",
       "name": {
-        "en": "Soil Health Card (NMSA)",
-        "ml": "എൻ എം എസ് എ - സോയിൽ ഹെൽത്ത് കാർഡ്"
+        "en": "Chief Minister's Crop Insurance Scheme",
+        "ta": "முதலமைச்சரின் பயிர் காப்பீட்டுத் திட்டம்"
       },
       "description": {
-        "en": "The Soil Health Card is a scheme implemented by the Ministry of Agriculture, Government of India, through State and UT Agriculture Departments. It provides farmers with a soil test report (printed or online) showing nutrient levels and soil health indicators, along with fertilizer recommendations to improve crop productivity.",
-        "ml": "സോയിൽ ഹെൽത്ത് കാർഡ് കേന്ദ്ര കൃഷി മന്ത്രാലയം നടപ്പിലാക്കുന്ന ഒരു പദ്ധതി. മണ്ണിന്റെ പോഷക നിലവാരം മനസ്സിലാക്കാനും സംയോജിത വളപ്രയോഗ ശുപാർശകൾ നൽകാനും ഇത് സഹായിക്കുന്നു."
+        "en": "This scheme provides compensation to farmers for crop loss due to natural calamities, pests, and diseases. It covers risks from sowing to harvest.",
+        "ta": "இயற்கை இடர்ப்பாடுகள், பூச்சி மற்றும் நோய் தாக்குதல்களால் ஏற்படும் பயிர் இழப்புக்கு விவசாயிகளுக்கு இழப்பீடு வழங்கும் திட்டம்."
       },
       "scheme": {
-        "en": "NMSA - Soil Health Card",
-        "ml": "എൻ എം എസ് എ - സോയിൽ ഹെൽത്ത് കാർഡ്"
+        "en": "Revamped Pradhan Mantri Fasal Bima Yojana (RPMFBY)",
+        "ta": "திருத்தி அமைக்கப்பட்ட பிரதம மந்திரி பயிர் காப்பீட்டுத் திட்டம்"
       },
-      "component": "",
-      "eligibility": "Farmers can get recommendations after soil testing their farmland.",
-      "how_to_avail": "Submit soil samples to the nearest Krishi Bhavan.",
-      "contact": "കൃഷിഭവൻ",
-      "online_url": "https://aims.kerala.gov.in/cropinsurance",
-      "category": "testing",
-      "icon": "file-text"
-    },
-    {
-      "id": "crop-insurance",
-      "name": {
-        "en": "State Crop Insurance Scheme",
-        "ml": "സംസ്ഥാന വിള ഇൻഷുറൻസ് പദ്ധതി"
-      },
-      "description": {
-        "en": "Farmers can apply to enroll in the State Crop Insurance Scheme to protect crops against natural calamities, wild animal attacks, pests, and diseases.",
-        "ml": "സംസ്ഥാന വിള ഇൻഷുറൻസ് പദ്ധതിയിൽ അംഗമാകാൻ കർഷകർക്ക് അപേക്ഷിക്കാവുന്നതാണ്. പ്രകൃതിക്ഷോഭം, വന്യജീവികളുടെ ആക്രമണം, രോഗകീടബാധ എന്നിവ മൂലം നഷ്ടപ്പെട്ട വിളയ്ക്ക് നഷ്ടപരിഹാരം ലഭിക്കും."
-      },
-      "scheme": {
-        "en": "Restructured State Crop Insurance Scheme",
-        "ml": "പുനരാവിഷ്കൃത സംസ്ഥാന വിള ഇൻഷുറൻസ് പദ്ധതി"
-      },
-      "component": "",
-      "eligibility": "Farmers cultivating 27 types of crops included under the scheme.",
-      "how_to_avail": "Farmers registered on the AIMS portal can apply online.",
-      "contact": "കൃഷിഭവൻ",
-      "online_url": "https://aims.kerala.gov.in/cropinsurance",
+      "component": "Crop Insurance",
+      "eligibility": "Farmers cultivating notified crops in notified areas. Loanee farmers are enrolled compulsorily, non-loanee farmers voluntarily.",
+      "how_to_avail": "Through Primary Agricultural Cooperative Credit Societies (PACCS), Nationalized Banks, or Common Service Centers.",
+      "contact": "Agricultural Officer / Bank Branch",
+      "online_url": "https://pmfby.gov.in/",
       "category": "insurance",
       "icon": "shield"
     },
     {
-      "id": "pm-kisan",
+      "id": "tn-micro-irrigation",
       "name": {
-        "en": "PM-Kisan Samman Nidhi",
-        "ml": "പി എം - കിസാൻ സമ്മാൻ നിധി"
+        "en": "Micro Irrigation Scheme (PMKSY)",
+        "ta": "நுண்ணீர் பாசனத் திட்டம் (PMKSY)"
       },
       "description": {
-        "en": "PM-Kisan is a Central Government scheme launched on 1st December 2018 to increase the income of small and marginal farmers. It provides ₹6,000 per year per eligible farmer family in three equal installments, directly to their bank accounts, with the aim of enhancing purchasing power, enabling adoption of better agricultural practices, and protecting farmers from debt traps.",
-        "ml": "ചെറുകിട നാമമാത്ര കർഷകരുടെ വരുമാനം വർദ്ധിപ്പിക്കുന്നതിന് പ്രധാന്‍മന്ത്രി കിസാന്‍ സമ്മാൻ നിധി (പി.എം.കിസാൻ) പദ്ധതി 2018 ഡിസംബർ 1 മുതൽ നടപ്പിലാക്കി വരുന്നു. വർഷത്തിലൊരിക്കൽ ₹6,000 മൂന്നു തുല്യ തുകയായി ബാങ്ക് അക്കൗണ്ടിലേക്ക് നൽകുന്നു."
+        "en": "Encourages water use efficiency. Small & marginal farmers get 100% subsidy, others get 75% subsidy for drip/sprinkler irrigation systems.",
+        "ta": "நீர் பயன்பாட்டுத் திறனை அதிகரிக்க சொட்டுநீர் மற்றும் தெளிப்பு நீர் பாசன கருவிகளுக்கு சிறு/குறு விவசாயிகளுக்கு 100% மானியமும், மற்றவர்களுக்கு 75% மானியமும் வழங்கப்படுகிறது."
       },
       "scheme": {
-        "en": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
-        "ml": "പ്രധാനമന്ത്രി കിസാൻ സമ്മാൻ നിധി (പി.എം.കിസാൻ)"
+        "en": "Pradhan Mantri Krishi Sinchayee Yojana (PMKSY) - Per Drop More Crop",
+        "ta": "பிரதம மந்திரி கிருஷி சிஞ்சாயி யோஜனா - ஒரு துளி நீர் அதிக பயிர்"
       },
-      "component": "",
-      "eligibility": "Farmer family includes the farmer, spouse, and minor children. Initially for small and marginal farmers; now benefits all farmers owning cultivable land.",
-      "how_to_avail": "Farmers can apply online at https://pmkisan.gov.in using their Aadhaar number.",
-      "contact": "കൃഷിഭവൻ",
-      "online_url": "https://aims.kerala.gov.in/cropinsurance",
+      "component": "Micro Irrigation",
+      "eligibility": "All farmers with land ownership and water source.",
+      "how_to_avail": "Submit application to Assistant Director of Horticulture/Agriculture or via MIMIS portal.",
+      "contact": "Assistant Director of Horticulture",
+      "online_url": "https://tnhorticulture.tn.gov.in/",
       "category": "subsidy",
-      "icon": "dollar-sign"
+      "icon": "droplet"
+    },
+    {
+      "id": "tn-farm-mechanization",
+      "name": {
+        "en": "Agricultural Mechanization Scheme",
+        "ta": "வேளாண் இயந்திரமயமாக்கல் திட்டம்"
+      },
+      "description": {
+        "en": "Subsidy for purchasing farm machinery like tractors, power tillers, rotavators, and paddy transplanters to overcome labor shortage and ensure timely operations.",
+        "ta": "வேளாண் பணிகளை குறித்த நேரத்தில் முடிக்கவும், ஆட்கள் பற்றாக்குறையை போக்கவும் டிராக்டர், பவர் டில்லர் போன்ற இயந்திரங்களை வாங்க மானியம்."
+      },
+      "scheme": {
+        "en": "Sub-Mission on Agricultural Mechanization (SMAM)",
+        "ta": "வேளாண் இயந்திரமயமாக்கல் துணை இயக்கம்"
+      },
+      "component": "Farm Machinery Subsidy",
+      "eligibility": "Individual farmers, Farmer Producer Organizations (FPOs), SHGs.",
+      "how_to_avail": "Apply via Uzhavan App or AED portal.",
+      "contact": "Agricultural Engineering Department",
+      "online_url": "https://aed.tn.gov.in/",
+      "category": "subsidy",
+      "icon": "tool"
+    },
+    {
+      "id": "tn-uzhavar-sandhai",
+      "name": {
+        "en": "Uzhavar Sandhai (Farmers Market)",
+        "ta": "உழவர் சந்தை"
+      },
+      "description": {
+        "en": "Direct marketing centers where farmers can sell their produce like fruits and vegetables directly to consumers without middlemen, ensuring better prices.",
+        "ta": "விவசாயிகள் தங்கள் காய்கறிகள் மற்றும் பழங்களை இடைத் தரகர்கள் இன்றி நேரடியாக நுகர்வோரிடம் விற்பனை செய்து நல்ல விலை பெற உதவும் திட்டம்."
+      },
+      "scheme": {
+        "en": "Uzhavar Sandhai Scheme",
+        "ta": "உழவர் சந்தை திட்டம்"
+      },
+      "component": "Marketing Support",
+      "eligibility": "Farmers with ID cards issued by the Department of Horticulture.",
+      "how_to_avail": "Obtain ID card from Horticulture Department and allotted shops in Uzhavar Sandhai.",
+      "contact": "Administrative Officer, Uzhavar Sandhai",
+      "online_url": "https://tnhorticulture.tn.gov.in/",
+      "category": "market",
+      "icon": "shopping-cart"
+    },
+    {
+      "id": "tn-collective-farming",
+      "name": {
+        "en": "Collective Farming",
+        "ta": "கூட்டுப் பண்ணையம்"
+      },
+      "description": {
+        "en": "Encourages farmers to form Farmer Interest Groups (FIGs) and Farmer Producer Groups (FPGs) to adopt collective cultivation, credit mobilization, and marketing.",
+        "ta": "விவசாயிகள் குழுக்களாக இணைந்து சாகுபடி, கடன் பெறுதல் மற்றும் விற்பனை மேற்கொள்வதை ஊக்குவிக்கும் திட்டம். கார்பஸ் நிதி வழங்கப்படுகிறது."
+      },
+      "scheme": {
+        "en": "Collective Farming Scheme",
+        "ta": "கூட்டுப் பண்ணையத் திட்டம்"
+      },
+      "component": "Corpus Fund",
+      "eligibility": "Small and Marginal Farmers organized into groups.",
+      "how_to_avail": "Contact Assistant Director of Agriculture.",
+      "contact": "Department of Agriculture",
+      "online_url": "https://tnagrisnet.tn.gov.in/",
+      "category": "subsidy",
+      "icon": "users"
+    },
+    {
+      "id": "kuruvai-package",
+      "name": {
+        "en": "Kuruvai Cultivation Package",
+        "ta": "குறுவை சாகுபடி தொகுப்பு திட்டம்"
+      },
+      "description": {
+        "en": "Special package to support farmers taking up Kuruvai paddy cultivation, including inputs like seeds, fertilizers, and bio-fertilizers at subsidized rates.",
+        "ta": "குறுவை நெல் சாகுபடியை ஊக்குவிக்க விதைகள், உரங்கள் மற்றும் உயிர் உரங்களை மானிய விலையில் வழங்கும் சிறப்புத் தொகுப்பு."
+      },
+      "scheme": {
+        "en": "Kuruvai Special Package",
+        "ta": "குறுவை சிறப்புத் தொகுப்பு"
+      },
+      "component": "Input Subsidy",
+      "eligibility": "Farmers in delta and non-delta districts taking up Kuruvai paddy.",
+      "how_to_avail": "Contact local Agricultural Extension Center.",
+      "contact": "Assistant Director of Agriculture",
+      "online_url": "https://tnagrisnet.tn.gov.in/",
+      "category": "subsidy",
+      "icon": "sun"
     }
   ]
 }

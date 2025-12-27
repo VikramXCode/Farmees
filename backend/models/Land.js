@@ -116,7 +116,8 @@ const landSchema = new mongoose.Schema({
   // Metadata
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+  isDemo: { type: Boolean, default: false }
 });
 
 // Update the updatedAt field before saving

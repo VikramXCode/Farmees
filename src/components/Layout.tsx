@@ -1,9 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Clock, Users, Leaf, User, Globe, FileText } from 'lucide-react';
+import { Home, Clock, Users, Leaf, User, Globe, FileText, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import ConnectivityIndicator, { CompactConnectivityIndicator } from './ConnectivityIndicator';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,12 +13,27 @@ export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
 
-  const navigation = [
-    { name: t('home'), href: '/', icon: Home },
-    { name: t('reminders'), href: '/reminders', icon: Clock },
-    { name: t('schemes'), href: '/schemes', icon: FileText },
-    { name: t('connect'), href: '/connect', icon: Users },
-  ];
+  // Navigation items - show different items based on user role
+  const isCoordinator = user?.role === 'coordinator';
+  const isWorker = user?.role === 'worker';
+  
+  const navigation = isCoordinator 
+    ? [
+        { name: language === 'english' ? 'Dashboard' : 'டாஷ்போர்டு', href: '/coordinator', icon: Briefcase },
+        { name: t('connect'), href: '/connect', icon: Users },
+      ]
+    : isWorker
+    ? [
+        { name: language === 'english' ? 'Dashboard' : 'டாஷ்போர்டு', href: '/worker', icon: Briefcase },
+        { name: t('connect'), href: '/connect', icon: Users },
+      ]
+    : [
+        { name: t('home'), href: '/', icon: Home },
+        { name: language === 'english' ? 'Labour' : 'தொழிலாளர்', href: '/labour', icon: Briefcase },
+        { name: t('reminders'), href: '/reminders', icon: Clock },
+        { name: t('schemes'), href: '/schemes', icon: FileText },
+        { name: t('connect'), href: '/connect', icon: Users },
+      ];
 
   return (
     <div className="min-h-screen bg-green-50">
@@ -31,30 +45,25 @@ export default function Layout({ children }: LayoutProps) {
               <Leaf className="w-8 h-8 text-green-600 mr-3" />
               <h1 className="text-xl font-bold text-green-800">{t('farmease')}</h1>
             </div>
-            
+
             <div className="flex items-center space-x-4">
-              {/* Connectivity Indicator */}
-              <ConnectivityIndicator className="hidden sm:flex" />
-              
-              {/* Removed Ollama Status Indicator */}
-              
               <div className="text-sm text-gray-600">
                 {t('welcome')}, <span className="font-medium text-green-700">{user?.name}</span>
               </div>
-              
+
               {/* Language Switcher */}
               <div className="flex items-center space-x-2">
                 <Globe className="w-4 h-4 text-gray-500" />
                 <select
                   value={language}
-                  onChange={(e) => setLanguage(e.target.value as 'english' | 'malayalam')}
+                  onChange={(e) => setLanguage(e.target.value as 'english' | 'tamil')}
                   className="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                 >
                   <option value="english">{t('english')}</option>
-                  <option value="malayalam">{t('malayalam')}</option>
+                  <option value="tamil">{t('tamil')}</option>
                 </select>
               </div>
-              
+
               <button
                 onClick={logout}
                 className="text-gray-500 hover:text-red-600 transition-colors"
@@ -82,22 +91,16 @@ export default function Layout({ children }: LayoutProps) {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex flex-col items-center py-3 px-4 transition-colors ${
-                    isActive
+                  className={`flex flex-col items-center py-3 px-4 transition-colors ${isActive
                       ? 'text-green-600 bg-green-50'
                       : 'text-gray-500 hover:text-green-600'
-                  }`}
+                    }`}
                 >
                   <item.icon className="w-6 h-6 mb-1" />
                   <span className="text-xs font-medium">{item.name}</span>
                 </Link>
               );
             })}
-            
-            {/* Mobile Connectivity Indicator */}
-            <div className="flex flex-col items-center py-3 px-4">
-              <CompactConnectivityIndicator />
-            </div>
           </div>
         </div>
       </nav>

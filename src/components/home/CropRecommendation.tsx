@@ -1,27 +1,25 @@
 import { useEffect, useState, useRef } from 'react';
-import { Lightbulb, MessageCircle, Send, Bot, User, Sparkles, RefreshCw, AlertCircle, Mic, MicOff, Square, Wifi, WifiOff } from 'lucide-react';
+import { Lightbulb, MessageCircle, Send, Bot, User, Sparkles, RefreshCw, AlertCircle, Mic, MicOff, Square } from 'lucide-react';
 import { useFarm } from '../../contexts/FarmContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { useConnectivity } from '../../contexts/ConnectivityContext';
 import cropRecommendationService, { ChatMessage, AIRecommendationResponse } from '../../services/cropRecommendationService';
 import { AudioRecorder, AudioRecorderState } from '../../utils/audioRecorder';
 
 export default function CropRecommendation() {
   const { lands, selectedLandId } = useFarm();
   const { user } = useAuth();
-  const { online } = useConnectivity();
   const [activeTab, setActiveTab] = useState<'ai' | 'chat'>('ai');
   const [aiRecommendation, setAiRecommendation] = useState<AIRecommendationResponse | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
-  
+
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'ml'>('en');
+  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'ta'>('en');
   const [audioRecorder] = useState(() => new AudioRecorder(
     (state: AudioRecorderState) => {
       setIsRecording(state.isRecording);
@@ -32,9 +30,9 @@ export default function CropRecommendation() {
       setIsRecording(false);
     }
   ));
-  
+
   const chatEndRef = useRef<HTMLDivElement>(null);
-  
+
   const selectedLand = lands.find(land => land.id === selectedLandId);
 
   // Auto-scroll chat to bottom
@@ -44,21 +42,30 @@ export default function CropRecommendation() {
 
   // Generate AI recommendation
   const generateAIRecommendation = async (userQuery?: string) => {
-    if (!selectedLandId && !userQuery) return;
+    console.log('=== Generate AI Recommendation Called ===');
+    console.log('selectedLandId:', selectedLandId);
+    console.log('userQuery:', userQuery);
+    console.log('user:', user);
+    
+    if (!selectedLandId && !userQuery) {
+      console.log('❌ Stopping: No land selected and no query');
+      return;
+    }
 
     // Check if user is authenticated
     if (!user) {
-      console.log('Please log in to use AI recommendations');
+      console.log('❌ Stopping: User not authenticated');
       return;
     }
 
     setAiLoading(true);
     try {
-      console.log('Generating AI recommendation for user:', user.id, 'land:', selectedLandId);
+      console.log('✅ Calling API with user:', user.id, 'land:', selectedLandId);
       const result = await cropRecommendationService.generateAIRecommendation(selectedLandId || undefined, userQuery);
+      console.log('✅ API Response received:', result);
       setAiRecommendation(result);
     } catch (err) {
-      console.error('Error generating AI recommendation:', err);
+      console.error('❌ Error generating AI recommendation:', err);
     } finally {
       setAiLoading(false);
     }
@@ -86,7 +93,7 @@ export default function CropRecommendation() {
 
     try {
       const result = await cropRecommendationService.chatWithBot([...chatMessages, userMessage], selectedLandId || undefined);
-      
+
       const botMessage: ChatMessage = {
         role: 'assistant',
         content: result.response,
@@ -128,12 +135,12 @@ export default function CropRecommendation() {
     try {
       setIsTranscribing(true);
       const audioBlob = await audioRecorder.stopRecording();
-      
+
       if (audioBlob) {
         // Transcribe the audio with selected language
         const filename = `voice_message${audioRecorder.getFileExtension()}`;
         const result = await cropRecommendationService.transcribeAudio(audioBlob, filename, selectedLanguage);
-        
+
         if (result.success && result.transcription.trim()) {
           // Set the transcribed text as the new message
           setNewMessage(result.transcription.trim());
@@ -143,6 +150,7 @@ export default function CropRecommendation() {
       }
     } catch (error) {
       console.error('Failed to transcribe audio:', error);
+      setIsTranscribing(false);
     } finally {
       setIsTranscribing(false);
     }
@@ -154,7 +162,7 @@ export default function CropRecommendation() {
 
   const formatAIContent = (content: string) => {
     const parsed = cropRecommendationService.parseStructuredRecommendation(content);
-    
+
     if (parsed.sections.length > 0) {
       return (
         <div className="space-y-4">
@@ -172,10 +180,10 @@ export default function CropRecommendation() {
     }
 
     return (
-      <div 
+      <div
         className="text-gray-700 whitespace-pre-line"
-        dangerouslySetInnerHTML={{ 
-          __html: cropRecommendationService.formatRecommendationText(content) 
+        dangerouslySetInnerHTML={{
+          __html: cropRecommendationService.formatRecommendationText(content)
         }}
       />
     );
@@ -188,27 +196,25 @@ export default function CropRecommendation() {
           <Lightbulb className="w-6 h-6 text-green-600 mr-2" />
           <h3 className="text-lg font-semibold text-green-800">Crop Recommendations</h3>
         </div>
-        
+
         {/* Tab Navigation */}
         <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
           <button
             onClick={() => setActiveTab('ai')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'ai' 
-                ? 'bg-white text-green-700 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'ai'
+              ? 'bg-white text-green-700 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+              }`}
           >
             <Sparkles className="w-4 h-4 inline mr-1" />
             AI Assistant
           </button>
           <button
             onClick={() => setActiveTab('chat')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'chat' 
-                ? 'bg-white text-green-700 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'chat'
+              ? 'bg-white text-green-700 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+              }`}
           >
             <MessageCircle className="w-4 h-4 inline mr-1" />
             Chat
@@ -272,7 +278,7 @@ export default function CropRecommendation() {
                     <div className="flex items-center justify-between mb-4">
                       <h5 className="font-semibold text-gray-800">AI Recommendation</h5>
                     </div>
-                    
+
                     {/* Land & Soil Context */}
                     {(aiRecommendation.landData || aiRecommendation.soilData) && (
                       <div className="mb-6 p-4 bg-gray-50 rounded-lg">
@@ -299,7 +305,7 @@ export default function CropRecommendation() {
                     <div className="prose max-w-none">
                       {formatAIContent(aiRecommendation.recommendation)}
                     </div>
-                    
+
                     <div className="mt-6 p-4 bg-green-50 rounded-lg">
                       <p className="text-sm text-green-700">
                         💡 <strong>Tip:</strong> Use the Chat tab below to ask specific questions about this recommendation or get more detailed guidance!
@@ -340,12 +346,12 @@ export default function CropRecommendation() {
                     <select
                       id="language-select"
                       value={selectedLanguage}
-                      onChange={(e) => setSelectedLanguage(e.target.value as 'en' | 'ml')}
+                      onChange={(e) => setSelectedLanguage(e.target.value as 'en' | 'ta')}
                       className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
                       disabled={isRecording || isTranscribing}
                     >
                       <option value="en">English</option>
-                      <option value="ml">മലയാളം</option>
+                      <option value="ta">தமிழ்</option>
                     </select>
                   </div>
                 </div>
@@ -364,11 +370,10 @@ export default function CropRecommendation() {
                     <>
                       {chatMessages.map((message, index) => (
                         <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.role === 'user' 
-                              ? 'bg-green-600 text-white ml-auto' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
+                          <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.role === 'user'
+                            ? 'bg-green-600 text-white ml-auto'
+                            : 'bg-gray-100 text-gray-800'
+                            }`}>
                             <div className="flex items-start space-x-2">
                               {message.role === 'assistant' && (
                                 <Bot className="w-4 h-4 mt-1 text-blue-600 flex-shrink-0" />

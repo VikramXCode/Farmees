@@ -2,18 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Droplets, Thermometer, TrendingUp, Cloud, Sun, Edit3, Trash2, MoreVertical, Loader2, CloudRain } from 'lucide-react';
 import { useFarm } from '../../contexts/FarmContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useConnectivity } from '../../contexts/ConnectivityContext';
 import EditLandForm from './EditLandForm';
 import weatherService, { type WeatherData } from '../../services/weatherService';
 
 export default function LandCards() {
   const { lands, selectedLandId, selectLand, deleteLand } = useFarm();
   const { t } = useLanguage();
-  const { online } = useConnectivity();
   const [editingLandId, setEditingLandId] = useState<string | null>(null);
   const [showMenuForLand, setShowMenuForLand] = useState<string | null>(null);
   const [weatherDataCache, setWeatherDataCache] = useState<{ [landId: string]: WeatherData }>({});
   const [loadingWeather, setLoadingWeather] = useState<{ [landId: string]: boolean }>({});
+  const [weatherFetchedIds, setWeatherFetchedIds] = useState<Set<string>>(new Set());
 
   // Get coordinates for a land (fallback to Kochi, Kerala if not available)
   const getCoordinates = (land: any) => {
@@ -26,12 +25,22 @@ export default function LandCards() {
   // Load weather data for all lands
   useEffect(() => {
     const loadWeatherForLands = async () => {
-      if (!online || lands.length === 0) return;
+      if (lands.length === 0) return;
 
-      for (const land of lands) {
-        // Skip if already loading or cached
-        if (loadingWeather[land.id] || weatherDataCache[land.id]) continue;
+      const landsToFetch = lands.filter(land => 
+        !weatherFetchedIds.has(land.id) && !loadingWeather[land.id]
+      );
 
+      if (landsToFetch.length === 0) return;
+
+      // Mark as fetched immediately to prevent re-fetching
+      setWeatherFetchedIds(prev => {
+        const newSet = new Set(prev);
+        landsToFetch.forEach(land => newSet.add(land.id));
+        return newSet;
+      });
+
+      for (const land of landsToFetch) {
         setLoadingWeather(prev => ({ ...prev, [land.id]: true }));
 
         try {
@@ -53,7 +62,8 @@ export default function LandCards() {
     };
 
     loadWeatherForLands();
-  }, [lands, online]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lands.map(l => l.id).join(',')]);
 
   const getWaterColor = (level: string) => {
     switch (level) {
@@ -280,11 +290,6 @@ export default function LandCards() {
                       </span>
                     </div>
                   </div>
-                  {!online && !weather.loading && (
-                    <div className="mt-1 text-xs text-amber-600">
-                      ⚠️ Offline mode - showing cached data
-                    </div>
-                  )}
                 </div>
 
                 {/* Market Status */}

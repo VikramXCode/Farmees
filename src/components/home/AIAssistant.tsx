@@ -38,16 +38,19 @@ export default function AIAssistant() {
 
   // Load land-specific data when land is selected
   useEffect(() => {
+    let cancelled = false;
     const loadLandData = async () => {
       if (selectedLandId) {
         try {
-          const data = await landService.getLandData(selectedLandId) || 
-                      await landService.getMockLandData(selectedLandId);
-          setLandData(data);
+          const data = await landService.getLandData(selectedLandId) ||
+            await landService.getMockLandData(selectedLandId);
+          if (!cancelled) setLandData(data);
         } catch (error) {
           console.error('Error loading land data:', error);
-          const mockData = await landService.getMockLandData(selectedLandId);
-          setLandData(mockData);
+          if (!cancelled) {
+            const mockData = await landService.getMockLandData(selectedLandId);
+            setLandData(mockData);
+          }
         }
       } else {
         setLandData(null);
@@ -55,6 +58,7 @@ export default function AIAssistant() {
     };
 
     loadLandData();
+    return () => { cancelled = true; };
   }, [selectedLandId]);
 
   const handleRecommendationRequest = (query: string) => {
@@ -71,7 +75,7 @@ export default function AIAssistant() {
         };
         setMessages(prev => [...prev, userMessage]);
         setInputValue('');
-        
+
         // Generate AI response
         generateResponseWithLandData(query).then(response => {
           const assistantMessage: Message = {
@@ -101,7 +105,7 @@ export default function AIAssistant() {
     setInputValue('');
 
     // Generate AI response with land-specific data
-  const response = await generateResponseWithLandData(userInput);
+    const response = await generateResponseWithLandData(userInput);
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
       type: 'assistant',
@@ -131,8 +135,8 @@ export default function AIAssistant() {
     }
 
     // Check if the response suggests an action to be added to reminders
-    if (response.includes('fertilize') || response.includes('spray') || response.includes('irrigation') || 
-        response.includes('ഓർമ്മപ്പെടുത്തലുകളിൽ ചേർക്കുന്നു')) {
+    if (response.includes('fertilize') || response.includes('spray') || response.includes('irrigation') ||
+      response.includes('ഓർമ്മപ്പെടുത്തലുകളിൽ ചേർക്കുന്നു')) {
       addReminder({
         title: 'AI Recommendation',
         description: response,
@@ -145,8 +149,8 @@ export default function AIAssistant() {
   };
 
   const generateResponseWithLandData = async (input: string): Promise<string> => {
-    const systemPrompt = language === 'malayalam'
-      ? 'നിങ്ങൾ ഒരു കാർഷിക സഹായി ആണ്. ലളിതവും പ്രായോഗികവുമായ Malayāḷam ഉപദേശം നൽകുക.'
+    const systemPrompt = language === 'tamil'
+      ? 'நீங்கள் ஒரு விவசாய உதவியாளர். எளிய மற்றும் நடைமுறை தமிழ் ஆலோசனைகளை வழங்கவும்.'
       : 'You are a farming assistant. Provide concise, practical guidance.';
 
     try {
@@ -169,119 +173,119 @@ export default function AIAssistant() {
 
   const generateLandSpecificResponse = (input: string, data: LandData): string => {
     const lowerInput = input.toLowerCase();
-    
+
     // Fertilizer recommendations based on soil data
-    if (lowerInput.includes('fertilizer') || lowerInput.includes('fertilize') || lowerInput.includes('ചെമ്പ്') || lowerInput.includes('വളം')) {
+    if (lowerInput.includes('fertilizer') || lowerInput.includes('fertilize') || lowerInput.includes('ചെമ്പ്') || lowerInput.includes('உரம்')) {
       const soil = data.soilReport;
       if (soil) {
-        if (language === 'malayalam') {
-          return `${data.name} ൽ ${data.currentCrop} വളർത്തുന്നതിന്, മണ്ണിന്റെ pH ${soil.pH} ആണ്. നൈട്രജൻ ${soil.nitrogen} ppm, ഫോസ്ഫറസ് ${soil.phosphorus} ppm, പൊട്ടാസ്യം ${soil.potassium} ppm ഉണ്ട്. ശുപാർശ: NPK 20:10:10 ഹെക്ടറിന് 120 കിലോ പ്രയോഗിക്കുക. ജല ലഭ്യത ${data.waterAvailability} ആയതിനാൽ, രാവിലെ പ്രയോഗിക്കുക.`;
+        if (language === 'tamil') {
+          return `${data.name} இல் ${data.currentCrop} பயிரிட, மண் pH ${soil.pH} ஆக உள்ளது. நைட்ரஜன் ${soil.nitrogen} ppm, பாஸ்பரஸ் ${soil.phosphorus} ppm, பொட்டாசியம் ${soil.potassium} ppm உள்ளது. பரிந்துரை: NPK 20:10:10 ஹெக்டேருக்கு 120 கிலோ இடவும். நீர் இருப்பு ${data.waterAvailability} ஆக இருப்பதால், காலையில் இடவும்.`;
         }
         return `For your ${data.name} with ${data.currentCrop}, soil pH is ${soil.pH}. Nitrogen: ${soil.nitrogen} ppm, Phosphorus: ${soil.phosphorus} ppm, Potassium: ${soil.potassium} ppm. Recommendation: Apply 120kg/hectare of NPK 20:10:10. With ${data.waterAvailability} water availability, apply in the morning.`;
       }
     }
-    
+
     // Weather-based advice
-    if (lowerInput.includes('weather') || lowerInput.includes('കാലാവസ്ഥ')) {
+    if (lowerInput.includes('weather') || lowerInput.includes('வானிலை')) {
       const recentWeather = data.weatherHistory[data.weatherHistory.length - 1];
       if (recentWeather) {
-        if (language === 'malayalam') {
-          return `${data.name} ൽ നിലവിലെ കാലാവസ്ഥ: താപനില ${recentWeather.temperature}°C, ഈർപ്പം ${recentWeather.humidity}%, മഴ ${recentWeather.rainfall}mm. ${recentWeather.conditions} അവസ്ഥയിൽ, ${data.currentCrop} വളർത്തുന്നതിന് അനുയോജ്യമാണ്.`;
+        if (language === 'tamil') {
+          return `${data.name} இல் தற்போதைய வானிலை: வெப்பநிலை ${recentWeather.temperature}°C, ஈரப்பதம் ${recentWeather.humidity}%, மழை ${recentWeather.rainfall}mm. ${recentWeather.conditions} நிலையில், ${data.currentCrop} பயிரிட உகந்தது.`;
         }
         return `Current weather in ${data.name}: Temperature ${recentWeather.temperature}°C, Humidity ${recentWeather.humidity}%, Rainfall ${recentWeather.rainfall}mm. With ${recentWeather.conditions} conditions, it's suitable for growing ${data.currentCrop}.`;
       }
     }
-    
+
     // Market price information
-    if (lowerInput.includes('market') || lowerInput.includes('price') || lowerInput.includes('മാർക്കറ്റ്') || lowerInput.includes('വില')) {
+    if (lowerInput.includes('market') || lowerInput.includes('price') || lowerInput.includes('சந்தை') || lowerInput.includes('விலை')) {
       const market = data.marketData[0];
       if (market) {
-        if (language === 'malayalam') {
-          return `${data.name} ൽ ${market.cropName} ന്റെ നിലവിലെ വില ₹${market.currentPrice}/quintal. ആവശ്യം ${market.demand} ആണ്. അടുത്ത മാസത്തെ പ്രവചനം ₹${market.forecast.nextMonth}/quintal.`;
+        if (language === 'tamil') {
+          return `${data.name} இல் ${market.cropName} இன் தற்போதைய விலை ₹${market.currentPrice}/குவின்டால். தேவை ${market.demand}. அடுத்த மாத முன்னறிவிப்பு ₹${market.forecast.nextMonth}/குவின்டால்.`;
         }
         return `Current price for ${market.cropName} in ${data.name}: ₹${market.currentPrice}/quintal. Demand is ${market.demand}. Next month forecast: ₹${market.forecast.nextMonth}/quintal.`;
       }
     }
-    
+
     // Pest and disease management based on history
-    if (lowerInput.includes('pest') || lowerInput.includes('disease') || lowerInput.includes('കീടം') || lowerInput.includes('രോഗം')) {
+    if (lowerInput.includes('pest') || lowerInput.includes('disease') || lowerInput.includes('பூச்சி') || lowerInput.includes('நோய்')) {
       const recentPests = data.pestDiseaseHistory.filter(p => p.status === 'active');
       if (recentPests.length > 0) {
-        if (language === 'malayalam') {
-          return `${data.name} ൽ സജീവ കീടങ്ങൾ: ${recentPests.map(p => p.name).join(', ')}. ശുപാർശ: ${recentPests.map(p => p.treatment).join(', ')}. നിങ്ങളുടെ ${data.currentCrop} വിളയെ സൂക്ഷിക്കുക.`;
+        if (language === 'tamil') {
+          return `${data.name} இல் உள்ள பூச்சிகள்: ${recentPests.map(p => p.name).join(', ')}. பரிந்துரை: ${recentPests.map(p => p.treatment).join(', ')}. உங்கள் ${data.currentCrop} பயிரைப் பாதுகாக்கவும்.`;
         }
         return `Active pests in ${data.name}: ${recentPests.map(p => p.name).join(', ')}. Recommendations: ${recentPests.map(p => p.treatment).join(', ')}. Protect your ${data.currentCrop} crop.`;
       }
     }
-    
+
     // Treatment history
-    if (lowerInput.includes('treatment') || lowerInput.includes('spray') || lowerInput.includes('ചികിത്സ') || lowerInput.includes('സ്പ്രേ')) {
+    if (lowerInput.includes('treatment') || lowerInput.includes('spray') || lowerInput.includes('சிகிச்சை') || lowerInput.includes('தெளிப்பு')) {
       const recentTreatments = data.treatmentHistory.slice(-3);
       if (recentTreatments.length > 0) {
-        if (language === 'malayalam') {
-          return `${data.name} ൽ സമീപകാല ചികിത്സകൾ: ${recentTreatments.map(t => `${t.product} (${t.quantity}${t.unit})`).join(', ')}. അടുത്ത ചികിത്സ ആസൂത്രണം ചെയ്യുക.`;
+        if (language === 'tamil') {
+          return `${data.name} இல் சமீபத்திய சிகிச்சைகள்: ${recentTreatments.map(t => `${t.product} (${t.quantity}${t.unit})`).join(', ')}. அடுத்த சிகிச்சையைத் திட்டமிடுங்கள்.`;
         }
         return `Recent treatments in ${data.name}: ${recentTreatments.map(t => `${t.product} (${t.quantity}${t.unit})`).join(', ')}. Plan your next treatment accordingly.`;
       }
     }
-    
+
     // General land-specific advice
-    if (language === 'malayalam') {
-      return `${data.name} ൽ ${data.currentCrop} വളർത്തുന്നതിന്, ${data.soilType} മണ്ണും ${data.waterAvailability} ജല ലഭ്യതയും ഉണ്ട്. കൂടുതൽ വിശദാംശങ്ങൾക്ക് എന്നെ ചോദിക്കുക.`;
+    if (language === 'tamil') {
+      return `${data.name} இல் ${data.currentCrop} பயிரிட, ${data.soilType} மண் மற்றும் ${data.waterAvailability} நீர் வசதி உள்ளது. மேலும் விவரங்களுக்கு என்னைக் கேட்கவும்.`;
     }
     return `For your ${data.name} with ${data.currentCrop}, you have ${data.soilType} soil and ${data.waterAvailability} water availability. Ask me for more specific details.`;
   };
 
   const generateResponse = (input: string): string => {
     const lowerInput = input.toLowerCase();
-    
+
     if (selectedLand) {
-      if (lowerInput.includes('fertilizer') || lowerInput.includes('fertilize') || lowerInput.includes('ചെമ്പ്') || lowerInput.includes('വളം')) {
-        if (language === 'malayalam') {
-          return `${selectedLand.name} ൽ ${selectedLand.currentCrop} വളർത്തുന്നതിന്, ${selectedLand.soilType} മണ്ണിന് അനുയോജ്യമായ നൈട്രജൻ വളം ശുപാർശ ചെയ്യുന്നു. ${selectedLand.waterAvailability} ജല ലഭ്യതയുള്ളതിനാൽ, ഹെക്ടറിന് 120 കിലോ NPK 20:10:10 പ്രയോഗിക്കുക. രാവിലെ പ്രയോഗിക്കുന്നതാണ് ഏറ്റവും നല്ലത്. ഇത് നിങ്ങളുടെ ഓർമ്മപ്പെടുത്തലുകളിൽ ചേർക്കുന്നു.`;
+      if (lowerInput.includes('fertilizer') || lowerInput.includes('fertilize') || lowerInput.includes('ചെമ്പ്') || lowerInput.includes('உரம்')) {
+        if (language === 'tamil') {
+          return `${selectedLand.name} இல் ${selectedLand.currentCrop} பயிரிட, ${selectedLand.soilType} மண்ணிற்கு ஏற்ற நைட்ரஜன் உரம் பரிந்துரைக்கிறேன். ${selectedLand.waterAvailability} நீர் வசதி இருப்பதால், ஹெக்டேருக்கு 120 கிலோ NPK 20:10:10 இடவும். அதிகாலை சிறந்தது. இதை உங்கள் நினைவூட்டல்களில் சேர்க்கிறேன்.`;
         }
         return `For your ${selectedLand.name} with ${selectedLand.currentCrop}, I recommend applying nitrogen fertilizer based on the ${selectedLand.soilType} soil type. With ${selectedLand.waterAvailability} water availability, apply 120kg/hectare of NPK 20:10:10. Best time is early morning. I'll add this to your reminders.`;
       }
-      
-      if (lowerInput.includes('pest') || lowerInput.includes('disease') || lowerInput.includes('കീടം') || lowerInput.includes('രോഗം')) {
-        if (language === 'malayalam') {
-          return `${selectedLand.name} ൽ ${selectedLand.currentCrop} വളർത്തുന്നതിന്, സ്റ്റെം ബോറർ, ആഫിഡ് തുടങ്ങിയ സാധാരണ കീടങ്ങളിൽ നിന്ന് സൂക്ഷിക്കുക. 3-4 ദിവസത്തിലൊരിക്കൽ പരിശോധന നടത്തുക. നീം ഓയിൽ സ്പ്രേ പ്രതിരോധ നടപടിയായി ഉപയോഗിക്കുക. ${selectedLand.soilType} മണ്ണിന് സാധാരണയായി നല്ല കീട പ്രതിരോധശേഷി ഉണ്ട്.`;
+
+      if (lowerInput.includes('pest') || lowerInput.includes('disease') || lowerInput.includes('பூச்சி') || lowerInput.includes('நோய்')) {
+        if (language === 'tamil') {
+          return `${selectedLand.name} இல் ${selectedLand.currentCrop} பயிரிட, தண்டு துளைப்பான் மற்றும் அசுவினி போன்ற பொதுவான பூச்சிகள் குறித்து கவனமாக இருங்கள். 3-4 நாட்களுக்கு ஒருமுறை ஆய்வு செய்ய பரிந்துரைக்கப்படுகிறது. வேப்ப எண்ணெய் தெளிப்பை தடுப்பு நடவடிக்கையாகப் பயன்படுத்தவும். ${selectedLand.soilType} மண் பொதுவாக பூச்சி எதிர்ப்பைக் கொண்டுள்ளது.`;
         }
         return `For ${selectedLand.currentCrop} in your ${selectedLand.name}, watch out for common pests like stem borers and aphids. Regular inspection every 3-4 days is recommended. Use neem oil spray as a preventive measure. The ${selectedLand.soilType} soil generally has good pest resistance.`;
       }
-      
-      if (lowerInput.includes('water') || lowerInput.includes('irrigation') || lowerInput.includes('ജലം') || lowerInput.includes('നനയ്ക്കൽ')) {
-        if (language === 'malayalam') {
-          return `${selectedLand.name} ൽ ${selectedLand.waterAvailability} ജല ലഭ്യതയുണ്ട്. ${selectedLand.currentCrop} വളർത്തുന്നതിന്, മണ്ണിന്റെ ഈർപ്പം 80% ഫീൽഡ് കപ്പാസിറ്റിയിൽ നിലനിർത്തുക. നിലവിലെ കാലാവസ്ഥയിൽ, 2-3 ദിവസത്തിലൊരിക്കൽ നനയ്ക്കുക. അടുത്ത നനയ്ക്കൽ സൈക്കിളിനായി ഒരു ഓർമ്മപ്പെടുത്തൽ സജ്ജമാക്കുന്നു.`;
+
+      if (lowerInput.includes('water') || lowerInput.includes('irrigation') || lowerInput.includes('நீர்') || lowerInput.includes('நீர்ப்பாசனம்')) {
+        if (language === 'tamil') {
+          return `${selectedLand.name} இல் ${selectedLand.waterAvailability} நீர் வசதி உள்ளது. ${selectedLand.currentCrop} பயிரிட, மண் ஈரப்பதத்தை 80% பராமரிக்கவும். தற்போதைய வானிலையில், 2-3 நாட்களுக்கு ஒருமுறை நீர் பாய்ச்சவும். அடுத்த நீர்ப்பாசன சுழற்சிக்கு நினைவூட்டலை அமைக்கிறேன்.`;
         }
         return `Your ${selectedLand.name} has ${selectedLand.waterAvailability} water availability. For ${selectedLand.currentCrop}, maintain soil moisture at 80% field capacity. With the current weather, irrigate every 2-3 days. I'll set up a reminder for your next irrigation cycle.`;
       }
-      
-      if (lowerInput.includes('harvest') || lowerInput.includes('when to harvest') || lowerInput.includes('വിളവെടുക്കൽ') || lowerInput.includes('എപ്പോൾ വിളവെടുക്കണം')) {
-        if (language === 'malayalam') {
-          return `${selectedLand.name} ൽ ${selectedLand.currentCrop} വളർത്തുന്നതിന്, വിളവെടുക്കൽ സമയം വിത്തിന്റെ തരത്തെ ആശ്രയിച്ചിരിക്കുന്നു. സാധാരണയായി, അരി 110-120 ദിവസത്തിന് ശേഷം വിളവെടുക്കാൻ തയ്യാറാകും. സ്വർണ്ണ മഞ്ഞ ധാന്യങ്ങൾ നോക്കുക, ഈർപ്പ അളവ് പരിശോധിക്കുക. നിലവിലെ മാർക്കറ്റ് വില ₹2,850/quintal ആണ്.`;
+
+      if (lowerInput.includes('harvest') || lowerInput.includes('when to harvest') || lowerInput.includes('அறுவடை') || lowerInput.includes('எப்போது அறுவடை')) {
+        if (language === 'tamil') {
+          return `${selectedLand.name} இல் ${selectedLand.currentCrop} பயிரிட, அறுவடை நேரம் ரகத்தைப் பொறுத்தது. பொதுவாக, நடவு செய்த 110-120 நாட்களுக்குப் பிறகு நெல் தயாராகும். தங்க மஞ்சள் நிறத் தானியங்களைப் பார்த்து, ஈரப்பதத்தைச் சரிபார்க்கவும். தற்போதைய சந்தை விலை ₹2,850/குவின்டால்.`;
         }
         return `For ${selectedLand.currentCrop} in ${selectedLand.name}, harvest timing depends on the variety. Generally, rice is ready in 110-120 days after transplanting. Look for golden yellow grains and check moisture content. Current market prices are favorable at ₹2,850/quintal.`;
       }
     }
-    
+
     // General responses
-    if (lowerInput.includes('weather') || lowerInput.includes('കാലാവസ്ഥ')) {
-      if (language === 'malayalam') {
-        return 'നിലവിലെ കാലാവസ്ഥാ പ്രവചനത്തെ അടിസ്ഥാനമാക്കി, 28°C താപനിലയിൽ ഭാഗികമായി മേഘാവൃതമായ അവസ്ഥ പ്രതീക്ഷിക്കുന്നു. ബുധനും വ്യാഴവും കനത്ത മഴ പ്രതീക്ഷിക്കുന്നു, അതിനാൽ അതനുസരിച്ച് ആസൂത്രണം ചെയ്യുക. മഴയിൽ സ്പ്രേ ഒഴിവാക്കുക, ശരിയായ ഡ്രെയിനേജ് ഉറപ്പാക്കുക.';
+    if (lowerInput.includes('weather') || lowerInput.includes('வானிலை')) {
+      if (language === 'tamil') {
+        return 'தற்போதைய வானிலை முன்னறிவிப்பின்படி, 28°C வெப்பநிலையுடன் ஓரளவு மேகமூட்டமாக இருக்கும் என்று எதிர்பார்க்கப்படுகிறது. புதன் மற்றும் வியாழன் அன்று கனமழை பெய்யக்கூடும், எனவே அதற்கேற்ப திட்டமிடுங்கள். மழையின் போது மருந்து தெளிப்பதைத் தவிர்க்கவும் மற்றும் வடிகால் வசதியை உறுதி செய்யவும்.';
       }
       return 'Based on the current weather forecast, we expect partly cloudy conditions with 28°C temperature. Heavy rain is predicted for Wednesday-Thursday, so plan accordingly. Avoid spraying during rain and ensure proper drainage.';
     }
-    
-    if (lowerInput.includes('market') || lowerInput.includes('price') || lowerInput.includes('മാർക്കറ്റ്') || lowerInput.includes('വില')) {
-      if (language === 'malayalam') {
-        return 'നിലവിലെ മാർക്കറ്റ് വിലകൾ അരി ₹2,850/quintal (1.8% വർദ്ധനവ്), തെങ്ങ് ₹18,500/quintal (3.6% കുറവ്) കാണിക്കുന്നു. എക്സ്പോർട്ട് അവസരങ്ങൾ കാരണം അരിക്ക് ഉയർന്ന ആവശ്യമുണ്ട്. നിങ്ങളുടെ വിളകൾക്ക് വില അലേർട്ടുകൾ സജ്ജമാക്കാൻ ആഗ്രഹിക്കുന്നുണ്ടോ?';
+
+    if (lowerInput.includes('market') || lowerInput.includes('price') || lowerInput.includes('சந்தை') || lowerInput.includes('விலை')) {
+      if (language === 'tamil') {
+        return 'தற்போதைய சந்தை விலைகள்: நெல் ₹2,850/குவின்டால் (1.8% உயர்வு), தேங்காய் ₹18,500/குவின்டால் (3.6% குறைவு). ஏற்றுமதி வாய்ப்புகளால் நெல்லுக்கு அதிக தேவை உள்ளது. உங்கள் பயிர்களுக்கான விலை எச்சரிக்கைகளை அமைக்க விரும்புகிறீர்களா?';
       }
       return 'Current market prices show rice at ₹2,850/quintal (up 1.8%), coconut at ₹18,500/quintal (down 3.6%). Demand is high for rice due to export opportunities. Would you like me to set up price alerts for your crops?';
     }
-    
-    if (language === 'malayalam') {
-      return 'കാർഷികത്തിൽ സഹായം ആവശ്യമാണെന്ന് മനസ്സിലാക്കുന്നു. നിങ്ങൾ അറിയാൻ ആഗ്രഹിക്കുന്നതിനെക്കുറിച്ച് കൂടുതൽ വിശദമായി പറയാമോ? വിള പരിപാലനം, കീട നിയന്ത്രണം, കാലാവസ്ഥാ ആസൂത്രണം, മാർക്കറ്റ് വിലകൾ എന്നിവയിൽ സഹായിക്കാനാകും. കൂടുതൽ ലക്ഷ്യാനുസൃത ഉപദേശത്തിന് "എന്റെ ഭൂമികൾ" ൽ നിന്ന് ഒരു പ്രത്യേക ഭൂമി തിരഞ്ഞെടുക്കാം.';
+
+    if (language === 'tamil') {
+      return 'விவசாயத்தில் உதவி தேவை என்பதைப் புரிந்துகொள்கிறேன். நீங்கள் என்ன தெரிந்து கொள்ள விரும்புகிறீர்கள் என்பதை இன்னும் விரிவாகக் கூற முடியுமா? பயிர் பாதுகாப்பு, பூச்சி கட்டுப்பாடு, வானிலை திட்டமிடல், சந்தை விலைகள் போன்றவற்றில் நான் உதவ முடியும். மேலும் குறிப்பிட்ட ஆலோசனைக்கு "என் நிலங்கள்" என்பதிலிருந்து ஒரு குறிப்பிட்ட நிலத்தைத் தேர்ந்தெடுக்கலாம்.';
     }
     return 'I understand you need help with farming. Could you please be more specific about what you\'d like to know? I can assist with crop care, pest management, weather planning, market prices, and more. You can also select a specific land from "My Lands" for more targeted advice.';
   };
@@ -331,22 +335,20 @@ export default function AIAssistant() {
           <div className="flex border-b border-gray-200">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center ${
-                activeTab === 'dashboard'
+              className={`flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center ${activeTab === 'dashboard'
                   ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               Analytics
             </button>
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center ${
-                activeTab === 'chat'
+              className={`flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center ${activeTab === 'chat'
                   ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               Chat
@@ -369,11 +371,10 @@ export default function AIAssistant() {
                       className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-xs p-3 rounded-lg text-sm ${
-                          message.type === 'user'
+                        className={`max-w-xs p-3 rounded-lg text-sm ${message.type === 'user'
                             ? 'bg-green-600 text-white'
                             : 'bg-gray-100 text-gray-800'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start">
                           {message.type === 'assistant' && (
@@ -399,11 +400,10 @@ export default function AIAssistant() {
                     />
                     <button
                       onClick={handleVoiceInput}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isListening
+                      className={`p-2 rounded-lg transition-colors ${isListening
                           ? 'bg-red-600 text-white'
                           : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                      }`}
+                        }`}
                     >
                       <Mic className="w-4 h-4" />
                     </button>

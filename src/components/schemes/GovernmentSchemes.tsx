@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Filter, FileText } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { Scheme } from '../../types/schemes';
@@ -11,8 +11,8 @@ export default function GovernmentSchemes() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
-  
-  const lang = language === 'malayalam' ? 'ml' : 'en';
+
+  const lang = language === 'tamil' ? 'ta' : 'en';
   const allSchemes = schemesService.getAllSchemes();
   const categories = schemesService.getCategories();
 
@@ -28,7 +28,7 @@ export default function GovernmentSchemes() {
     // Search
     if (searchQuery.trim()) {
       schemes = schemesService.searchSchemes(searchQuery.trim(), lang);
-      
+
       // If category filter is also applied, intersect the results
       if (selectedCategory !== 'all') {
         schemes = schemes.filter(scheme => scheme.category === selectedCategory);

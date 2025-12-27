@@ -1,123 +1,130 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#16a34a" />
-    <meta name="description" content="FarmEase - Smart farming made easy with AI assistance, crop recommendations, and farmer community" />
-    <meta name="keywords" content="farming, agriculture, crop recommendation, disease diagnosis, weather forecast, farmer community" />
-    <meta name="author" content="FarmEase Team" />
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="FarmEase - Smart Farming Made Easy" />
-    <meta property="og:description" content="AI-powered farming assistant with crop recommendations, disease diagnosis, and farmer community" />
-    <meta property="og:image" content="/og-image.jpg" />
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="FarmEase - Smart Farming Made Easy" />
-    <meta property="twitter:description" content="AI-powered farming assistant with crop recommendations, disease diagnosis, and farmer community" />
-    <meta property="twitter:image" content="/og-image.jpg" />
-    
-    <!-- Preconnect to Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Google Fonts - Inter for English and Noto Sans Malayalam for Malayalam -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Malayalam:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- Leaflet CSS for map view -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
-    
-    <title>FarmEase - Smart Farming Made Easy</title>
-    
-    <!-- Critical CSS for above-the-fold content -->
-    <style>
-      /* Critical CSS for initial load */
-      body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        line-height: 1.6;
-        color: #374151;
-        background-color: #f0fdf4;
-        margin: 0;
-        padding: 0;
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="description"
+    content="FarmEase - Smart farming made easy with AI assistance, crop recommendations, and farmer community" />
+  <meta name="keywords"
+    content="farming, agriculture, crop recommendation, disease diagnosis, weather forecast, farmer community" />
+  <meta name="author" content="FarmEase Team" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="FarmEase - Smart Farming Made Easy" />
+  <meta property="og:description"
+    content="AI-powered farming assistant with crop recommendations, disease diagnosis, and farmer community" />
+  <meta property="og:image" content="/og-image.jpg" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content="FarmEase - Smart Farming Made Easy" />
+  <meta property="twitter:description"
+    content="AI-powered farming assistant with crop recommendations, disease diagnosis, and farmer community" />
+  <meta property="twitter:image" content="/og-image.jpg" />
+
+  <!-- Preconnect to Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Google Fonts - Inter for English and Noto Sans Malayalam for Malayalam -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Malayalam:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <!-- Leaflet CSS for map view -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+
+  <title>FarmEase - Smart Farming Made Easy</title>
+
+  <!-- Critical CSS for above-the-fold content -->
+  <style>
+    /* Critical CSS for initial load */
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #374151;
+      background-color: #f0fdf4;
+      margin: 0;
+      padding: 0;
+    }
+
+    #root {
+      min-height: 100vh;
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0fdf4;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #16a34a;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
       }
-      
-      #root {
-        min-height: 100vh;
+
+      100% {
+        transform: rotate(360deg);
       }
-      
-      /* Loading spinner */
-      .loading-spinner {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #f0fdf4;
-      }
-      
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid #e5e7eb;
-        border-top: 4px solid #16a34a;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      
-      /* Hide loading spinner when app loads */
-      .app-loaded .loading-spinner {
-        display: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root">
-      <!-- Loading spinner shown while app loads -->
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-      </div>
+    }
+
+    /* Hide loading spinner when app loads */
+    .app-loaded .loading-spinner {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root">
+    <!-- Loading spinner shown while app loads -->
+    <!-- Loading spinner shown while app loads -->
+    <div class="loading-spinner">
+      <div class="spinner"></div>
     </div>
-    <!-- Leaflet JS for map view (load before app) -->
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-      defer
-    ></script>
-    <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Service Worker Registration (only in production) -->
-    <script type="module">
-      if (import.meta.env && import.meta.env.PROD && 'serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
-        });
-      }
-    </script>
-  </body>
+  </div>
+  <!-- Leaflet JS for map view (load before app) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  <script type="module" src="/src/main.tsx"></script>
+
+  <!-- Service Worker Registration (only in production) -->
+  <script type="module">
+    if (import.meta.env && import.meta.env.PROD && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+  </script>
+</body>
+
 </html>

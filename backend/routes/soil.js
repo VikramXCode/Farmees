@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { DEMO_SOIL_REPORT } = require('../middleware/demoMode');
 
 // Use /tmp on Vercel (serverless), local uploads dir otherwise
 const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads', 'soil_reports') : path.join(__dirname, '..', 'uploads', 'soil_reports');
@@ -25,6 +26,11 @@ const upload = multer({ storage });
 // POST /api/soil/upload - accepts PDF or image file under field `report`
 router.post('/upload', upload.single('report'), async (req, res) => {
   try {
+    // Demo mode - return mock soil report
+    if (req.isDemo) {
+      return res.json(DEMO_SOIL_REPORT);
+    }
+
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     // Call Python OCR script
     const { path: filePath } = req.file;

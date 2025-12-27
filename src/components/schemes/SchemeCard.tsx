@@ -25,8 +25,8 @@ const categoryColorMap = {
 
 export default function SchemeCard({ scheme, onViewDetails }: SchemeCardProps) {
   const { language, t } = useLanguage();
-  const lang = language === 'malayalam' ? 'ml' : 'en';
-  
+  const lang = language === 'tamil' ? 'ta' : 'en';
+
   const IconComponent = iconMap[scheme.icon as keyof typeof iconMap] || Shield;
   const categoryColor = categoryColorMap[scheme.category] || 'bg-gray-100 text-gray-800 border-gray-200';
 
@@ -36,7 +36,7 @@ export default function SchemeCard({ scheme, onViewDetails }: SchemeCardProps) {
   };
 
   return (
-    <div 
+    <div
       className="card-elevated hover:shadow-xl transition-all duration-300 cursor-pointer group"
       onClick={() => onViewDetails(scheme)}
     >
@@ -76,7 +76,7 @@ export default function SchemeCard({ scheme, onViewDetails }: SchemeCardProps) {
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <button 
+        <button
           className="text-green-600 text-sm font-medium hover:text-green-700 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
@@ -85,7 +85,7 @@ export default function SchemeCard({ scheme, onViewDetails }: SchemeCardProps) {
         >
           {t('view_details')}
         </button>
-        <button 
+        <button
           className="btn-primary text-sm py-2 px-4 flex items-center space-x-2"
           onClick={handleApplyOnline}
         >

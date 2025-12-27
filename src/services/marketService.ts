@@ -1,10 +1,47 @@
-import axios from 'axios';
+import api from './api';
 
 // Prefer Vite-exposed env variable in the browser build, fallback to process.env on the server
 const API_KEY = typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_DATA_GOV_API_KEY
   ? (import.meta as any).env.VITE_DATA_GOV_API_KEY
-  : (process.env as any)?.REACT_APP_DATA_GOV_API_KEY;
+  : (typeof process !== 'undefined' && process.env && process.env.REACT_APP_DATA_GOV_API_KEY);
 const BASE_URL = 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070';
+
+// Mock data for demo mode
+const DEMO_MARKET_DATA = [
+  { commodity: 'Rice', market: 'Pollachi APMC', district: 'Coimbatore', min_price: 2750, max_price: 2950, modal_price: 2850, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Coconut', market: 'Pollachi Market', district: 'Coimbatore', min_price: 18000, max_price: 19000, modal_price: 18500, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Turmeric', market: 'Pollachi', district: 'Coimbatore', min_price: 12500, max_price: 13200, modal_price: 12800, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Cotton', market: 'Udumalaipettai', district: 'Coimbatore', min_price: 6200, max_price: 6700, modal_price: 6450, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Groundnut', market: 'Pollachi', district: 'Coimbatore', min_price: 5800, max_price: 6200, modal_price: 6000, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Banana', market: 'Kinathukadavu', district: 'Coimbatore', min_price: 1200, max_price: 1800, modal_price: 1500, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Sugarcane', market: 'Pollachi', district: 'Coimbatore', min_price: 2800, max_price: 3200, modal_price: 3000, price_unit: 'per ton', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Ginger', market: 'Pollachi', district: 'Coimbatore', min_price: 8500, max_price: 9500, modal_price: 9000, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Tomato', market: 'Coimbatore', district: 'Coimbatore', min_price: 800, max_price: 1200, modal_price: 1000, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Onion', market: 'Coimbatore', district: 'Coimbatore', min_price: 1500, max_price: 2000, modal_price: 1750, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Potato', market: 'Coimbatore', district: 'Coimbatore', min_price: 1800, max_price: 2200, modal_price: 2000, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Carrot', market: 'Coimbatore', district: 'Coimbatore', min_price: 2200, max_price: 2800, modal_price: 2500, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Cabbage', market: 'Coimbatore', district: 'Coimbatore', min_price: 1000, max_price: 1500, modal_price: 1250, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Cauliflower', market: 'Coimbatore', district: 'Coimbatore', min_price: 1200, max_price: 1800, modal_price: 1500, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Brinjal', market: 'Coimbatore', district: 'Coimbatore', min_price: 1500, max_price: 2000, modal_price: 1750, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Beans', market: 'Coimbatore', district: 'Coimbatore', min_price: 3000, max_price: 3800, modal_price: 3400, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Chilli', market: 'Pollachi', district: 'Coimbatore', min_price: 8000, max_price: 10000, modal_price: 9000, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Coriander', market: 'Coimbatore', district: 'Coimbatore', min_price: 5000, max_price: 6000, modal_price: 5500, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Garlic', market: 'Coimbatore', district: 'Coimbatore', min_price: 15000, max_price: 18000, modal_price: 16500, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Green Peas', market: 'Coimbatore', district: 'Coimbatore', min_price: 4000, max_price: 5000, modal_price: 4500, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Cucumber', market: 'Coimbatore', district: 'Coimbatore', min_price: 800, max_price: 1200, modal_price: 1000, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] },
+  { commodity: 'Pumpkin', market: 'Coimbatore', district: 'Coimbatore', min_price: 600, max_price: 1000, modal_price: 800, price_unit: 'per quintal', arrival_date: new Date().toISOString().split('T')[0] }
+];
+
+function isDemoMode(): boolean {
+  try {
+    const user = localStorage.getItem('farmease_user');
+    if (user) {
+      const userData = JSON.parse(user);
+      return userData.isDemo === true;
+    }
+  } catch {}
+  return false;
+}
 
 export interface MarketRecord {
   commodity: string;
@@ -54,12 +91,9 @@ export async function fetchKeralaMarketData(commodity?: string, limit = 50): Pro
 
   try {
     console.log('Fetching market data with params:', params);
-    const resp = await axios.get(BASE_URL, { params });
-    console.log('API Response status:', resp.status);
-    console.log('API Response data:', resp.data);
-    
-    const data = resp.data;
-    
+    const data = await api.get(BASE_URL, { params });
+    console.log('API Response data:', data);
+
     // Handle different response formats
     let records = [];
     if (data && Array.isArray(data.records)) {
@@ -72,11 +106,11 @@ export async function fetchKeralaMarketData(commodity?: string, limit = 50): Pro
       console.warn('Unexpected API response format:', data);
       return [];
     }
-    
+
     console.log('Found records:', records.length);
     const mapped = records.map(mapApiRecord);
     console.log('Mapped records:', mapped.slice(0, 3)); // Log first 3 for debugging
-    
+
     return mapped;
   } catch (err: any) {
     console.error('Error fetching market data:', err);
@@ -89,13 +123,21 @@ export async function fetchKeralaMarketData(commodity?: string, limit = 50): Pro
 // Fetch Kerala market data from our backend CSV endpoint
 export async function fetchKeralaMarketDataBackend(commodity?: string): Promise<MarketRecord[]> {
   try {
+    // Return mock data for demo mode
+    if (isDemoMode()) {
+      const filtered = commodity 
+        ? DEMO_MARKET_DATA.filter(item => item.commodity.toLowerCase().includes(commodity.toLowerCase()))
+        : DEMO_MARKET_DATA;
+      return filtered as MarketRecord[];
+    }
+
     const params: any = {};
     if (commodity) params.commodity = commodity;
-    const base = '';
-    const url = `${base}/api/market/kerala`;
-    const resp = await axios.get(url, { params });
-    const data = resp.data;
-    if (data && Array.isArray(data.records)) {
+    const url = '/market/kerala'; // Remove /api prefix since api instance already has baseURL: '/api'
+    const data = await api.get(url, { params });
+    if (data && Array.isArray(data.data)) {
+      return data.data as MarketRecord[];
+    } else if (data && Array.isArray(data.records)) {
       return data.records as MarketRecord[];
     }
     return [];

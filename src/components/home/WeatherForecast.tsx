@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Cloud, Sun, CloudRain, CloudSnow, CloudDrizzle, Droplets, Wind, AlertTriangle, MapPin, Loader2, Thermometer, PlusCircle } from 'lucide-react';
 import { useFarm } from '../../contexts/FarmContext';
-import { useConnectivity } from '../../contexts/ConnectivityContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import weatherService, { type WeatherData, type ForecastData } from '../../services/weatherService';
 
 export default function WeatherForecast() {
   const { lands, selectedLandId, addReminder } = useFarm();
   const { t } = useLanguage();
-  const { online } = useConnectivity();
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [forecastData, setForecastData] = useState<ForecastData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cachedTs, setCachedTs] = useState<number | null>(null);
   const selectedLand = lands.find(land => land.id === selectedLandId);
 
   // Use fallback coordinates for demonstration (you can update this to get real coordinates)
@@ -26,60 +23,9 @@ export default function WeatherForecast() {
     };
   };
 
-  // Helpers for cache keys
-  const getCacheKeys = (landId: string) => ({
-    current: `weather:last:${landId}`,
-    forecast: `weather:forecast:${landId}`,
-  });
-
-  const loadCache = (landId?: string | null) => {
-    if (!landId) return false;
-    try {
-      const keys = getCacheKeys(landId);
-      const curText = localStorage.getItem(keys.current);
-      const fText = localStorage.getItem(keys.forecast);
-      let used = false;
-      let newestTs: number | null = null;
-      if (curText) {
-        const obj = JSON.parse(curText);
-        if (obj?.weather) {
-          setWeatherData(obj.weather);
-          used = true;
-        }
-        if (obj?.ts) newestTs = obj.ts;
-      }
-      if (fText) {
-        const obj = JSON.parse(fText);
-        if (obj?.forecast) {
-          setForecastData(obj.forecast);
-          used = true;
-        }
-        if (obj?.ts) newestTs = newestTs ? Math.max(newestTs, obj.ts) : obj.ts;
-      }
-      if (newestTs) setCachedTs(newestTs);
-      return used;
-    } catch {}
-    return false;
-  };
-
-  const saveCache = (landId: string, weather: WeatherData | null, forecast: ForecastData | null) => {
-    try {
-      const keys = getCacheKeys(landId);
-      const ts = Date.now();
-      if (weather) localStorage.setItem(keys.current, JSON.stringify({ weather, ts }));
-      if (forecast) localStorage.setItem(keys.forecast, JSON.stringify({ forecast, ts }));
-      setCachedTs(ts);
-    } catch {}
-  };
-
-  // Fetch weather data when land is selected and online; load cache when offline
+  // Fetch weather data when land is selected
   useEffect(() => {
-    if (!selectedLand) return;
-    if (!online) {
-      // When offline, try loading cache immediately
-      loadCache(selectedLand.id);
-      return;
-    }
+    const abortController = new AbortController();
     const fetchWeatherData = async () => {
       if (!selectedLand) return;
       
@@ -96,24 +42,21 @@ export default function WeatherForecast() {
         if (currentResponse.success && forecastResponse.success) {
           setWeatherData(currentResponse.weather);
           setForecastData(forecastResponse.forecast);
-          saveCache(selectedLand.id, currentResponse.weather, forecastResponse.forecast);
         } else {
           setError('Failed to fetch weather data');
-          // attempt to load cache if network response invalid
-          loadCache(selectedLand.id);
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
         setError('Failed to fetch weather data');
         console.error('Weather fetch error:', err);
-        // fallback to cached data
-        loadCache(selectedLand.id);
       } finally {
         setLoading(false);
       }
     };
 
     fetchWeatherData();
-  }, [selectedLand, online]);
+    return () => { abortController.abort(); };
+  }, [selectedLand]);
 
   const getWeatherIcon = (condition: string, size = 'w-6 h-6') => {
     const conditionLower = condition.toLowerCase();
@@ -239,23 +182,6 @@ export default function WeatherForecast() {
     );
   }
 
-  // Offline mode panel
-  if (!online) {
-    return (
-      <div className="p-6">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <AlertTriangle className="w-5 h-5 text-amber-600 mr-2 mt-0.5" />
-            <div>
-              <div className="font-medium text-amber-800">Offline mode</div>
-              <div className="text-sm text-amber-700">Weather updates are paused. Turn Online to fetch live data.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -268,20 +194,6 @@ export default function WeatherForecast() {
           {selectedLand.name}
         </div>
       </div>
-
-      {/* Offline banner and cache timestamp */}
-      {(!online || cachedTs) && (
-        <div className="mb-4 flex items-center justify-between">
-          {!online && (
-            <div className="text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-1 text-sm">
-              Offline mode: showing last known data when available
-            </div>
-          )}
-          {cachedTs && (
-            <div className="text-xs text-gray-500">Last updated: {new Date(cachedTs).toLocaleString()}</div>
-          )}
-        </div>
-      )}
 
       <div className="bg-green-50 rounded-lg p-4 mb-6">
         <p className="text-green-800 text-sm font-medium">

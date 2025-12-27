@@ -2,10 +2,16 @@ const express = require('express');
 const router = express.Router();
 const weatherService = require('../services/weatherService');
 const Land = require('../models/Land');
+const { isDemoUser, DEMO_WEATHER } = require('../middleware/demoMode');
 
 // Get current weather by coordinates
 router.get('/current/:lat/:lon', async (req, res) => {
   try {
+    // Check if demo mode
+    if (req.isDemo) {
+      return res.json(DEMO_WEATHER);
+    }
+
     const { lat, lon } = req.params;
     const { location } = req.query;
 
@@ -23,7 +29,7 @@ router.get('/current/:lat/:lon', async (req, res) => {
 
     const result = await weatherService.getCurrentWeather(latitude, longitude, location);
     
-    res.json({
+    return res.json({
       success: true,
       weather: result.data,
       metadata: {

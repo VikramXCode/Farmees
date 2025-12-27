@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { isDemoUser, DEMO_DISEASE_ANALYSIS } = require('../middleware/demoMode');
 
 // Use /tmp on Vercel (serverless), local uploads dir otherwise
 const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, '..', 'uploads');
@@ -25,6 +26,11 @@ const upload = multer({ storage });
 // This route calls Plant.id API for plant disease identification. Supports key rotation via env vars.
 router.post('/identify', upload.single('image'), async (req, res) => {
   try {
+    // Check if demo mode
+    if (req.isDemo) {
+      return res.json(DEMO_DISEASE_ANALYSIS);
+    }
+
     if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
     const { getEnvKeys, shouldRotate } = require('../utils/apiKeys');
     const keys = getEnvKeys('PLANT_ID');
