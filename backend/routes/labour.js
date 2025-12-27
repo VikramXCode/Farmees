@@ -484,10 +484,15 @@ router.post('/requests', async (req, res) => {
     }
     
     // Find best matching coordinator
-    const coordinators = await Coordinator.find({
+    let coordinators = await Coordinator.find({
       isActive: true,
       skillsOffered: workType
     }).sort({ reliabilityScore: -1 });
+    
+    // If no coordinator has this specific skill, get any active coordinator
+    if (coordinators.length === 0) {
+      coordinators = await Coordinator.find({ isActive: true }).sort({ reliabilityScore: -1 });
+    }
     
     if (coordinators.length === 0) {
       return res.status(404).json({ error: 'No coordinators available for this work type' });

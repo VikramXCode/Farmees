@@ -60,6 +60,8 @@ router.post('/signup', async (req, res) => {
           isActive: true 
         });
         await coordinator.save();
+      } else {
+        console.warn(`Worker ${user.phone} created but no coordinator available to assign`);
       }
     }
     
@@ -69,8 +71,11 @@ router.post('/signup', async (req, res) => {
         userId: user._id,
         name: user.name,
         phone: user.phone,
-        district: user.district,
-        area: user.area,
+        location: {
+          district: user.district || 'Coimbatore',
+          area: user.area || 'Pollachi'
+        },
+        skillsOffered: ['land_preparation', 'sowing', 'weeding', 'harvesting', 'general'], // Default skills
         workerCount: 0,
         isActive: true,
         isDemo: false
@@ -131,6 +136,8 @@ router.post('/signin', async (req, res) => {
             isActive: true 
           });
           await coordinator.save();
+        } else {
+          console.warn(`Worker ${user.phone} needs Worker profile but no coordinator available`);
         }
       }
     }
@@ -143,8 +150,11 @@ router.post('/signin', async (req, res) => {
           userId: user._id,
           name: user.name,
           phone: user.phone,
-          district: user.district || 'Coimbatore',
-          area: user.area || 'Pollachi',
+          location: {
+            district: user.district || 'Coimbatore',
+            area: user.area || 'Pollachi'
+          },
+          skillsOffered: ['land_preparation', 'sowing', 'weeding', 'harvesting', 'general'], // Default skills
           workerCount: 0,
           isActive: true,
           isDemo: false

@@ -70,6 +70,12 @@ export default function CoordinatorPage() {
     setLoading(true);
     try {
       const profileRes = await labourService.getCoordinatorProfile(user!.id);
+      
+      if (!profileRes.coordinator) {
+        setError('Coordinator profile not found. Please contact support.');
+        return;
+      }
+      
       setCoordinator(profileRes.coordinator);
 
       const [requestsRes, workersRes] = await Promise.all([
