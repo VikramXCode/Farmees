@@ -37,9 +37,9 @@ const DEMO_FORECAST_RESPONSE = {
     forecast: [
       {
         date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        temperature: 29,
-        minTemperature: 22,
-        maxTemperature: 32,
+        dayName: new Date(Date.now() + 86400000).toLocaleDateString('en-US', { weekday: 'short' }),
+        minTemp: 22,
+        maxTemp: 32,
         condition: 'Clear',
         description: 'Clear sky',
         icon: '01d',
@@ -50,9 +50,9 @@ const DEMO_FORECAST_RESPONSE = {
       },
       {
         date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
-        temperature: 27,
-        minTemperature: 21,
-        maxTemperature: 30,
+        dayName: new Date(Date.now() + 2 * 86400000).toLocaleDateString('en-US', { weekday: 'short' }),
+        minTemp: 21,
+        maxTemp: 30,
         condition: 'Rain',
         description: 'Light rain',
         icon: '10d',
@@ -63,9 +63,9 @@ const DEMO_FORECAST_RESPONSE = {
       },
       {
         date: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
-        temperature: 28,
-        minTemperature: 22,
-        maxTemperature: 31,
+        dayName: new Date(Date.now() + 3 * 86400000).toLocaleDateString('en-US', { weekday: 'short' }),
+        minTemp: 22,
+        maxTemp: 31,
         condition: 'Clouds',
         description: 'Partly cloudy',
         icon: '03d',
@@ -76,9 +76,9 @@ const DEMO_FORECAST_RESPONSE = {
       },
       {
         date: new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0],
-        temperature: 29,
-        minTemperature: 23,
-        maxTemperature: 33,
+        dayName: new Date(Date.now() + 4 * 86400000).toLocaleDateString('en-US', { weekday: 'short' }),
+        minTemp: 23,
+        maxTemp: 33,
         condition: 'Clear',
         description: 'Clear sky',
         icon: '01d',
@@ -89,9 +89,9 @@ const DEMO_FORECAST_RESPONSE = {
       },
       {
         date: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
-        temperature: 30,
-        minTemperature: 24,
-        maxTemperature: 34,
+        dayName: new Date(Date.now() + 5 * 86400000).toLocaleDateString('en-US', { weekday: 'short' }),
+        minTemp: 24,
+        maxTemp: 34,
         condition: 'Clear',
         description: 'Clear sky',
         icon: '01d',
@@ -320,7 +320,7 @@ class WeatherService {
           success: true,
           land: {
             id: landId,
-            name: 'Demo Land',
+            name: 'North Field',
             location: 'Pollachi, Coimbatore',
             coordinates: { lat: 10.6593, lon: 77.0068 }
           },

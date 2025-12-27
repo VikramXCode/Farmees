@@ -10,7 +10,7 @@ require('dotenv').config();
 
 const DEMO_USERS = [
   {
-    name: 'Demo Farmer',
+    name: 'Tharun',
     phone: '9999000001',
     password: 'demo123',
     role: 'farmer',
@@ -19,7 +19,7 @@ const DEMO_USERS = [
     area: 'Pollachi'
   },
   {
-    name: 'Demo Coordinator',
+    name: 'Marimuthu',
     phone: '9999000002', 
     password: 'demo123',
     role: 'coordinator',
@@ -28,7 +28,7 @@ const DEMO_USERS = [
     area: 'Pollachi'
   },
   {
-    name: 'Demo Worker',
+    name: 'Sivasami',
     phone: '9999000003',
     password: 'demo123',
     role: 'worker',
@@ -42,7 +42,7 @@ const DEMO_LANDS = [
   {
     landId: 'demo-land-1',
     userId: null, // Will be set after user creation
-    name: 'North Field Demo',
+    name: 'North Field',
     location: 'Pollachi, Coimbatore',
     soilType: 'Clay Loam',
     currentCrop: 'Rice',
@@ -188,7 +188,7 @@ async function seedDemoUsers() {
       console.log(`✓ Created demo coordinator profile`);
 
       // Create demo workers for coordinator
-      const demoWorkerNames = ['Demo Worker', 'Ravi Kumar', 'Muthu', 'Selvam', 'Ganesh', 'Prakash', 'Dinesh', 'Rajesh'];
+      const demoWorkerNames = ['Sivasami', 'Ravi Kumar', 'Muthu', 'Selvam', 'Ganesh', 'Prakash', 'Dinesh', 'Rajesh'];
       const createdWorkers = [];
       for (let i = 0; i < 8; i++) {
         const worker = new Worker({
