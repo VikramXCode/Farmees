@@ -16,6 +16,7 @@ export default function Layout({ children }: LayoutProps) {
   // Navigation items - show different items based on user role
   const isCoordinator = user?.role === 'coordinator';
   const isWorker = user?.role === 'worker';
+  const isDemoUser = user?.isDemo === true;
   
   const navigation = isCoordinator 
     ? [
@@ -27,7 +28,14 @@ export default function Layout({ children }: LayoutProps) {
         { name: language === 'english' ? 'Dashboard' : 'டாஷ்போர்டு', href: '/worker', icon: Briefcase },
         { name: t('connect'), href: '/connect', icon: Users },
       ]
+    : isDemoUser
+    ? [
+        // Demo farmers: only Home and Connect
+        { name: t('home'), href: '/', icon: Home },
+        { name: t('connect'), href: '/connect', icon: Users },
+      ]
     : [
+        // Regular farmers: full menu
         { name: t('home'), href: '/', icon: Home },
         { name: language === 'english' ? 'Labour' : 'தொழிலாளர்', href: '/labour', icon: Briefcase },
         { name: t('reminders'), href: '/reminders', icon: Clock },

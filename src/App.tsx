@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { FarmProvider } from './contexts/FarmContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -15,8 +15,26 @@ import Layout from './components/Layout';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <div className="flex items-center justify-center min-h-screen text-green-700 text-lg">Loading...</div>;
-  return user ? <>{children}</> : <Navigate to="/auth" />;
+
+  if (!user) return <Navigate to="/auth" replace />;
+
+  const path = location.pathname;
+  const allowedByRole: Record<string, string[]> = {
+    farmer: ['/', '/reminders', '/schemes', '/connect', '/labour'],
+    coordinator: ['/coordinator', '/connect'],
+    worker: ['/worker', '/connect']
+  };
+
+  const allowed = allowedByRole[user.role] || ['/', '/connect'];
+  const isAllowed = allowed.some((base) => path === base || path.startsWith(base + '/'));
+  if (!isAllowed) {
+    const redirectTo = user.role === 'coordinator' ? '/coordinator' : user.role === 'worker' ? '/worker' : '/';
+    return <Navigate to={redirectTo} replace />;
+  }
+
+  return <>{children}</>;
 }
 
 function App() {

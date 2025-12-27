@@ -108,9 +108,17 @@ router.post('/signin', async (req, res) => {
     // Force isDemo flag for demo credentials
     const demoPhones = ['9999000001', '9999000002', '9999000003'];
     const isDemo = demoPhones.includes(user.phone) ? true : (user.isDemo || false);
+
+    // Ensure demo accounts return the correct role even if DB was seeded incorrectly
+    const demoRoleByPhone = {
+      '9999000001': 'farmer',
+      '9999000002': 'coordinator',
+      '9999000003': 'worker'
+    };
+    const effectiveRole = (isDemo && demoRoleByPhone[user.phone]) ? demoRoleByPhone[user.phone] : user.role;
     
     // Auto-create Worker profile if missing and role is 'worker'
-    if (user.role === 'worker' && !isDemo) {
+    if (effectiveRole === 'worker' && !isDemo) {
       const existingWorker = await Worker.findOne({ phone: user.phone });
       if (!existingWorker) {
         // Find a coordinator to assign to
@@ -143,7 +151,7 @@ router.post('/signin', async (req, res) => {
     }
     
     // Auto-create Coordinator profile if missing and role is 'coordinator'
-    if (user.role === 'coordinator' && !isDemo) {
+    if (effectiveRole === 'coordinator' && !isDemo) {
       const existingCoordinator = await Coordinator.findOne({ userId: user._id });
       if (!existingCoordinator) {
         const coordinator = new Coordinator({
@@ -167,7 +175,7 @@ router.post('/signin', async (req, res) => {
       id: user._id, 
       name: user.name, 
       phone: user.phone, 
-      role: user.role,
+      role: effectiveRole,
       isDemo: isDemo,
       district: user.district || 'Coimbatore',
       area: user.area || 'Pollachi'

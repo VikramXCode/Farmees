@@ -16,6 +16,10 @@ let connectionPromise = null;
 app.use(cors());
 app.use(express.json());
 
+// Demo mode middleware (shared with backend)
+const { demoModeMiddleware } = require('../backend/middleware/demoMode');
+app.use(demoModeMiddleware);
+
 // Database connection
 async function connectToDatabase() {
   if (mongoose.connection.readyState === 1) {
@@ -69,6 +73,7 @@ app.use('/api/escalations', require('../backend/routes/escalations'));
 app.use('/api/alerts', require('../backend/routes/alerts'));
 app.use('/api/market', require('../backend/routes/market'));
 app.use('/api/connect', require('../backend/routes/connect'));
+app.use('/api/labour', require('../backend/routes/labour'));
 
 // Root API endpoint
 app.get('/api', (req, res) => {

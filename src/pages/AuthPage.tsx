@@ -71,7 +71,8 @@ export default function AuthPage() {
         language: language,
         isDemo: user.isDemo || false
       });
-      navigate('/');
+      const nextPath = user.role === 'coordinator' ? '/coordinator' : user.role === 'worker' ? '/worker' : '/';
+      navigate(nextPath);
     } catch (err: any) {
       setErrors({ general: err.message });
       setIsLoading(false);

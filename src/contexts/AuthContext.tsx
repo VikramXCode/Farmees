@@ -6,8 +6,9 @@ interface User {
   district: string;
   area: string;
   language: 'english' | 'tamil';
-  role: 'farmer' | 'coordinator';
+  role: 'farmer' | 'coordinator' | 'worker';
   isDemo?: boolean;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -36,14 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
 
   // Accepts user object from backend (with id)
-  const login = (userData: Partial<User> & { id?: string; _id?: string; isDemo?: boolean }) => {
+  const login = (userData: Partial<User> & { id?: string; _id?: string; isDemo?: boolean; phone?: string }) => {
     const newUser = {
       ...userData,
       id: userData.id || userData._id || '',
       role: userData.role || 'farmer',
       isDemo: userData.isDemo || false,
       district: userData.district || '',
-      area: userData.area || ''
+      area: userData.area || '',
+      phone: userData.phone || ''
     };
     setUser(newUser as User);
     localStorage.setItem('farmease_user', JSON.stringify(newUser));

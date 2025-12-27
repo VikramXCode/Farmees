@@ -14,10 +14,12 @@ export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect coordinators to their dashboard
+  // Redirect coordinators and workers to their dashboards
   useEffect(() => {
     if (user?.role === 'coordinator') {
       navigate('/coordinator');
+    } else if (user?.role === 'worker') {
+      navigate('/worker');
     }
   }, [user, navigate]);
 

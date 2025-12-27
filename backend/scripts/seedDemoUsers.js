@@ -31,7 +31,7 @@ const DEMO_USERS = [
     name: 'Demo Worker',
     phone: '9999000003',
     password: 'demo123',
-    role: 'farmer',
+    role: 'worker',
     isDemo: true,
     district: 'Coimbatore',
     area: 'Pollachi'
