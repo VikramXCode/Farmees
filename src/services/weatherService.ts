@@ -36,8 +36,8 @@ const DEMO_FORECAST_RESPONSE = {
     coordinates: { lat: 10.6593, lon: 77.0068 },
     forecast: [
       {
-        date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        dayName: new Date(Date.now() + 86400000).toLocaleDateString('en-US', { weekday: 'short' }),
+        date: new Date(Date.now() + 1 * 86400000).toISOString().split('T')[0],
+        dayName: new Date(Date.now() + 1 * 86400000).toLocaleDateString('en-US', { weekday: 'short' }),
         minTemp: 22,
         maxTemp: 32,
         condition: 'Clear',
@@ -320,7 +320,7 @@ class WeatherService {
           success: true,
           land: {
             id: landId,
-            name: 'North Field',
+            name: 'Demo Land',
             location: 'Pollachi, Coimbatore',
             coordinates: { lat: 10.6593, lon: 77.0068 }
           },
