@@ -35,7 +35,7 @@ const translations = {
     'retry': 'Retry',
 
     // Authentication
-    'farmease': 'FarmEase',
+    'farmease': 'Farmees',
     'farming_made_easy': 'Farming Made Easy',
     'full_name': 'Full Name',
     'enter_name': 'Enter your full name',
@@ -205,7 +205,7 @@ const translations = {
     'retry': 'மீண்டும் முயற்சி செய்க',
 
     // Authentication
-    'farmease': 'ஃபார்ம்ஈஸ்',
+    'farmease': 'ஃபார்மீஸ்',
     'farming_made_easy': 'விவசாயம் எளிதானது',
     'full_name': 'முழு பெயர்',
     'enter_name': 'உங்கள் முழு பெயரை உள்ளிடவும்',

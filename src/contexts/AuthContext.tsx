@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface User {
   id: string;
@@ -13,10 +13,13 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (userData: Partial<User> & { id?: string; _id?: string }) => void;
+  login: (phone: string, password: string) => Promise<void>;
+  register: (data: { name: string; phone: string; password: string; role: string }) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
+
+const API_BASE = '/api';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -36,19 +39,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [loading, setLoading] = useState(false);
 
-  // Accepts user object from backend (with id)
-  const login = (userData: Partial<User> & { id?: string; _id?: string; isDemo?: boolean; phone?: string }) => {
-    const newUser = {
-      ...userData,
-      id: userData.id || userData._id || '',
-      role: userData.role || 'farmer',
-      isDemo: userData.isDemo || false,
-      district: userData.district || '',
-      area: userData.area || '',
-      phone: userData.phone || ''
-    };
-    setUser(newUser as User);
-    localStorage.setItem('farmease_user', JSON.stringify(newUser));
+  // Login with phone and password
+  const login = async (phone: string, password: string): Promise<void> => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/auth/signin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
+      }
+
+      const userData = await response.json();
+      const newUser: User = {
+        id: userData.id || userData._id || '',
+        name: userData.name || '',
+        role: userData.role || 'farmer',
+        isDemo: userData.isDemo || false,
+        district: userData.district || '',
+        area: userData.area || '',
+        phone: userData.phone || phone,
+        language: 'english',
+      };
+      setUser(newUser);
+      localStorage.setItem('farmease_user', JSON.stringify(newUser));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Register new user
+  const register = async (data: { name: string; phone: string; password: string; role: string }): Promise<void> => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+
+      const userData = await response.json();
+      const newUser: User = {
+        id: userData.id || userData._id || '',
+        name: userData.name || data.name,
+        role: (userData.role || data.role) as User['role'],
+        isDemo: false,
+        district: userData.district || '',
+        area: userData.area || '',
+        phone: userData.phone || data.phone,
+        language: 'english',
+      };
+      setUser(newUser);
+      localStorage.setItem('farmease_user', JSON.stringify(newUser));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
@@ -57,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

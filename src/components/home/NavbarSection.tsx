@@ -1,5 +1,6 @@
 import { Plus, Lightbulb, Bug, TrendingUp, Cloud, FileText } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import FarmeesLogo from '../common/FarmeesLogo';
 
 interface NavbarSectionProps {
   activeSection: string;
@@ -41,8 +42,9 @@ export default function NavbarSection({ activeSection, setActiveSection }: Navba
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
       {/* Navigation Bar */}
       <div className="bg-gradient-to-r from-green-600 to-green-500 p-4">
-        <div className="mb-3">
-          <div className="text-white/90 text-sm">FarmEase</div>
+        <div className="mb-3 flex items-center gap-2">
+          <FarmeesLogo size="sm" />
+          <div className="text-white font-semibold">Farmees</div>
         </div>
         <div className="flex space-x-2 overflow-x-auto">
           {sections.map((section) => (

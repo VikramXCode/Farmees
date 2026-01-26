@@ -3,6 +3,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { FarmProvider } from './contexts/FarmContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+
+// Universal layout component
+import AppShell from './components/layout/AppShell';
+
+// Pages
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
 import RemindersPage from './pages/RemindersPage';
@@ -11,7 +16,16 @@ import ConnectPage from './pages/ConnectPage';
 import LabourPage from './pages/LabourPage';
 import CoordinatorPage from './pages/CoordinatorPage';
 import WorkerPage from './pages/WorkerPage';
-import Layout from './components/Layout';
+import MobileAuthPage from './pages/MobileAuthPage';
+import FarmerDashboard from './pages/FarmerDashboard';
+import AIPage from './pages/AIPage';
+import MorePage from './pages/MorePage';
+import DiagnosePage from './pages/DiagnosePage';
+import AddLandPage from './pages/AddLandPage';
+import MarketPage from './pages/MarketPage';
+import SoilReportPage from './pages/SoilReportPage';
+import WeatherPage from './pages/WeatherPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -22,9 +36,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   const path = location.pathname;
   const allowedByRole: Record<string, string[]> = {
-    farmer: ['/', '/reminders', '/schemes', '/connect', '/labour'],
-    coordinator: ['/coordinator', '/connect'],
-    worker: ['/worker', '/connect']
+    farmer: ['/', '/reminders', '/schemes', '/connect', '/labour', '/ai', '/more', '/add-land', '/diagnose', '/soil-report', '/market', '/weather', '/analytics', '/profile', '/help', '/about'],
+    coordinator: ['/coordinator', '/connect', '/more'],
+    worker: ['/worker', '/connect', '/more']
   };
 
   const allowed = allowedByRole[user.role] || ['/', '/connect'];
@@ -43,60 +57,131 @@ function App() {
       <AuthProvider>
         <FarmProvider>
           <Router>
-            <div className="min-h-screen bg-green-50">
-              <Routes>
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <HomePage />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/reminders" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <RemindersPage />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/schemes" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <SchemesPage />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/connect" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <ConnectPage />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/labour" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <LabourPage />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/coordinator" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <CoordinatorPage />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/worker" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <WorkerPage />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-              </Routes>
-            </div>
+            <Routes>
+              {/* Auth Route - No navigation */}
+              <Route path="/auth" element={<MobileAuthPage />} />
+              
+              {/* All protected routes use AppShell (which includes nav) */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <FarmerDashboard />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/ai" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <AIPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/more" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <MorePage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/diagnose" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <DiagnosePage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/add-land" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <AddLandPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/market" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <MarketPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/soil-report" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <SoilReportPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/weather" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <WeatherPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <AnalyticsPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/reminders" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <RemindersPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/schemes" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <SchemesPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/connect" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <ConnectPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/labour" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <LabourPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/coordinator" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <CoordinatorPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/worker" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <WorkerPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+            </Routes>
           </Router>
         </FarmProvider>
       </AuthProvider>

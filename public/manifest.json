@@ -1,6 +1,6 @@
 {
-  "name": "FarmEase - Smart Farming Made Easy",
-  "short_name": "FarmEase",
+  "name": "Farmees - Smart Farming Made Easy",
+  "short_name": "Farmees",
   "description": "AI-powered farming assistant with crop recommendations, disease diagnosis, and farmer community",
   "start_url": "/",
   "display": "standalone",

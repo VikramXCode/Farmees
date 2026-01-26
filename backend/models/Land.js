@@ -91,9 +91,16 @@ const landSchema = new mongoose.Schema({
   // Basic Land Information
   name: { type: String, required: true },
   location: { type: String, required: true },
+  postalCode: { type: String }, // Postal/PIN code for approximate location
   soilType: { type: String, required: true },
   currentCrop: { type: String, required: true },
   waterAvailability: { type: String, enum: ['high', 'medium', 'low'], required: true },
+  
+  // Coordinates for map display (can be derived from postal code)
+  coordinates: {
+    lat: { type: Number },
+    lng: { type: Number }
+  },
   
   // Soil Analysis Data - Reference to SoilReport collection
   soilReportId: {

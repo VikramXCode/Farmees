@@ -84,7 +84,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             location: ld.location,
             currentCrop: ld.currentCrop,
             waterAvailability: ld.waterAvailability,
-            soilType: ld.soilType
+            soilType: ld.soilType,
+            latitude: ld.coordinates?.lat,
+            longitude: ld.coordinates?.lng
           }));
 
           const newHash = JSON.stringify(mapped);

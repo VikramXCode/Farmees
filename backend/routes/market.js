@@ -7,10 +7,9 @@ const { isDemoUser, DEMO_MARKET_DATA } = require('../middleware/demoMode');
 
 const router = express.Router();
 
-// Deterministic fallback dataset so the UI can still render meaningful
-// Kerala market intel when the CSV feed is absent in dev/demo setups.
-// Fallback data removed as per "Remove all mock data" requirement.
-const fallbackKeralaMarketData = [];
+// Fallback market data - use DEMO_MARKET_DATA as fallback for all users
+// when CSV file is not available
+const fallbackKeralaMarketData = DEMO_MARKET_DATA;
 
 function parseCsv(text) {
   const rows = [];

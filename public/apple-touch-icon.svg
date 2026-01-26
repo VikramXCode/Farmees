@@ -1,4 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
-  <rect width="180" height="180" fill="#16a34a" rx="22"/>
-  <text x="90" y="115" text-anchor="middle" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="white">F</text>
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="180" height="180" fill="url(#bgGradient)" rx="32"/>
+  
+  <!-- Leaf -->
+  <path d="M90 32C90 32 136 50 144 98C152 147 109 158 90 158C71 158 28 147 36 98C44 50 90 32 90 32Z" fill="white" fill-opacity="0.95"/>
+  <!-- Leaf vein -->
+  <path d="M90 42V140M90 70L68 94M90 90L112 112M90 110L72 127" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-opacity="0.5"/>
+  
+  <!-- Bee Body -->
+  <ellipse cx="112" cy="68" rx="22" ry="16" fill="#fbbf24"/>
+  <!-- Bee stripes -->
+  <path d="M102 60V76" stroke="#1f2937" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M112 58V78" stroke="#1f2937" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M122 60V76" stroke="#1f2937" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- Bee head -->
+  <circle cx="134" cy="68" r="9" fill="#1f2937"/>
+  <!-- Bee eye -->
+  <circle cx="137" cy="66" r="2" fill="white"/>
+  <!-- Bee wings -->
+  <ellipse cx="104" cy="52" rx="12" ry="7.5" fill="white" fill-opacity="0.8" transform="rotate(-20 104 52)"/>
+  <ellipse cx="116" cy="50" rx="10" ry="6.5" fill="white" fill-opacity="0.7" transform="rotate(10 116 50)"/>
 </svg>

@@ -133,14 +133,30 @@ export async function fetchKeralaMarketDataBackend(commodity?: string): Promise<
 
     const params: any = {};
     if (commodity) params.commodity = commodity;
-    const url = '/market/kerala'; // Remove /api prefix since api instance already has baseURL: '/api'
+    const url = '/market/kerala';
     const data = await api.get(url, { params });
+    
+    // Handle different response formats
+    let records: any[] = [];
     if (data && Array.isArray(data.data)) {
-      return data.data as MarketRecord[];
+      records = data.data;
     } else if (data && Array.isArray(data.records)) {
-      return data.records as MarketRecord[];
+      records = data.records;
+    } else if (data && Array.isArray(data)) {
+      records = data;
     }
-    return [];
+    
+    // Normalize records to have commodity property
+    return records.map(rec => ({
+      commodity: rec.commodity || rec.crop || 'Unknown',
+      market: rec.market || 'Unknown',
+      district: rec.district || 'Unknown',
+      min_price: rec.min_price ?? rec.minPrice ?? null,
+      max_price: rec.max_price ?? rec.maxPrice ?? null,
+      modal_price: rec.modal_price ?? rec.modalPrice ?? rec.currentPrice ?? null,
+      price_unit: rec.price_unit || 'per quintal',
+      arrival_date: rec.arrival_date || null,
+    })) as MarketRecord[];
   } catch (err: any) {
     console.error('Error fetching backend market data:', err);
     throw new Error(`Failed to fetch backend market data: ${err.message}`);

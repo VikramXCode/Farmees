@@ -1,8 +1,14 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { X, MapPin, Upload, Droplets } from 'lucide-react';
 import { useFarm } from '../../contexts/FarmContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import AutocompleteInput from '../common/AutocompleteInput';
+import ChipInput from '../common/ChipInput';
+import { getCropSuggestions, filterCrops, COMMON_CROPS } from '../../data/cropSuggestions';
+import { getSoilTypeSuggestions, filterSoilTypes } from '../../data/soilTypes';
+import { getLocationSuggestions, type LocationSuggestion } from '../../services/geocodingService';
+import { debounce } from '../../utils/debounce';
 
 interface AddLandFormProps {
   onClose: () => void;
@@ -11,23 +17,36 @@ interface AddLandFormProps {
 export default function AddLandForm({ onClose }: AddLandFormProps) {
   const { addLand } = useFarm();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     location: '',
+    postalCode: '',
     currentCrop: '',
     waterAvailability: 'medium' as 'high' | 'medium' | 'low',
     soilType: '',
   });
+  const [selectedCrops, setSelectedCrops] = useState<string[]>([]);
   const [soilReportFile, setSoilReportFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Smart input states
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [cropSuggestions, setCropSuggestions] = useState<Array<{ name: string; icon?: string }>>([]);
+  const [cropSearchResults, setCropSearchResults] = useState<string[]>([]);
+  const [soilSuggestions, setSoilSuggestions] = useState(getSoilTypeSuggestions(''));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     (async () => {
       try {
-        // Add land and get the created landId
-        const createdLandId = await addLand({ ...formData });
+        // Add land with selected crops joined as comma-separated string
+        const landData = {
+          ...formData,
+          currentCrop: selectedCrops.length > 0 ? selectedCrops.join(', ') : formData.currentCrop
+        };
+        const createdLandId = await addLand(landData);
         
         // Upload soil report if file selected, using the returned landId
         if (soilReportFile) {
@@ -45,8 +64,8 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
         
         onClose();
       } catch (error) {
-        console.error('Land creation error:', error);
-        alert('Failed to create land: ' + error);
+        console.error('Error adding land:', error);
+        alert('Failed to add land. Please try again.');
       }
     })();
   };
@@ -56,6 +75,79 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  // Location autocomplete handler (debounced)
+  const fetchLocations = useCallback(
+    debounce(async (query: string) => {
+      if (query.length < 2) {
+        setLocationSuggestions([]);
+        return;
+      }
+
+      setLocationLoading(true);
+      try {
+        const suggestions = await getLocationSuggestions(query);
+        setLocationSuggestions(suggestions);
+      } catch (error) {
+        console.error('Location fetch error:', error);
+        setLocationSuggestions([]);
+      } finally {
+        setLocationLoading(false);
+      }
+    }, 500),
+    []
+  );
+  // Update crop suggestions when location changes
+  useEffect(() => {
+    if (formData.location) {
+      const newCropSuggestions = getCropSuggestions(formData.location);
+      setCropSuggestions(newCropSuggestions);
+      
+      const newSoilSuggestions = getSoilTypeSuggestions(formData.location);
+      setSoilSuggestions(newSoilSuggestions);
+    } else {
+      // Show major Indian crops when no location selected
+      const majorCrops = getCropSuggestions('');
+      setCropSuggestions(majorCrops);
+    }
+  }, [formData.location]);
+  // Handle crop input change (autocomplete)
+  const handleCropInputChange = (query: string) => {
+    setFormData(prev => ({ ...prev, currentCrop: query }));
+    
+    if (query.length >= 2) {
+      const results = filterCrops(query, COMMON_CROPS);
+      // Convert CropSuggestion objects to strings
+      setCropSearchResults(results.map(c => c.name));
+    } else {
+      setCropSearchResults([]);
+    }
+  };
+
+  // Add selected crop to the list
+  const handleAddCrop = (cropName: string) => {
+    if (cropName && !selectedCrops.includes(cropName)) {
+      setSelectedCrops(prev => [...prev, cropName]);
+      setFormData(prev => ({ ...prev, currentCrop: '' }));
+      setCropSearchResults([]);
+    }
+  };
+
+  // Remove crop from selected list
+  const handleRemoveCrop = (cropName: string) => {
+    setSelectedCrops(prev => prev.filter(c => c !== cropName));
+  };
+
+  // Handle location input change
+  const handleLocationChange = (value: string) => {
+    setFormData(prev => ({ ...prev, location: value }));
+    fetchLocations(value);
+  };
+
+  // Handle soil type input change
+  const handleSoilTypeChange = (query: string) => {
+    setFormData(prev => ({ ...prev, soilType: query }));
   };
 
   return (
@@ -80,7 +172,7 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            placeholder="e.g., North Field"
+            placeholder={language === 'english' ? 'e.g., North Field' : 'உதாரணம்: வடக்கு வயல்'}
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
           />
@@ -91,44 +183,128 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
             <MapPin className="w-4 h-4 inline mr-1" />
             {t('location')}
           </label>
+          <AutocompleteInput
+            value={formData.location}
+            onChange={handleLocationChange}
+            onSelect={(selectedLocation) => {
+              // Find the full location object to extract lat/lng
+              const fullLocation = locationSuggestions.find(
+                loc => loc.displayName === selectedLocation
+              );
+              if (fullLocation) {
+                console.log('Location selected:', {
+                  name: fullLocation.displayName,
+                  city: fullLocation.city,
+                  state: fullLocation.state,
+                  latitude: fullLocation.latitude,
+                  longitude: fullLocation.longitude
+                });
+                // Store lat/lng for future use (can be saved to backend)
+              }
+            }}
+            suggestions={locationSuggestions.map(loc => loc.displayName)}
+            loading={locationLoading}
+            placeholder={language === 'english' ? 'e.g., Kochi, Kerala' : 'உதாரணம்: கோச்சி, கேரளா'}
+            showSuggestionsOnFocus={false}
+            minCharsForSuggestions={2}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            <MapPin className="w-4 h-4 inline mr-1" />
+            {language === 'english' ? 'Postal/PIN Code (for map)' : 'அஞ்சல் குறியீடு (வரைபடத்திற்கு)'}
+          </label>
           <input
             type="text"
-            name="location"
-            value={formData.location}
+            name="postalCode"
+            value={formData.postalCode}
             onChange={handleInputChange}
-            placeholder="e.g., Kochi, Kerala"
-            required
+            placeholder={language === 'english' ? 'e.g., 642001' : 'உதாரணம்: 642001'}
+            maxLength={6}
+            pattern="[0-9]{6}"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
           />
+          <p className="text-xs text-gray-500 mt-1">
+            {language === 'english' 
+              ? '6-digit PIN code helps show your land on the map' 
+              : '6 இலக்க PIN குறியீடு வரைபடத்தில் உங்கள் நிலத்தைக் காட்ட உதவுகிறது'}
+          </p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {t('current_crop')}
           </label>
-          <input
-            type="text"
-            name="currentCrop"
+          <ChipInput
             value={formData.currentCrop}
-            onChange={handleInputChange}
-            placeholder="e.g., Rice, Wheat, Coconut"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+            onChange={handleCropInputChange}
+            onSelect={handleAddCrop}
+            suggestions={cropSuggestions}
+            placeholder={language === 'english' ? 'e.g., Rice, Wheat, Coconut' : 'உதாரணம்: நெல், கோதுமை, தேங்காய்'}
+            language={language}
           />
+          {cropSearchResults.length > 0 && formData.currentCrop.length >= 2 && (
+            <div className="mt-1 relative">
+              <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                {cropSearchResults.map((crop, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      handleAddCrop(crop);
+                    }}
+                    className="w-full px-3 py-2 text-left hover:bg-green-50 transition-colors"
+                  >
+                    {crop}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Selected Crops Display */}
+          {selectedCrops.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs text-gray-500 mb-2">
+                {language === 'english' ? 'Selected crops:' : 'தேர்ந்தெடுக்கப்பட்ட பயிர்கள்:'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {selectedCrops.map((crop, index) => (
+                  <div
+                    key={index}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-sm font-medium border border-green-300"
+                  >
+                    <span>{crop}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCrop(crop)}
+                      className="hover:bg-green-200 rounded-full p-0.5 transition-colors"
+                      title={language === 'english' ? 'Remove' : 'நீக்கு'}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {t('soil_type')}
           </label>
-          <input
-            type="text"
-            name="soilType"
+          <AutocompleteInput
             value={formData.soilType}
-            onChange={handleInputChange}
-            placeholder="e.g., Clay Loam, Sandy Clay"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+            onChange={handleSoilTypeChange}
+            suggestions={soilSuggestions.map(soil => 
+              language === 'english' ? soil.name : soil.localName
+            )}
+            loading={false}
+            placeholder={language === 'english' ? 'e.g., Red Soil, Black Soil' : 'உதாரணம்: சிவப்பு மண், கருப்பு மண்'}
+            showSuggestionsOnFocus={true}
+            minCharsForSuggestions={0}
           />
         </div>
 

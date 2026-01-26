@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Clock, Users, Leaf, User, Globe, FileText, Briefcase } from 'lucide-react';
+import { Home, Clock, Users, User, FileText, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSwitch from './common/LanguageSwitch';
+import FarmeesLogo from './common/FarmeesLogo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -63,7 +65,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Leaf className="w-8 h-8 text-green-600 mr-3" />
+              <FarmeesLogo size="sm" className="mr-3" />
               <h1 className="text-xl font-bold text-green-800">{t('farmease')}</h1>
             </div>
 
@@ -73,17 +75,7 @@ export default function Layout({ children }: LayoutProps) {
               </div>
 
               {/* Language Switcher */}
-              <div className="flex items-center space-x-2">
-                <Globe className="w-4 h-4 text-gray-500" />
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value as 'english' | 'tamil')}
-                  className="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                >
-                  <option value="english">{t('english')}</option>
-                  <option value="tamil">{t('tamil')}</option>
-                </select>
-              </div>
+              <LanguageSwitch language={language} onChange={setLanguage} />
 
               <button
                 onClick={logout}

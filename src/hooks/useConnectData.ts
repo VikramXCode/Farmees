@@ -30,12 +30,21 @@ export interface PestAlert {
     longitude?: number;
 }
 
+export interface DemoUserLand {
+    id: string;
+    name: string;
+    currentCrop: string;
+    postalCode?: string;
+    location?: { latitude: number; longitude: number };
+}
+
 export function useConnectData() {
     const { user } = useAuth();
     const { lands } = useFarm();
 
     const [nearbyFarmers, setNearbyFarmers] = useState<Farmer[]>([]);
     const [pestAlerts, setPestAlerts] = useState<PestAlert[]>([]);
+    const [demoUserLands, setDemoUserLands] = useState<DemoUserLand[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -57,11 +66,6 @@ export function useConnectData() {
     };
 
     const loadData = async () => {
-        if (!user) {
-            console.log('useConnectData: No user, skipping load');
-            return;
-        }
-
         console.log('useConnectData: Starting load...');
         setIsLoading(true);
         setError(null);
@@ -72,18 +76,38 @@ export function useConnectData() {
             console.log('useConnectData: Fetching with query', query);
 
             const [farmersData, alertsData] = await Promise.all([
-                api.get<Farmer[]>(`/connect/nearby-farmers${query}`),
+                api.get<any>(`/connect/nearby-farmers${query}`),
                 api.get<PestAlert[]>(`/alerts/pests${query}`)
             ]);
 
             console.log('useConnectData: Data received', {
-                farmers: Array.isArray(farmersData) ? farmersData.length : 'not-array',
-                alerts: Array.isArray(alertsData) ? alertsData.length : 'not-array'
+                farmersData,
+                alertsData
             });
 
-            // Axios interceptor returns data directly
-            setNearbyFarmers(Array.isArray(farmersData) ? farmersData : []);
-            setPestAlerts(Array.isArray(alertsData) ? alertsData : []);
+            // Handle farmers data - can be array directly or { farmers: [] } object
+            let farmers: Farmer[] = [];
+            let userLandsFromApi: DemoUserLand[] = [];
+            if (Array.isArray(farmersData)) {
+                farmers = farmersData;
+            } else if (farmersData) {
+                if (Array.isArray(farmersData.farmers)) {
+                    farmers = farmersData.farmers;
+                }
+                if (Array.isArray(farmersData.userLands)) {
+                    userLandsFromApi = farmersData.userLands;
+                }
+            }
+
+            // Handle alerts data
+            let alerts: PestAlert[] = [];
+            if (Array.isArray(alertsData)) {
+                alerts = alertsData;
+            }
+
+            setNearbyFarmers(farmers);
+            setPestAlerts(alerts);
+            setDemoUserLands(userLandsFromApi);
 
         } catch (err: any) {
             console.error('Failed to load connect data', err);
@@ -91,6 +115,7 @@ export function useConnectData() {
             // Set empty on error to avoid stale state
             setNearbyFarmers([]);
             setPestAlerts([]);
+            setDemoUserLands([]);
         } finally {
             console.log('useConnectData: Finished loading');
             setIsLoading(false);
@@ -123,10 +148,11 @@ export function useConnectData() {
     return useMemo(() => ({
         nearbyFarmers,
         pestAlerts,
+        demoUserLands,
         isLoading,
         error,
         refresh: loadData,
         submitAlert,
         userLocation
-    }), [nearbyFarmers, pestAlerts, isLoading, error, userLocation]);
+    }), [nearbyFarmers, pestAlerts, demoUserLands, isLoading, error, userLocation]);
 }

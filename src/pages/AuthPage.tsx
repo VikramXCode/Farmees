@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { signup, signin } from '../services/authService';
 import { useLanguage } from '../contexts/LanguageContext';
-import { User, Leaf, Eye, EyeOff, CheckCircle, AlertCircle, Smartphone, Wifi, MapPin, Globe } from 'lucide-react';
+import { User, Eye, EyeOff, CheckCircle, AlertCircle, Smartphone, Wifi, MapPin, Globe } from 'lucide-react';
+import FarmeesLogo from '../components/common/FarmeesLogo';
 
 export default function AuthPage() {
   const [formData, setFormData] = useState({
@@ -115,10 +116,9 @@ export default function AuthPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <div className="relative">
-              <Leaf className="w-12 h-12 text-green-600 mr-3 animate-bounce-gentle" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+              <FarmeesLogo size="lg" />
             </div>
-            <div>
+            <div className="ml-3">
               <h1 className="text-3xl font-bold text-green-800" style={{ fontFamily: language === 'tamil' ? 'Noto Sans Tamil' : 'Inter' }}>
                 {t('farmease')}
               </h1>
@@ -298,7 +298,7 @@ export default function AuthPage() {
           {/* Features Preview */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4">
             <h3 className="text-sm font-semibold text-green-800 mb-2" style={{ fontFamily: language === 'tamil' ? 'Noto Sans Tamil' : 'Inter' }}>
-              {language === 'tamil' ? 'ஃபார்ம்ஈஸ் என்றால் என்ன?' : 'What is FarmEase?'}
+              {language === 'tamil' ? 'ஃபார்மீஸ் என்றால் என்ன?' : 'What is Farmees?'}
             </h3>
             <div className="grid grid-cols-2 gap-2 text-xs text-green-700">
               <div className="flex items-center">

@@ -79,7 +79,7 @@ app.use('/api/labour', require('../backend/routes/labour'));
 app.get('/api', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'FarmEase API', 
+    message: 'Farmees API', 
     endpoints: ['/api/health', '/api/auth', '/api/lands', '/api/weather', '/api/market']
   });
 });

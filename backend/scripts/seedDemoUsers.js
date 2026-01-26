@@ -49,6 +49,10 @@ const DEMO_LANDS = [
     waterAvailability: 'high',
     size: 2.5,
     isDemo: true,
+    coordinates: {
+      lat: 10.6593,
+      lng: 77.0068
+    },
     soilReport: {
       pH: 6.8,
       nitrogen: 55,

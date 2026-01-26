@@ -34,10 +34,18 @@ async function connectToDatabase() {
     return mongoose.connection;
   }
   if (!connectionPromise) {
-    connectionPromise = mongoose.connect(MONGODB_URI).catch((err) => {
-      connectionPromise = null;
-      throw err;
-    });
+    console.log('🔄 Connecting to MongoDB...');
+    connectionPromise = mongoose.connect(MONGODB_URI)
+      .then(() => {
+        console.log('✅ MongoDB connected successfully');
+        console.log(`📊 Database: ${mongoose.connection.name}`);
+        return mongoose.connection;
+      })
+      .catch((err) => {
+        connectionPromise = null;
+        console.error('❌ MongoDB connection failed:', err.message);
+        throw err;
+      });
   }
   return connectionPromise;
 }
@@ -86,25 +94,34 @@ app.use('/api/alerts', require('./routes/alerts'));
 app.use('/api/market', require('./routes/market'));
 app.use('/api/connect', require('./routes/connect'));
 app.use('/api/labour', require('./routes/labour'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 async function startServer() {
+  console.log('🚀 Starting FarmEase Backend Server...');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  
   try {
     await connectToDatabase();
+    
     const server = app.listen(PORT, () => {
-      console.log(`API listening on http://localhost:${PORT}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ Server started successfully!');
+      console.log(`🌐 API URL: http://localhost:${PORT}`);
+      console.log(`📍 Health Check: http://localhost:${PORT}/api/health`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     });
 
     server.on('error', (err) => {
       if (err && err.code === 'EADDRINUSE') {
-        console.error(`Port ${PORT} is already in use. Stop the existing server, then retry.`);
+        console.error(`❌ Port ${PORT} is already in use. Stop the existing server, then retry.`);
         console.error(`Windows quick fix: Get-NetTCPConnection -LocalPort ${PORT} -State Listen | Select OwningProcess | Stop-Process -Id {PID} -Force`);
         process.exit(1);
       }
-      console.error('Server listen error:', err);
+      console.error('❌ Server listen error:', err);
       process.exit(1);
     });
   } catch (err) {
-    console.error('Failed to start server:', err);
+    console.error('❌ Failed to start server:', err.message);
     process.exit(1);
   }
 }

@@ -8,9 +8,16 @@ export interface LandData {
   // Basic Land Information
   name: string;
   location: string;
+  postalCode?: string; // Postal/PIN code for approximate location
   soilType: string;
   currentCrop: string;
   waterAvailability: 'high' | 'medium' | 'low';
+  
+  // Coordinates (optional, can be derived from postal code)
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   
   // Soil Analysis Data
   soilReport?: {

@@ -1,4 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#16a34a" rx="64"/>
-  <text x="256" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="280" font-weight="bold" fill="white">F</text>
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bgGradient)" rx="90"/>
+  
+  <!-- Large Leaf -->
+  <path d="M256 90C256 90 385 140 410 280C435 420 310 450 256 450C202 450 77 420 102 280C127 140 256 90 256 90Z" fill="white" fill-opacity="0.95"/>
+  <!-- Leaf veins -->
+  <path d="M256 120V400M256 200L195 265M256 255L318 320M256 310L205 360" stroke="#22c55e" stroke-width="12" stroke-linecap="round" stroke-opacity="0.5"/>
+  
+  <!-- Bee Body -->
+  <ellipse cx="320" cy="195" rx="62" ry="46" fill="#fbbf24"/>
+  <!-- Bee stripes -->
+  <path d="M290 170V220" stroke="#1f2937" stroke-width="14" stroke-linecap="round"/>
+  <path d="M320 165V225" stroke="#1f2937" stroke-width="14" stroke-linecap="round"/>
+  <path d="M350 170V220" stroke="#1f2937" stroke-width="14" stroke-linecap="round"/>
+  <!-- Bee head -->
+  <circle cx="382" cy="195" r="28" fill="#1f2937"/>
+  <!-- Bee eyes -->
+  <circle cx="390" cy="188" r="6" fill="white"/>
+  <circle cx="390" cy="202" r="6" fill="white"/>
+  <!-- Bee wings -->
+  <ellipse cx="295" cy="150" rx="35" ry="22" fill="white" fill-opacity="0.8" transform="rotate(-20 295 150)"/>
+  <ellipse cx="330" cy="145" rx="30" ry="18" fill="white" fill-opacity="0.7" transform="rotate(10 330 145)"/>
+  <!-- Bee antenna -->
+  <path d="M395 170Q405 155 400 145" stroke="#1f2937" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M400 175Q415 165 415 150" stroke="#1f2937" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <circle cx="400" cy="143" r="6" fill="#1f2937"/>
+  <circle cx="415" cy="148" r="6" fill="#1f2937"/>
 </svg>

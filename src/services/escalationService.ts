@@ -1,6 +1,7 @@
 import api from './api';
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+// API base is empty since api instance already has baseURL: '/api'
+const API_BASE = '';
 
 export interface Escalation {
   _id?: string;
@@ -27,16 +28,16 @@ export interface Officer {
 }
 
 export async function createEscalation(payload: Escalation) {
-  const { data } = await api.post(`${API_BASE}/api/escalations`, payload);
+  const data = await api.post(`${API_BASE}/escalations`, payload);
   return data;
 }
 
 export async function listEscalations(params?: { userId?: string; status?: string }) {
-  const { data } = await api.get(`${API_BASE}/api/escalations`, { params });
+  const data = await api.get(`${API_BASE}/escalations`, { params });
   return data;
 }
 
 export async function listOfficers(params?: { district?: string; state?: string; active?: boolean }) {
-  const { data } = await api.get(`${API_BASE}/api/officers`, { params });
+  const data = await api.get(`${API_BASE}/officers`, { params });
   return data;
 }

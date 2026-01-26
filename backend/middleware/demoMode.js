@@ -29,32 +29,104 @@ const DEMO_WEATHER = {
 
 const DEMO_MARKET_DATA = [
   {
-    crop: 'Rice',
+    commodity: 'Rice',
     market: 'Pollachi APMC',
     district: 'Coimbatore',
-    currentPrice: 2850,
-    previousPrice: 2800,
-    trend: 'up',
-    change: '+1.8%',
-    demand: 'high',
-    forecast: 'Price expected to rise',
-    volume: 1250,
-    avgPrice: 2825,
-    priceHistory: [2750, 2780, 2800, 2825, 2850]
+    min_price: 2750,
+    max_price: 2950,
+    modal_price: 2850,
+    price_unit: 'per quintal',
+    arrival_date: new Date().toISOString().split('T')[0]
   },
   {
-    crop: 'Coconut',
+    commodity: 'Coconut',
     market: 'Pollachi Market',
     district: 'Coimbatore',
-    currentPrice: 18500,
-    previousPrice: 19200,
-    trend: 'down',
-    change: '-3.6%',
-    demand: 'medium',
-    forecast: 'Stable expected',
-    volume: 850,
-    avgPrice: 18800,
-    priceHistory: [19500, 19200, 19000, 18700, 18500]
+    min_price: 18000,
+    max_price: 19000,
+    modal_price: 18500,
+    price_unit: 'per quintal',
+    arrival_date: new Date().toISOString().split('T')[0]
+  },
+  {
+    commodity: 'Turmeric',
+    market: 'Pollachi',
+    district: 'Coimbatore',
+    min_price: 12500,
+    max_price: 13200,
+    modal_price: 12800,
+    price_unit: 'per quintal',
+    arrival_date: new Date().toISOString().split('T')[0]
+  },
+  {
+    commodity: 'Cotton',
+    market: 'Udumalaipettai',
+    district: 'Coimbatore',
+    min_price: 6200,
+    max_price: 6700,
+    modal_price: 6450,
+    price_unit: 'per quintal',
+    arrival_date: new Date().toISOString().split('T')[0]
+  },
+  {
+    commodity: 'Groundnut',
+    market: 'Pollachi',
+    district: 'Coimbatore',
+    min_price: 5800,
+    max_price: 6200,
+    modal_price: 6000,
+    price_unit: 'per quintal',
+    arrival_date: new Date().toISOString().split('T')[0]
+  },
+  {
+    commodity: 'Banana',
+    market: 'Kinathukadavu',
+    district: 'Coimbatore',
+    min_price: 1200,
+    max_price: 1800,
+    modal_price: 1500,
+    price_unit: 'per quintal',
+    arrival_date: new Date().toISOString().split('T')[0]
+  },
+  {
+    commodity: 'Sugarcane',
+    market: 'Pollachi',
+    district: 'Coimbatore',
+    min_price: 2800,
+    max_price: 3200,
+    modal_price: 3000,
+    price_unit: 'per ton',
+    arrival_date: new Date().toISOString().split('T')[0]
+  },
+  {
+    commodity: 'Tomato',
+    market: 'Coimbatore',
+    district: 'Coimbatore',
+    min_price: 800,
+    max_price: 1200,
+    modal_price: 1000,
+    price_unit: 'per quintal',
+    arrival_date: new Date().toISOString().split('T')[0]
+  },
+  {
+    commodity: 'Onion',
+    market: 'Coimbatore',
+    district: 'Coimbatore',
+    min_price: 1500,
+    max_price: 2000,
+    modal_price: 1750,
+    price_unit: 'per quintal',
+    arrival_date: new Date().toISOString().split('T')[0]
+  },
+  {
+    commodity: 'Potato',
+    market: 'Coimbatore',
+    district: 'Coimbatore',
+    min_price: 1800,
+    max_price: 2200,
+    modal_price: 2000,
+    price_unit: 'per quintal',
+    arrival_date: new Date().toISOString().split('T')[0]
   }
 ];
 
@@ -192,27 +264,37 @@ Week 9: Complex fertilizer 50 kg/acre
 const DEMO_PEST_ALERTS = [
   {
     id: 'pest-alert-1',
-    type: 'warning',
-    title: 'Stem Borer Activity Detected',
-    description: 'High stem borer activity reported in Pollachi region. Immediate preventive action recommended.',
+    farmer: 'Ravi Kumar',
+    location: 'Erode Town, Erode',
+    pest: 'Stem Borer',
     severity: 'high',
+    probability: 85,
+    riskLevel: 'Critical',
+    description: 'Heavy stem borer infestation observed in rice fields. Dead hearts visible in 30% of plants. Immediate action required.',
+    distance: '2.5 km',
+    timestamp: new Date().toISOString(),
+    affected_area: '2 acres',
+    latitude: 11.3410,
+    longitude: 77.7172,
     crop: 'Rice',
-    location: 'Pollachi, Coimbatore',
-    reportedDate: new Date().toISOString(),
-    actionRequired: 'Install pheromone traps, monitor daily',
-    affectedArea: '15km radius'
+    recommendations: ['Apply Cartap Hydrochloride 4G @ 25kg/ha', 'Remove and destroy affected tillers', 'Use pheromone traps']
   },
   {
     id: 'pest-alert-2',
-    type: 'info',
-    title: 'Brown Plant Hopper - Low Risk',
-    description: 'Minimal BPH activity. Continue regular monitoring.',
-    severity: 'low',
+    farmer: 'Selvam K',
+    location: 'Bhavani, Erode',
+    pest: 'Brown Plant Hopper',
+    severity: 'high',
+    probability: 78,
+    riskLevel: 'High',
+    description: 'BPH outbreak reported. Plants showing hopperburn symptoms. Multiple farms affected in 5km radius.',
+    distance: '3.8 km',
+    timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    affected_area: '5 acres',
+    latitude: 11.4500,
+    longitude: 77.6833,
     crop: 'Rice',
-    location: 'Coimbatore district',
-    reportedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    actionRequired: 'Weekly monitoring sufficient',
-    affectedArea: '30km radius'
+    recommendations: ['Drain water from fields', 'Apply Imidacloprid 17.8 SL', 'Avoid excess nitrogen fertilizer']
   }
 ];
 
@@ -250,6 +332,80 @@ const DEMO_SOIL_REPORT = {
   }
 };
 
+// Demo user lands for map display (10 sample points around Erode)
+const DEMO_USER_LANDS = [
+  {
+    id: 'user-land-1',
+    name: 'North Field Demo',
+    currentCrop: 'Rice',
+    postalCode: '638001',
+    location: { latitude: 11.3410, longitude: 77.7172 }
+  },
+  {
+    id: 'user-land-2',
+    name: 'South Paddy Field',
+    currentCrop: 'Rice',
+    postalCode: '638002',
+    location: { latitude: 11.3320, longitude: 77.7250 }
+  },
+  {
+    id: 'user-land-3',
+    name: 'West Sugarcane Plot',
+    currentCrop: 'Sugarcane',
+    postalCode: '638003',
+    location: { latitude: 11.3500, longitude: 77.7050 }
+  },
+  {
+    id: 'user-land-4',
+    name: 'East Coconut Grove',
+    currentCrop: 'Coconut',
+    postalCode: '638004',
+    location: { latitude: 11.3550, longitude: 77.7350 }
+  },
+  {
+    id: 'user-land-5',
+    name: 'Central Vegetable Garden',
+    currentCrop: 'Vegetables',
+    postalCode: '638005',
+    location: { latitude: 11.3380, longitude: 77.7200 }
+  },
+  {
+    id: 'user-land-6',
+    name: 'Hill View Banana Farm',
+    currentCrop: 'Banana',
+    postalCode: '638006',
+    location: { latitude: 11.3250, longitude: 77.7400 }
+  },
+  {
+    id: 'user-land-7',
+    name: 'River Side Turmeric',
+    currentCrop: 'Turmeric',
+    postalCode: '638007',
+    location: { latitude: 11.3600, longitude: 77.7000 }
+  },
+  {
+    id: 'user-land-8',
+    name: 'Groundnut Field',
+    currentCrop: 'Groundnut',
+    postalCode: '638008',
+    location: { latitude: 11.3200, longitude: 77.7150 }
+  },
+  {
+    id: 'user-land-9',
+    name: 'Cotton Plantation',
+    currentCrop: 'Cotton',
+    postalCode: '638009',
+    location: { latitude: 11.3450, longitude: 77.6950 }
+  },
+  {
+    id: 'user-land-10',
+    name: 'Mixed Crop Field',
+    currentCrop: 'Rice',
+    postalCode: '638010',
+    location: { latitude: 11.3350, longitude: 77.7450 }
+  }
+];
+
 const DEMO_CONNECT_DATA = {
   officers: [
     {
@@ -285,51 +441,107 @@ const DEMO_CONNECT_DATA = {
       contact: '0422-6611200'
     }
   ],
+  userLands: DEMO_USER_LANDS,
   farmers: [
     {
       id: 'farmer-1',
       name: 'Ravi Kumar',
-      district: 'Coimbatore',
-      area: 'Pollachi',
+      district: 'Erode',
+      area: 'Erode Town',
       distance: '2.5 km',
       crops: ['Rice', 'Sugarcane'],
-      location: { latitude: 10.6693, longitude: 77.0168 }
+      location: { latitude: 11.3410, longitude: 77.7172 },
+      isUserLand: false
     },
     {
       id: 'farmer-2',
       name: 'Selvi Murugan',
-      district: 'Coimbatore',
-      area: 'Kinathukadavu',
+      district: 'Erode',
+      area: 'Bhavani',
       distance: '5.8 km',
       crops: ['Coconut', 'Banana'],
-      location: { latitude: 10.7793, longitude: 77.0368 }
+      location: { latitude: 11.4500, longitude: 77.6833 },
+      isUserLand: false
     },
     {
       id: 'farmer-3',
       name: 'Kumar Raj',
-      district: 'Coimbatore',
-      area: 'Udumalaipettai',
+      district: 'Erode',
+      area: 'Gobichettipalayam',
       distance: '12.3 km',
       crops: ['Cotton', 'Groundnut'],
-      location: { latitude: 10.5893, longitude: 77.2468 }
+      location: { latitude: 11.4550, longitude: 77.4400 },
+      isUserLand: false
     },
     {
       id: 'farmer-4',
       name: 'Lakshmi Devi',
-      district: 'Coimbatore',
-      area: 'Pollachi',
+      district: 'Erode',
+      area: 'Perundurai',
       distance: '3.2 km',
       crops: ['Turmeric', 'Ginger'],
-      location: { latitude: 10.6493, longitude: 76.9968 }
+      location: { latitude: 11.2750, longitude: 77.5900 },
+      isUserLand: false
     },
     {
       id: 'farmer-5',
       name: 'Anand Prakash',
-      district: 'Coimbatore',
-      area: 'Anaimalai',
+      district: 'Erode',
+      area: 'Sathyamangalam',
       distance: '18.5 km',
       crops: ['Tea', 'Coffee'],
-      location: { latitude: 10.5293, longitude: 76.9368 }
+      location: { latitude: 11.5050, longitude: 77.2380 },
+      isUserLand: false
+    },
+    {
+      id: 'farmer-6',
+      name: 'Murugan S',
+      district: 'Erode',
+      area: 'Modakurichi',
+      distance: '6.2 km',
+      crops: ['Rice', 'Vegetables'],
+      location: { latitude: 11.3200, longitude: 77.8100 },
+      isUserLand: false
+    },
+    {
+      id: 'farmer-7',
+      name: 'Selvam K',
+      district: 'Erode',
+      area: 'Erode Town',
+      distance: '1.8 km',
+      crops: ['Rice', 'Groundnut'],
+      location: { latitude: 11.3480, longitude: 77.7250 },
+      isUserLand: false
+    },
+    {
+      id: 'farmer-8',
+      name: 'Anitha R',
+      district: 'Erode',
+      area: 'Kodumudi',
+      distance: '4.1 km',
+      crops: ['Groundnut', 'Sesame'],
+      location: { latitude: 11.0770, longitude: 77.8870 },
+      isUserLand: false
+    },
+    {
+      id: 'farmer-9',
+      name: 'Prakash M',
+      district: 'Erode',
+      area: 'Anthiyur',
+      distance: '15.2 km',
+      crops: ['Coconut', 'Arecanut'],
+      location: { latitude: 11.5700, longitude: 77.5900 },
+      isUserLand: false
+    },
+    {
+      id: 'farmer-10',
+      name: 'Devi Lakshmi',
+      district: 'Erode',
+      area: 'Erode Town',
+      distance: '2.9 km',
+      crops: ['Rice', 'Banana'],
+      location: { latitude: 11.3350, longitude: 77.7100 },
+      isUserLand: false
     }
   ]
 };
