@@ -16,13 +16,12 @@ class AIService {
   private ollamaModel: string;
 
   constructor() {
-    const viteEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
-    this.useOllama = String(viteEnv.VITE_USE_OLLAMA || '').toLowerCase() === 'true';
-    this.useGroq = String(viteEnv.VITE_USE_GROQ || '').toLowerCase() === 'true';
+    this.useOllama = String(import.meta.env.VITE_USE_OLLAMA || '').toLowerCase() === 'true';
+    this.useGroq = String(import.meta.env.VITE_USE_GROQ || '').toLowerCase() === 'true';
     // Import dynamically to avoid circular dependency
-    this.apiBase = viteEnv.VITE_API_URL || (viteEnv.PROD ? 'https://farmees-backend.vercel.app/api' : '/api');
-    this.ollamaUrl = viteEnv.VITE_OLLAMA_URL || 'http://localhost:11434';
-    this.ollamaModel = viteEnv.VITE_OLLAMA_MODEL || 'llama2:latest';
+    this.apiBase = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://farmees-backend.vercel.app/api' : '/api');
+    this.ollamaUrl = import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434';
+    this.ollamaModel = import.meta.env.VITE_OLLAMA_MODEL || 'llama2:latest';
   }
 
   async generate(input: string, options: AIOptions = {}): Promise<string> {
