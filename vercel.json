@@ -3,36 +3,13 @@
   "builds": [
     {
       "src": "backend/server.cjs",
-      "use": "@vercel/node",
-      "config": {
-        "maxDuration": 10,
-        "includeFiles": ["backend/**"]
-      }
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "use": "@vercel/node"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/backend/server.cjs"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*\\..+)",
-      "dest": "/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/api/:path*",
+      "destination": "/backend/server.cjs"
     }
   ]
 }
