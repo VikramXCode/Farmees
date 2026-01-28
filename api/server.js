@@ -76,29 +76,60 @@ app.get('/api/health', async (req, res) => {
     service: 'farmease-api', 
     time: new Date().toISOString(),
     database: dbStatus,
-    mongoUri: process.env.MONGODB_URI ? 'configured' : 'missing'
+    mongoUri: process.env.MONGODB_URI ? 'configured' : 'missing',
+    dirname: __dirname,
+    cwd: process.cwd()
   });
 });
 
 // Import routes from backend (using createRequire for CommonJS modules)
 const backendPath = path.join(__dirname, '..', 'backend');
-app.use('/api/lands', require(path.join(backendPath, 'routes', 'lands')));
-app.use('/api/ai-interactions', require(path.join(backendPath, 'routes', 'ai-interactions')));
-app.use('/api/recommendations', require(path.join(backendPath, 'routes', 'recommendations')));
-app.use('/api/diseases', require(path.join(backendPath, 'routes', 'diseases')));
-app.use('/api/pests', require(path.join(backendPath, 'routes', 'pests')));
-app.use('/api/auth', require(path.join(backendPath, 'routes', 'auth')));
-app.use('/api/soil', require(path.join(backendPath, 'routes', 'soil')));
-app.use('/api/crop-recommendations', require(path.join(backendPath, 'routes', 'crop-recommendations')));
-app.use('/api/weather', require(path.join(backendPath, 'routes', 'weather')));
-app.use('/api/ai', require(path.join(backendPath, 'routes', 'ai')));
-app.use('/api/officers', require(path.join(backendPath, 'routes', 'officers')));
-app.use('/api/escalations', require(path.join(backendPath, 'routes', 'escalations')));
-app.use('/api/alerts', require(path.join(backendPath, 'routes', 'alerts')));
-app.use('/api/market', require(path.join(backendPath, 'routes', 'market')));
-app.use('/api/connect', require(path.join(backendPath, 'routes', 'connect')));
-app.use('/api/labour', require(path.join(backendPath, 'routes', 'labour')));
-app.use('/api/analytics', require(path.join(backendPath, 'routes', 'analytics')));
+
+// Try to load routes with error handling
+let routesLoaded = {};
+const loadRoute = (name, routePath) => {
+  try {
+    const route = require(routePath);
+    routesLoaded[name] = 'ok';
+    return route;
+  } catch (err) {
+    console.error(`Failed to load route ${name}:`, err.message);
+    routesLoaded[name] = err.message;
+    // Return a placeholder router that returns error
+    const placeholder = express.Router();
+    placeholder.all('*', (req, res) => {
+      res.status(500).json({ error: `Route ${name} failed to load`, details: err.message });
+    });
+    return placeholder;
+  }
+};
+
+app.use('/api/lands', loadRoute('lands', path.join(backendPath, 'routes', 'lands')));
+app.use('/api/ai-interactions', loadRoute('ai-interactions', path.join(backendPath, 'routes', 'ai-interactions')));
+app.use('/api/recommendations', loadRoute('recommendations', path.join(backendPath, 'routes', 'recommendations')));
+app.use('/api/diseases', loadRoute('diseases', path.join(backendPath, 'routes', 'diseases')));
+app.use('/api/pests', loadRoute('pests', path.join(backendPath, 'routes', 'pests')));
+app.use('/api/auth', loadRoute('auth', path.join(backendPath, 'routes', 'auth')));
+app.use('/api/soil', loadRoute('soil', path.join(backendPath, 'routes', 'soil')));
+app.use('/api/crop-recommendations', loadRoute('crop-recommendations', path.join(backendPath, 'routes', 'crop-recommendations')));
+app.use('/api/weather', loadRoute('weather', path.join(backendPath, 'routes', 'weather')));
+app.use('/api/ai', loadRoute('ai', path.join(backendPath, 'routes', 'ai')));
+app.use('/api/officers', loadRoute('officers', path.join(backendPath, 'routes', 'officers')));
+app.use('/api/escalations', loadRoute('escalations', path.join(backendPath, 'routes', 'escalations')));
+app.use('/api/alerts', loadRoute('alerts', path.join(backendPath, 'routes', 'alerts')));
+app.use('/api/market', loadRoute('market', path.join(backendPath, 'routes', 'market')));
+app.use('/api/connect', loadRoute('connect', path.join(backendPath, 'routes', 'connect')));
+app.use('/api/labour', loadRoute('labour', path.join(backendPath, 'routes', 'labour')));
+app.use('/api/analytics', loadRoute('analytics', path.join(backendPath, 'routes', 'analytics')));
+
+// Debug endpoint to check route loading status
+app.get('/api/debug/routes', (req, res) => {
+  res.json({ 
+    routesLoaded, 
+    backendPath,
+    dirname: __dirname
+  });
+});
 
 // Root API endpoint
 app.get('/api', (req, res) => {
