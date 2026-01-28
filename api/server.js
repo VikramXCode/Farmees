@@ -3,7 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 
 const app = express();
@@ -77,23 +81,24 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Import routes from backend (using createRequire for CommonJS modules)
-app.use('/api/lands', require('../backend/routes/lands'));
-app.use('/api/ai-interactions', require('../backend/routes/ai-interactions'));
-app.use('/api/recommendations', require('../backend/routes/recommendations'));
-app.use('/api/diseases', require('../backend/routes/diseases'));
-app.use('/api/pests', require('../backend/routes/pests'));
-app.use('/api/auth', require('../backend/routes/auth'));
-app.use('/api/soil', require('../backend/routes/soil'));
-app.use('/api/crop-recommendations', require('../backend/routes/crop-recommendations'));
-app.use('/api/weather', require('../backend/routes/weather'));
-app.use('/api/ai', require('../backend/routes/ai'));
-app.use('/api/officers', require('../backend/routes/officers'));
-app.use('/api/escalations', require('../backend/routes/escalations'));
-app.use('/api/alerts', require('../backend/routes/alerts'));
-app.use('/api/market', require('../backend/routes/market'));
-app.use('/api/connect', require('../backend/routes/connect'));
-app.use('/api/labour', require('../backend/routes/labour'));
-app.use('/api/analytics', require('../backend/routes/analytics'));
+const backendPath = path.join(__dirname, '..', 'backend');
+app.use('/api/lands', require(path.join(backendPath, 'routes', 'lands')));
+app.use('/api/ai-interactions', require(path.join(backendPath, 'routes', 'ai-interactions')));
+app.use('/api/recommendations', require(path.join(backendPath, 'routes', 'recommendations')));
+app.use('/api/diseases', require(path.join(backendPath, 'routes', 'diseases')));
+app.use('/api/pests', require(path.join(backendPath, 'routes', 'pests')));
+app.use('/api/auth', require(path.join(backendPath, 'routes', 'auth')));
+app.use('/api/soil', require(path.join(backendPath, 'routes', 'soil')));
+app.use('/api/crop-recommendations', require(path.join(backendPath, 'routes', 'crop-recommendations')));
+app.use('/api/weather', require(path.join(backendPath, 'routes', 'weather')));
+app.use('/api/ai', require(path.join(backendPath, 'routes', 'ai')));
+app.use('/api/officers', require(path.join(backendPath, 'routes', 'officers')));
+app.use('/api/escalations', require(path.join(backendPath, 'routes', 'escalations')));
+app.use('/api/alerts', require(path.join(backendPath, 'routes', 'alerts')));
+app.use('/api/market', require(path.join(backendPath, 'routes', 'market')));
+app.use('/api/connect', require(path.join(backendPath, 'routes', 'connect')));
+app.use('/api/labour', require(path.join(backendPath, 'routes', 'labour')));
+app.use('/api/analytics', require(path.join(backendPath, 'routes', 'analytics')));
 
 // Root API endpoint
 app.get('/api', (req, res) => {
