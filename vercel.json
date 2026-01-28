@@ -1,15 +1,31 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "backend/server.cjs",
-      "use": "@vercel/node"
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": null,
+  "functions": {
+    "backend/server.cjs": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 10
     }
-  ],
+  },
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "/backend/server.cjs"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend/server.cjs"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
