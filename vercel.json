@@ -2,17 +2,18 @@
   "version": 2,
   "builds": [
     {
+      "src": "backend/server.cjs",
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 10,
+        "includeFiles": ["backend/**"]
+      }
+    },
+    {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist"
-      }
-    },
-    {
-      "src": "backend/server.cjs",
-      "use": "@vercel/node",
-      "config": {
-        "maxDuration": 10
       }
     }
   ],
