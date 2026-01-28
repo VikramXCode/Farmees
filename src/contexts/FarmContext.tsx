@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { landService } from '../services/landService';
-import type { LandData } from '../types/land';
+import type { LandData, FarmBoundaryData, LandSize } from '../types/land';
 import { useAuth } from './AuthContext';
 
 export interface Land {
@@ -13,6 +13,9 @@ export interface Land {
   currentCrop: string;
   waterAvailability: 'high' | 'medium' | 'low';
   soilType: string;
+  // Farm Boundary Mapping (optional)
+  boundary?: FarmBoundaryData;
+  landSize?: LandSize;
 }
 
 export interface Reminder {
@@ -86,7 +89,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             waterAvailability: ld.waterAvailability,
             soilType: ld.soilType,
             latitude: ld.coordinates?.lat,
-            longitude: ld.coordinates?.lng
+            longitude: ld.coordinates?.lng,
+            boundary: ld.boundary,
+            landSize: ld.landSize
           }));
 
           const newHash = JSON.stringify(mapped);
@@ -134,6 +139,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         soilType: landData.soilType,
         currentCrop: landData.currentCrop,
         waterAvailability: landData.waterAvailability,
+        // Include boundary data if available
+        boundary: landData.boundary,
+        landSize: landData.landSize,
         soilReport: undefined,
         weatherHistory: [],
         cropHistory: [],
@@ -160,7 +168,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         location: created.location,
         currentCrop: created.currentCrop,
         waterAvailability: created.waterAvailability,
-        soilType: created.soilType
+        soilType: created.soilType,
+        boundary: created.boundary,
+        landSize: created.landSize
       };
       setLands(prev => [...prev, newLand]);
       return newLand.id;

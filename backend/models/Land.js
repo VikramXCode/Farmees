@@ -84,6 +84,29 @@ const aiContextSchema = new mongoose.Schema({
   }
 });
 
+// Farm Boundary Mapping Schema (Optional feature)
+const boundaryCoordinateSchema = new mongoose.Schema({
+  lat: { type: Number, required: true },
+  lng: { type: Number, required: true },
+  timestamp: { type: Number },
+  accuracy: { type: Number }
+}, { _id: false });
+
+const farmBoundarySchema = new mongoose.Schema({
+  coordinates: [boundaryCoordinateSchema],
+  area: {
+    sqMeters: { type: Number },
+    acres: { type: Number },
+    hectares: { type: Number }
+  },
+  perimeter: { type: Number }, // in meters
+  centroid: boundaryCoordinateSchema,
+  mappingMode: { type: String, enum: ['walk', 'draw'] },
+  isApproximate: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 const landSchema = new mongoose.Schema({
   landId: { type: String, required: true },
   userId: { type: String, required: true, index: true },
@@ -100,6 +123,16 @@ const landSchema = new mongoose.Schema({
   coordinates: {
     lat: { type: Number },
     lng: { type: Number }
+  },
+  
+  // Farm Boundary Mapping (Optional)
+  boundary: farmBoundarySchema,
+  
+  // Calculated land size (from boundary or manual)
+  landSize: {
+    value: { type: Number },
+    unit: { type: String, enum: ['acres', 'hectares', 'sqMeters'], default: 'acres' },
+    source: { type: String, enum: ['manual', 'boundary_mapping'], default: 'manual' }
   },
   
   // Soil Analysis Data - Reference to SoilReport collection

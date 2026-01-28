@@ -1,5 +1,36 @@
 // Land-specific data types for MongoDB integration
 
+// Boundary coordinate for farm mapping
+export interface BoundaryCoordinate {
+  lat: number;
+  lng: number;
+  timestamp?: number;
+  accuracy?: number;
+}
+
+// Farm boundary data from Smart Farm Boundary Mapping
+export interface FarmBoundaryData {
+  coordinates: BoundaryCoordinate[];
+  area: {
+    sqMeters: number;
+    acres: number;
+    hectares: number;
+  };
+  perimeter: number;
+  centroid: BoundaryCoordinate;
+  mappingMode: 'walk' | 'draw';
+  isApproximate: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Land size information
+export interface LandSize {
+  value: number;
+  unit: 'acres' | 'hectares' | 'sqMeters';
+  source: 'manual' | 'boundary_mapping';
+}
+
 export interface LandData {
   _id?: string;
   landId: string;
@@ -18,6 +49,12 @@ export interface LandData {
     lat: number;
     lng: number;
   };
+  
+  // Farm Boundary (optional - from Smart Farm Boundary Mapping)
+  boundary?: FarmBoundaryData;
+  
+  // Land Size (calculated from boundary or entered manually)
+  landSize?: LandSize;
   
   // Soil Analysis Data
   soilReport?: {

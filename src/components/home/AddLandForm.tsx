@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { X, MapPin, Upload, Droplets } from 'lucide-react';
+import { X, MapPin, Upload, Droplets, Map, ChevronDown, ChevronUp } from 'lucide-react';
 import { useFarm } from '../../contexts/FarmContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -9,6 +9,8 @@ import { getCropSuggestions, filterCrops, COMMON_CROPS } from '../../data/cropSu
 import { getSoilTypeSuggestions, filterSoilTypes } from '../../data/soilTypes';
 import { getLocationSuggestions, type LocationSuggestion } from '../../services/geocodingService';
 import { debounce } from '../../utils/debounce';
+import FarmBoundaryMapper from '../boundary/FarmBoundaryMapper';
+import type { FarmBoundary } from '../../types/boundary';
 
 interface AddLandFormProps {
   onClose: () => void;
@@ -30,6 +32,11 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
   const [soilReportFile, setSoilReportFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Smart Farm Boundary Mapping state
+  const [enableBoundaryMapping, setEnableBoundaryMapping] = useState(false);
+  const [showBoundaryMapper, setShowBoundaryMapper] = useState(false);
+  const [farmBoundary, setFarmBoundary] = useState<FarmBoundary | null>(null);
+
   // Smart input states
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
   const [locationLoading, setLocationLoading] = useState(false);
@@ -42,10 +49,29 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
     (async () => {
       try {
         // Add land with selected crops joined as comma-separated string
-        const landData = {
+        const landData: any = {
           ...formData,
           currentCrop: selectedCrops.length > 0 ? selectedCrops.join(', ') : formData.currentCrop
         };
+        
+        // Include boundary data if mapped
+        if (farmBoundary) {
+          landData.boundary = {
+            coordinates: farmBoundary.coordinates,
+            area: farmBoundary.area,
+            perimeter: farmBoundary.perimeter,
+            centroid: farmBoundary.centroid,
+            mappingMode: farmBoundary.mappingMode,
+            isApproximate: farmBoundary.isApproximate,
+          };
+          // Auto-fill land size from boundary
+          landData.landSize = {
+            value: farmBoundary.area.acres,
+            unit: 'acres',
+            source: 'boundary_mapping',
+          };
+        }
+        
         const createdLandId = await addLand(landData);
         
         // Upload soil report if file selected, using the returned landId
@@ -323,6 +349,133 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
             <option value="medium">{t('medium')}</option>
             <option value="low">{t('low')}</option>
           </select>
+        </div>
+
+        {/* Smart Farm Boundary Mapping - Optional Feature */}
+        <div className="border-t border-gray-200 pt-4 mt-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Map className="w-5 h-5 text-green-600" />
+              <div>
+                <label className="font-medium text-gray-800">
+                  {language === 'english' 
+                    ? 'Smart Farm Boundary Mapping' 
+                    : 'ஸ்மார்ட் பண்ணை எல்லை வரைபடம்'}
+                </label>
+                <p className="text-xs text-gray-500">
+                  {language === 'english'
+                    ? 'Optional: Map your farm for accurate area calculation'
+                    : 'விருப்பம்: துல்லியமான பரப்பளவு கணக்கிற்கு உங்கள் பண்ணையை வரையுங்கள்'}
+                </p>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={enableBoundaryMapping}
+                onChange={(e) => {
+                  setEnableBoundaryMapping(e.target.checked);
+                  if (!e.target.checked) {
+                    setShowBoundaryMapper(false);
+                    setFarmBoundary(null);
+                  }
+                }}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+            </label>
+          </div>
+
+          {enableBoundaryMapping && (
+            <>
+              {!showBoundaryMapper && !farmBoundary && (
+                <button
+                  type="button"
+                  onClick={() => setShowBoundaryMapper(true)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-green-400 rounded-lg text-green-700 hover:bg-green-50 transition-colors"
+                >
+                  <Map className="w-5 h-5" />
+                  {language === 'english' 
+                    ? 'Start Mapping Farm Boundary' 
+                    : 'பண்ணை எல்லை வரைபடத்தைத் தொடங்கு'}
+                </button>
+              )}
+
+              {showBoundaryMapper && (
+                <FarmBoundaryMapper
+                  onBoundaryComplete={(boundary) => {
+                    setFarmBoundary(boundary);
+                    setShowBoundaryMapper(false);
+                  }}
+                  onCancel={() => setShowBoundaryMapper(false)}
+                  language={language}
+                />
+              )}
+
+              {farmBoundary && !showBoundaryMapper && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-green-700">
+                      <Map className="w-5 h-5" />
+                      <span className="font-medium">
+                        {language === 'english' ? 'Boundary Mapped' : 'எல்லை வரையப்பட்டது'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowBoundaryMapper(true);
+                      }}
+                      className="text-xs text-green-600 hover:text-green-800 underline"
+                    >
+                      {language === 'english' ? 'Edit' : 'திருத்து'}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-500">
+                        {language === 'english' ? 'Area:' : 'பரப்பளவு:'}
+                      </span>
+                      <span className="ml-1 font-semibold text-gray-800">
+                        {farmBoundary.area.acres.toFixed(2)} acres
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">
+                        {language === 'english' ? 'Perimeter:' : 'சுற்றளவு:'}
+                      </span>
+                      <span className="ml-1 font-semibold text-gray-800">
+                        {(farmBoundary.perimeter / 1000).toFixed(2)} km
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">
+                        {language === 'english' ? 'Points:' : 'புள்ளிகள்:'}
+                      </span>
+                      <span className="ml-1 font-semibold text-gray-800">
+                        {farmBoundary.coordinates.length}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">
+                        {language === 'english' ? 'Mode:' : 'முறை:'}
+                      </span>
+                      <span className="ml-1 font-semibold text-gray-800">
+                        {farmBoundary.mappingMode === 'walk' 
+                          ? (language === 'english' ? 'GPS Walk' : 'GPS நடை')
+                          : (language === 'english' ? 'Manual Draw' : 'கைமுறை வரைதல்')}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {language === 'english' 
+                      ? '* Approximate values for advisory purposes' 
+                      : '* ஆலோசனை நோக்கங்களுக்கான தோராயமான மதிப்புகள்'}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <div>
