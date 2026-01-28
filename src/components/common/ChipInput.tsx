@@ -44,16 +44,18 @@ export default function ChipInput({
       )}
 
       {/* Chip Suggestions */}
-      {suggestions.length > 0 && !value && (
+      {suggestions.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs text-gray-500 mb-2">{language === 'english' ? 'Quick select:' : 'விரைவு தேர்வு:'}</p>
+          <p className="text-xs text-gray-500 mb-2">
+            {language === 'english' ? 'Quick select (based on location):' : 'விரைவு தேர்வு (இடத்தின் அடிப்படையில்):'}
+          </p>
           <div className="flex flex-wrap gap-2">
             {suggestions.map((suggestion, index) => (
               <button
                 key={index}
                 type="button"
                 onClick={() => handleChipClick(suggestion.name)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-medium hover:bg-green-100 transition-colors border border-green-200"
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-medium hover:bg-green-100 transition-colors border border-green-200 shadow-sm hover:shadow-md"
               >
                 {suggestion.icon && <span>{suggestion.icon}</span>}
                 <span>{language === 'tamil' && suggestion.tamilName ? suggestion.tamilName : suggestion.name}</span>

@@ -35,6 +35,42 @@ import {
 } from '../../utils/boundaryStorage';
 import type { Coordinate, FarmBoundary } from '../../types/boundary';
 
+// Utility function to check if two line segments intersect
+function doSegmentsIntersect(
+  p1: Coordinate, p2: Coordinate, 
+  p3: Coordinate, p4: Coordinate
+): boolean {
+  const ccw = (A: Coordinate, B: Coordinate, C: Coordinate) => {
+    return (C.lat - A.lat) * (B.lng - A.lng) > (B.lat - A.lat) * (C.lng - A.lng);
+  };
+  
+  return ccw(p1, p3, p4) !== ccw(p2, p3, p4) && ccw(p1, p2, p3) !== ccw(p1, p2, p4);
+}
+
+// Check if polygon has self-intersecting edges
+function checkSelfIntersection(points: Coordinate[]): boolean {
+  if (points.length < 4) return false;
+  
+  for (let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+    
+    for (let j = i + 2; j < points.length; j++) {
+      // Don't check adjacent edges
+      if (j === (i + points.length - 1) % points.length) continue;
+      
+      const p3 = points[j];
+      const p4 = points[(j + 1) % points.length];
+      
+      if (doSegmentsIntersect(p1, p2, p3, p4)) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
 interface FarmBoundaryMapperProps {
   onBoundaryComplete: (boundary: FarmBoundary) => void;
   onCancel?: () => void;
@@ -259,25 +295,93 @@ export default function FarmBoundaryMapper({
 
     if (currentPoints.length === 0) return;
 
-    // Add markers for each point
+    // Add draggable markers for each point
     currentPoints.forEach((point, index) => {
       const isFirst = index === 0;
       const isLast = index === currentPoints.length - 1;
       
       const marker = L.circleMarker([point.lat, point.lng], {
-        radius: isFirst || isLast ? 8 : 5,
+        radius: isFirst || isLast ? 8 : 6,
         fillColor: isFirst ? '#10B981' : isLast ? '#EF4444' : '#3B82F6',
         color: '#ffffff',
         weight: 2,
         opacity: 1,
         fillOpacity: 0.8,
+        draggable: mode === 'draw', // Enable dragging in draw mode
       });
       
       if (isFirst) {
-        marker.bindTooltip('Start', { permanent: false });
+        marker.bindTooltip('Start (Drag to move)', { permanent: false });
       } else if (isLast && currentPoints.length > 1) {
-        marker.bindTooltip('End', { permanent: false });
+        marker.bindTooltip('End (Drag to move)', { permanent: false });
+      } else {
+        marker.bindTooltip(`Point ${index + 1} (Drag to move)`, { permanent: false });
       }
+      
+      // Handle point dragging
+      marker.on('mousedown', function(e: any) {
+        if (mode !== 'draw') return;
+        
+        const map = mapInstanceRef.current;
+        if (!map) return;
+
+        // Prevent map dragging while dragging marker
+        map.dragging.disable();
+        
+        let currentMarker = marker;
+        
+        const onMouseMove = (moveEvent: any) => {
+          const newLatLng = map.mouseEventToLatLng(moveEvent.originalEvent);
+          currentMarker.setLatLng(newLatLng);
+          
+          // Update the point in state
+          setDrawPoints(prevPoints => {
+            const newPoints = [...prevPoints];
+            newPoints[index] = {
+              lat: newLatLng.lat,
+              lng: newLatLng.lng,
+              timestamp: Date.now(),
+            };
+            return newPoints;
+          });
+        };
+        
+        const onMouseUp = () => {
+          map.dragging.enable();
+          map.off('mousemove', onMouseMove);
+          map.off('mouseup', onMouseUp);
+          
+          // Check for point merging (within 10 meters)
+          const MERGE_THRESHOLD = 0.0001; // ~10 meters
+          const draggedPoint = {
+            lat: currentMarker.getLatLng().lat,
+            lng: currentMarker.getLatLng().lng,
+            timestamp: Date.now(),
+          };
+          
+          setDrawPoints(prevPoints => {
+            let merged = false;
+            const newPoints = prevPoints.map((p, i) => {
+              if (i !== index) {
+                const distance = Math.sqrt(
+                  Math.pow(p.lat - draggedPoint.lat, 2) + 
+                  Math.pow(p.lng - draggedPoint.lng, 2)
+                );
+                if (distance < MERGE_THRESHOLD) {
+                  merged = true;
+                  return null; // Mark for removal
+                }
+              }
+              return i === index ? draggedPoint : p;
+            }).filter(p => p !== null) as Coordinate[];
+            
+            return newPoints;
+          });
+        };
+        
+        map.on('mousemove', onMouseMove);
+        map.on('mouseup', onMouseUp);
+      });
       
       markersLayerRef.current.addLayer(marker);
     });
@@ -285,12 +389,26 @@ export default function FarmBoundaryMapper({
     // Draw polygon if we have at least 3 points
     if (currentPoints.length >= 3) {
       const latlngs = currentPoints.map(p => [p.lat, p.lng]);
+      
+      // Check for self-intersecting edges
+      const hasSelfIntersection = checkSelfIntersection(currentPoints);
+      
       const polygon = L.polygon(latlngs, {
-        color: '#10B981',
-        fillColor: '#10B981',
+        color: hasSelfIntersection ? '#EF4444' : '#10B981',
+        fillColor: hasSelfIntersection ? '#FEE2E2' : '#10B981',
         fillOpacity: 0.2,
         weight: 2,
+        dashArray: hasSelfIntersection ? '5, 5' : undefined,
       });
+      
+      if (hasSelfIntersection) {
+        polygon.bindTooltip('Warning: Edges are crossing! Adjust points to fix.', { 
+          permanent: true, 
+          className: 'error-tooltip',
+          direction: 'center'
+        });
+      }
+      
       polygonLayerRef.current.addLayer(polygon);
 
       // Fit bounds to polygon
@@ -305,7 +423,7 @@ export default function FarmBoundaryMapper({
       });
       polygonLayerRef.current.addLayer(polyline);
     }
-  }, [currentPoints]);
+  }, [currentPoints, mode]);
 
   // Update current position marker
   useEffect(() => {
@@ -640,7 +758,7 @@ export default function FarmBoundaryMapper({
         </div>
       )}
 
-      {/* CSS for pulse animation */}
+      {/* CSS for pulse animation and error tooltip */}
       <style>{`
         @keyframes pulse {
           0% {
@@ -652,6 +770,20 @@ export default function FarmBoundaryMapper({
           100% {
             box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
           }
+        }
+        
+        .error-tooltip {
+          background-color: #FEE2E2 !important;
+          color: #991B1B !important;
+          border: 2px solid #EF4444 !important;
+          font-weight: 600 !important;
+          padding: 8px 12px !important;
+          border-radius: 8px !important;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .leaflet-interactive:hover {
+          cursor: move !important;
         }
       `}</style>
     </div>
