@@ -10,7 +10,10 @@
     },
     {
       "src": "backend/server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 10
+      }
     }
   ],
   "routes": [
@@ -22,11 +25,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "functions": {
-    "backend/server.js": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 10
-    }
-  }
+  ]
 }
