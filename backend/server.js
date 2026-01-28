@@ -62,11 +62,7 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Demo mode middleware - must come after json parsing
-const { demoModeMiddleware } = require('./middleware/demoMode');
-app.use(demoModeMiddleware);
-
-// Simple test route - no database required
+// Simple test route - no database or middleware required
 app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -79,6 +75,10 @@ app.get('/', (req, res) => {
     }
   });
 });
+
+// Demo mode middleware - must come after json parsing
+const { demoModeMiddleware } = require('./middleware/demoMode');
+app.use(demoModeMiddleware);
 
 async function connectToDatabase() {
   if (mongoose.connection.readyState === 1) {
