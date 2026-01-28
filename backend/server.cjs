@@ -189,8 +189,15 @@ async function startServer() {
 }
 
 if (process.env.VERCEL) {
-  connectToDatabase().catch((err) => {
-    console.error('MongoDB connection failed on Vercel:', err);
+  // For Vercel, connect to database and export the app
+  app.use(async (req, res, next) => {
+    try {
+      await connectToDatabase();
+      next();
+    } catch (err) {
+      console.error('Database connection error:', err.message);
+      res.status(500).json({ error: 'Database connection failed', details: err.message });
+    }
   });
 } else {
   startServer();
