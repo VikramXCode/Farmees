@@ -21,9 +21,20 @@ if (process.env.VERCEL) {
   console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
 }
 
+// CORS configuration
+const corsOptions = {
+  origin: process.env.FRONTEND_URL 
+    ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000']
+    : true, // Allow all origins in development
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Demo-Mode', 'X-Requested-With']
+};
+
 // Middlewares
-app.use(cors());
-app.use(express.json());
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Demo mode middleware - must come after json parsing
 const { demoModeMiddleware } = require('./middleware/demoMode');

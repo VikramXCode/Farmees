@@ -4,9 +4,14 @@
   "private": true,
   "type": "commonjs",
   "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
+    "build": "echo 'No build required for backend'",
+    "vercel-build": "echo 'No build required for backend'",
     "init:db": "node scripts/initMongoDB.js",
     "seed:officers": "node scripts/seedOfficers.js"
   },
