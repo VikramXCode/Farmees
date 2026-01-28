@@ -1,16 +1,15 @@
-'use strict';
-
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const {
+import {
   getComprehensiveAnalytics,
   calculateYieldPrediction,
   generatePriceForecast,
   calculateRiskAssessment,
   CROP_YIELD_BASELINES,
   CROP_PRICE_DATA
-} = require('../services/analyticsService');
-const { DEMO_PEST_ALERTS } = require('../middleware/demoMode');
+} from '../services/analyticsService.js';
+import { DEMO_PEST_ALERTS } from '../middleware/demoMode.js';
+
 
 // Demo analytics data for quick loading
 const DEMO_ANALYTICS = {
@@ -115,7 +114,7 @@ const DEMO_ANALYTICS = {
 router.get('/', async (req, res) => {
   try {
     console.log('GET /api/analytics - isDemo:', req.isDemo);
-    
+
     // Return demo data for quick response
     if (req.isDemo || req.headers['x-demo-mode'] === 'true') {
       return res.json({
@@ -123,9 +122,9 @@ router.get('/', async (req, res) => {
         generatedAt: new Date().toISOString()
       });
     }
-    
+
     const { crops, area, soilHealth, location } = req.query;
-    
+
     const analytics = await getComprehensiveAnalytics({
       crops: crops ? crops.split(',') : ['Rice'],
       totalArea: parseFloat(area) || 5,
@@ -134,7 +133,7 @@ router.get('/', async (req, res) => {
       pestAlerts: DEMO_PEST_ALERTS, // Use demo alerts for now
       location: location || 'Tamil Nadu'
     });
-    
+
     res.json(analytics);
   } catch (err) {
     console.error('GET /api/analytics error:', err);
@@ -151,7 +150,7 @@ router.get('/', async (req, res) => {
 router.get('/yield', async (req, res) => {
   try {
     const { crop = 'Rice', area = 5, soilHealth = 'good', weather = 'normal', pestPressure = 'low' } = req.query;
-    
+
     const prediction = calculateYieldPrediction(
       crop,
       parseFloat(area),
@@ -159,7 +158,7 @@ router.get('/yield', async (req, res) => {
       weather,
       pestPressure
     );
-    
+
     res.json(prediction);
   } catch (err) {
     console.error('GET /api/analytics/yield error:', err);
@@ -171,9 +170,9 @@ router.get('/yield', async (req, res) => {
 router.get('/price', async (req, res) => {
   try {
     const { crop = 'Rice', months = 6 } = req.query;
-    
+
     const forecast = generatePriceForecast(crop, parseInt(months));
-    
+
     res.json(forecast);
   } catch (err) {
     console.error('GET /api/analytics/price error:', err);
@@ -185,14 +184,14 @@ router.get('/price', async (req, res) => {
 router.get('/risk', async (req, res) => {
   try {
     const { crops, location = 'Tamil Nadu' } = req.query;
-    
+
     const assessment = calculateRiskAssessment(
       crops ? crops.split(',') : ['Rice'],
       [], // Weather forecast
       DEMO_PEST_ALERTS,
       location
     );
-    
+
     res.json(assessment);
   } catch (err) {
     console.error('GET /api/analytics/risk error:', err);
@@ -210,8 +209,9 @@ router.get('/crops', (req, res) => {
       avgYield: CROP_YIELD_BASELINES[crop].average,
       priceInfo: CROP_PRICE_DATA[crop] || CROP_PRICE_DATA['default']
     }));
-  
+
   res.json(crops);
 });
 
-module.exports = router;
+export default router;
+

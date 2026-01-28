@@ -1,15 +1,15 @@
-'use strict';
-
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const PestAlert = require('../models/PestAlert');
-const { DEMO_PEST_ALERTS } = require('../middleware/demoMode');
+import PestAlert from '../models/PestAlert.js';
+import { DEMO_PEST_ALERTS } from '../middleware/demoMode.js';
+import { fuzzCoordinates } from '../utils/geoUtils.js';
+
 
 // GET /api/alerts/pests?district=&area=&limit=
 router.get('/pests', async (req, res) => {
   try {
     console.log('GET /api/alerts/pests - isDemo:', req.isDemo, 'header:', req.headers['x-demo-mode']);
-    
+
     // Demo mode - return mock pest alerts
     // Also check header directly as fallback
     if (req.isDemo || req.headers['x-demo-mode'] === 'true') {
@@ -32,7 +32,8 @@ router.get('/pests', async (req, res) => {
       return res.json(DEMO_PEST_ALERTS);
     }
 
-    const { fuzzCoordinates } = require('../utils/geoUtils');
+
+
 
     res.json(alerts.map(a => {
       let lat = a.coordinates?.lat;
@@ -101,4 +102,5 @@ router.post('/pests', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
+

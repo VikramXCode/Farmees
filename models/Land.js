@@ -1,5 +1,5 @@
 // MongoDB Schema for Land Data
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const soilReportSchema = new mongoose.Schema({
   pH: { type: Number, min: 0, max: 14 },
@@ -110,7 +110,7 @@ const farmBoundarySchema = new mongoose.Schema({
 const landSchema = new mongoose.Schema({
   landId: { type: String, required: true },
   userId: { type: String, required: true, index: true },
-  
+
   // Basic Land Information
   name: { type: String, required: true },
   location: { type: String, required: true },
@@ -118,23 +118,23 @@ const landSchema = new mongoose.Schema({
   soilType: { type: String, required: true },
   currentCrop: { type: String, required: true },
   waterAvailability: { type: String, enum: ['high', 'medium', 'low'], required: true },
-  
+
   // Coordinates for map display (can be derived from postal code)
   coordinates: {
     lat: { type: Number },
     lng: { type: Number }
   },
-  
+
   // Farm Boundary Mapping (Optional)
   boundary: farmBoundarySchema,
-  
+
   // Calculated land size (from boundary or manual)
   landSize: {
     value: { type: Number },
     unit: { type: String, enum: ['acres', 'hectares', 'sqMeters'], default: 'acres' },
     source: { type: String, enum: ['manual', 'boundary_mapping'], default: 'manual' }
   },
-  
+
   // Soil Analysis Data - Reference to SoilReport collection
   soilReportId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -142,17 +142,17 @@ const landSchema = new mongoose.Schema({
   },
   // Keep basic soil info for quick access
   soilReport: soilReportSchema,
-  
+
   // Historical Data
   weatherHistory: [weatherHistorySchema],
   cropHistory: [cropHistorySchema],
   pestDiseaseHistory: [pestDiseaseHistorySchema],
   treatmentHistory: [treatmentHistorySchema],
   marketData: [marketDataSchema],
-  
+
   // AI Context
   aiContext: aiContextSchema,
-  
+
   // Metadata
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
@@ -161,7 +161,7 @@ const landSchema = new mongoose.Schema({
 });
 
 // Update the updatedAt field before saving
-landSchema.pre('save', function(next) {
+landSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
@@ -171,4 +171,4 @@ landSchema.index({ userId: 1, isActive: 1 });
 landSchema.index({ landId: 1 }, { unique: true }); // explicit unique index for landId
 landSchema.index({ 'aiContext.lastInteraction': -1 });
 
-module.exports = mongoose.model('Land', landSchema);
+export default mongoose.model('Land', landSchema);

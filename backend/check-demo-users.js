@@ -1,13 +1,14 @@
-const mongoose = require('mongoose');
-const User = require('./models/User');
+import mongoose from 'mongoose';
+import User from './models/User.js';
+
 
 async function checkDemoUsers() {
   try {
     await mongoose.connect('mongodb://localhost:27017/farmease');
     console.log('✓ Connected to MongoDB\n');
-    
+
     const demoPhones = ['9999000001', '9999000002', '9999000003'];
-    
+
     for (const phone of demoPhones) {
       const user = await User.findOne({ phone });
       if (user) {
@@ -22,7 +23,7 @@ async function checkDemoUsers() {
         console.log(`❌ User ${phone} not found\n`);
       }
     }
-    
+
     process.exit(0);
   } catch (error) {
     console.error('Error:', error);

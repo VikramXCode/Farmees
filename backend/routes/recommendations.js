@@ -1,7 +1,7 @@
-// API Routes for Land Recommendations
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const LandRecommendation = require('../models/LandRecommendation');
+import LandRecommendation from '../models/LandRecommendation.js';
+
 
 // Create new recommendation
 router.post('/', async (req, res) => {
@@ -45,11 +45,11 @@ router.put('/:recommendationId/status', async (req, res) => {
       { status, updatedAt: new Date() },
       { new: true }
     );
-    
+
     if (!recommendation) {
       return res.status(404).json({ error: 'Recommendation not found' });
     }
-    
+
     res.json(recommendation);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -59,9 +59,9 @@ router.put('/:recommendationId/status', async (req, res) => {
 // Get pending recommendations
 router.get('/pending/:landId', async (req, res) => {
   try {
-    const recommendations = await LandRecommendation.find({ 
-      landId: req.params.landId, 
-      status: 'pending' 
+    const recommendations = await LandRecommendation.find({
+      landId: req.params.landId,
+      status: 'pending'
     }).sort({ priority: -1, dueDate: 1 });
     res.json(recommendations);
   } catch (error) {
@@ -72,8 +72,8 @@ router.get('/pending/:landId', async (req, res) => {
 // Get overdue recommendations
 router.get('/overdue/:landId', async (req, res) => {
   try {
-    const recommendations = await LandRecommendation.find({ 
-      landId: req.params.landId, 
+    const recommendations = await LandRecommendation.find({
+      landId: req.params.landId,
       status: 'pending',
       dueDate: { $lt: new Date() }
     }).sort({ dueDate: 1 });
@@ -87,15 +87,16 @@ router.get('/overdue/:landId', async (req, res) => {
 router.delete('/:recommendationId', async (req, res) => {
   try {
     const recommendation = await LandRecommendation.findByIdAndDelete(req.params.recommendationId);
-    
+
     if (!recommendation) {
       return res.status(404).json({ error: 'Recommendation not found' });
     }
-    
+
     res.json({ message: 'Recommendation deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-module.exports = router;
+export default router;
+

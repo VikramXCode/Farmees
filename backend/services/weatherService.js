@@ -1,5 +1,6 @@
-const { getEnvKeys, shouldRotate } = require('../utils/apiKeys');
-const axios = require('axios');
+import { getEnvKeys, shouldRotate } from '../utils/apiKeys.js';
+import axios from 'axios';
+
 
 class WeatherService {
   constructor() {
@@ -36,7 +37,7 @@ class WeatherService {
       console.warn('Cannot rotate: Only one or no OpenWeather API keys available');
       return false;
     }
-    
+
     this.currentKeyIndex = (this.currentKeyIndex + 1) % this.availableKeys.length;
     console.log(`Rotated to OpenWeather API key index: ${this.currentKeyIndex + 1}/${this.availableKeys.length}`);
     return true;
@@ -53,7 +54,7 @@ class WeatherService {
         console.log(
           `OpenWeather current request [key ${this.currentKeyIndex + 1} ${masked}] lat=${lat} lon=${lon} units=metric lang=en`
         );
-        
+
         const response = await axios.get(`${this.baseURL}/weather`, {
           params: {
             lat: lat,
@@ -69,7 +70,7 @@ class WeatherService {
         console.log(
           `OpenWeather current response [key ${this.currentKeyIndex + 1} ${masked}] status=${response.status} name=${weather?.name} coord=(${weather?.coord?.lat},${weather?.coord?.lon}) temp=${weather?.main?.temp} desc=${weather?.weather?.[0]?.description}`
         );
-        
+
         return {
           success: true,
           data: {
@@ -101,7 +102,7 @@ class WeatherService {
         const status = error.response?.status;
         const detail = error.response?.data?.message || error.response?.data || error.message;
         console.error(`OpenWeather current API error [key ${this.currentKeyIndex + 1} ${masked}] status=${status}:`, detail);
-        
+
         // Check if we should rotate the key based on error type
         if (this.shouldRotateForError(error)) {
           if (this.rotateKey()) {
@@ -130,7 +131,7 @@ class WeatherService {
         console.log(
           `OpenWeather forecast request [key ${this.currentKeyIndex + 1} ${masked}] lat=${lat} lon=${lon} days=${days} units=metric lang=en`
         );
-        
+
         const response = await axios.get(`${this.baseURL}/forecast`, {
           params: {
             lat: lat,
@@ -148,10 +149,10 @@ class WeatherService {
         console.log(
           `OpenWeather forecast response [key ${this.currentKeyIndex + 1} ${masked}] status=${response.status} city=${forecast?.city?.name} list=${forecast?.list?.length || 0} firstDt=${first ? first.dt : 'n/a'}`
         );
-        
+
         // Group forecasts by day
         const dailyForecasts = this.groupForecastsByDay(forecast.list);
-        
+
         return {
           success: true,
           data: {
@@ -177,7 +178,7 @@ class WeatherService {
         const status = error.response?.status;
         const detail = error.response?.data?.message || error.response?.data || error.message;
         console.error(`OpenWeather forecast API error [key ${this.currentKeyIndex + 1} ${masked}] status=${status}:`, detail);
-        
+
         if (this.shouldRotateForError(error)) {
           if (this.rotateKey()) {
             attempts++;
@@ -196,11 +197,11 @@ class WeatherService {
 
   groupForecastsByDay(forecasts) {
     const days = {};
-    
+
     forecasts.forEach(forecast => {
       const date = new Date(forecast.dt * 1000);
       const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
-      
+
       if (!days[dayKey]) {
         days[dayKey] = {
           date: dayKey,
@@ -208,7 +209,7 @@ class WeatherService {
           forecasts: []
         };
       }
-      
+
       days[dayKey].forecasts.push({
         time: date.toISOString(),
         temperature: Math.round(forecast.main.temp),
@@ -227,19 +228,19 @@ class WeatherService {
       const temps = day.forecasts.map(f => f.temperature);
       const conditions = day.forecasts.map(f => f.condition);
       const precipitations = day.forecasts.map(f => f.precipitation);
-      
+
       // Get most common condition
       const conditionCounts = {};
       conditions.forEach(condition => {
         conditionCounts[condition] = (conditionCounts[condition] || 0) + 1;
       });
-      const dominantCondition = Object.keys(conditionCounts).reduce((a, b) => 
+      const dominantCondition = Object.keys(conditionCounts).reduce((a, b) =>
         conditionCounts[a] > conditionCounts[b] ? a : b
       );
 
       // Find the forecast with dominant condition for icon
       const dominantForecast = day.forecasts.find(f => f.condition === dominantCondition);
-      
+
       return {
         date: day.date,
         dayName: day.dayName,
@@ -278,7 +279,7 @@ class WeatherService {
           `OpenWeather city lookup request [key ${this.currentKeyIndex + 1} ${masked}] q=${countryCode ? `${cityName},${countryCode}` : cityName}`
         );
         const query = countryCode ? `${cityName},${countryCode}` : cityName;
-        
+
         const response = await axios.get(`${this.baseURL}/weather`, {
           params: {
             q: query,
@@ -293,7 +294,7 @@ class WeatherService {
         console.log(
           `OpenWeather city lookup response [key ${this.currentKeyIndex + 1} ${masked}] status=${response.status} name=${weather?.name} coord=(${weather?.coord?.lat},${weather?.coord?.lon})`
         );
-        
+
         return {
           success: true,
           coordinates: {
@@ -308,7 +309,7 @@ class WeatherService {
         const status = error.response?.status;
         const detail = error.response?.data?.message || error.response?.data || error.message;
         console.error(`OpenWeather city lookup error [key ${this.currentKeyIndex + 1} ${masked}] status=${status}:`, detail);
-        
+
         if (this.shouldRotateForError(error)) {
           if (this.rotateKey()) {
             attempts++;
@@ -341,4 +342,4 @@ class WeatherService {
   }
 }
 
-module.exports = new WeatherService();
+export default new WeatherService();

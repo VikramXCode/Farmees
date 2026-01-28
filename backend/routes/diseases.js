@@ -1,10 +1,16 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const { isDemoUser, DEMO_DISEASE_ANALYSIS } = require('../middleware/demoMode');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
+import { fileURLToPath } from 'url';
+import { isDemoUser, DEMO_DISEASE_ANALYSIS } from '../middleware/demoMode.js';
+import { getEnvKeys, shouldRotate } from '../utils/apiKeys.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 // Use /tmp on Vercel (serverless), local uploads dir otherwise
 const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, '..', 'uploads');
@@ -16,7 +22,7 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2,8)}${ext}`);
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
   }
 });
 
@@ -32,7 +38,7 @@ router.post('/identify', upload.single('image'), async (req, res) => {
     }
 
     if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
-    const { getEnvKeys, shouldRotate } = require('../utils/apiKeys');
+
     const keys = getEnvKeys('PLANT_ID');
     if (!keys.length) {
       return res.status(400).json({
@@ -158,4 +164,5 @@ router.get('/uploads/:file', (req, res) => {
   res.sendFile(file);
 });
 
-module.exports = router;
+export default router;
+

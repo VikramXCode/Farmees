@@ -1,8 +1,13 @@
 // Vercel Serverless Function - Single Entry Point
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Define __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -30,7 +35,7 @@ app.use((err, req, res, next) => {
 });
 
 // Demo mode middleware
-const { demoModeMiddleware } = require('../middleware/demoMode');
+import { demoModeMiddleware } from '../middleware/demoMode.js';
 app.use(demoModeMiddleware);
 
 // Database connection
@@ -70,50 +75,43 @@ app.get('/api/health', async (req, res) => {
     });
 });
 
-// Routes path (relative to project root)
-const routesPath = path.join(__dirname, '..', 'routes');
-
-// Load routes with error handling
-let routesLoaded = {};
-const loadRoute = (name) => {
-    try {
-        const route = require(path.join(routesPath, name));
-        routesLoaded[name] = 'loaded';
-        return route;
-    } catch (err) {
-        console.error(`Failed to load route ${name}:`, err.message);
-        routesLoaded[name] = `error: ${err.message}`;
-        const placeholder = express.Router();
-        placeholder.all('*', (req, res) => {
-            res.status(500).json({ error: `Route ${name} failed to load`, details: err.message });
-        });
-        return placeholder;
-    }
-};
+// Import all routes
+import authRoutes from '../routes/auth.js';
+import landsRoutes from '../routes/lands.js';
+import aiInteractionsRoutes from '../routes/ai-interactions.js';
+import recommendationsRoutes from '../routes/recommendations.js';
+import diseasesRoutes from '../routes/diseases.js';
+import pestsRoutes from '../routes/pests.js';
+import soilRoutes from '../routes/soil.js';
+import cropRecommendationsRoutes from '../routes/crop-recommendations.js';
+import weatherRoutes from '../routes/weather.js';
+import aiRoutes from '../routes/ai.js';
+import officersRoutes from '../routes/officers.js';
+import escalationsRoutes from '../routes/escalations.js';
+import alertsRoutes from '../routes/alerts.js';
+import marketRoutes from '../routes/market.js';
+import connectRoutes from '../routes/connect.js';
+import labourRoutes from '../routes/labour.js';
+import analyticsRoutes from '../routes/analytics.js';
 
 // Load all routes
-app.use('/api/auth', loadRoute('auth'));
-app.use('/api/lands', loadRoute('lands'));
-app.use('/api/ai-interactions', loadRoute('ai-interactions'));
-app.use('/api/recommendations', loadRoute('recommendations'));
-app.use('/api/diseases', loadRoute('diseases'));
-app.use('/api/pests', loadRoute('pests'));
-app.use('/api/soil', loadRoute('soil'));
-app.use('/api/crop-recommendations', loadRoute('crop-recommendations'));
-app.use('/api/weather', loadRoute('weather'));
-app.use('/api/ai', loadRoute('ai'));
-app.use('/api/officers', loadRoute('officers'));
-app.use('/api/escalations', loadRoute('escalations'));
-app.use('/api/alerts', loadRoute('alerts'));
-app.use('/api/market', loadRoute('market'));
-app.use('/api/connect', loadRoute('connect'));
-app.use('/api/labour', loadRoute('labour'));
-app.use('/api/analytics', loadRoute('analytics'));
-
-// Debug endpoint
-app.get('/api/debug/routes', (req, res) => {
-    res.json({ routesLoaded, routesPath });
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/lands', landsRoutes);
+app.use('/api/ai-interactions', aiInteractionsRoutes);
+app.use('/api/recommendations', recommendationsRoutes);
+app.use('/api/diseases', diseasesRoutes);
+app.use('/api/pests', pestsRoutes);
+app.use('/api/soil', soilRoutes);
+app.use('/api/crop-recommendations', cropRecommendationsRoutes);
+app.use('/api/weather', weatherRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/officers', officersRoutes);
+app.use('/api/escalations', escalationsRoutes);
+app.use('/api/alerts', alertsRoutes);
+app.use('/api/market', marketRoutes);
+app.use('/api/connect', connectRoutes);
+app.use('/api/labour', labourRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Root API endpoint
 app.get('/api', (req, res) => {
@@ -139,4 +137,5 @@ app.use((err, req, res, next) => {
 });
 
 // Export for Vercel
-module.exports = app;
+export default app;
+

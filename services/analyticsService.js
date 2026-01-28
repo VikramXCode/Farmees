@@ -1,12 +1,5 @@
-'use strict';
-
-/**
- * Predictive Analytics Service
- * Provides yield predictions, price forecasting, and risk analysis
- */
-
-const { Groq } = require('groq-sdk');
-const { getEnvKeys } = require('../utils/apiKeys');
+import { Groq } from 'groq-sdk';
+import { getEnvKeys } from '../utils/apiKeys.js';
 
 // Historical yield data by crop (kg per acre) - baseline
 const CROP_YIELD_BASELINES = {
@@ -60,32 +53,32 @@ const WEATHER_IMPACT = {
 function calculateYieldPrediction(crop, areaInAcres, soilHealth = 'good', weatherCondition = 'normal', pestPressure = 'low') {
   const cropKey = crop.toLowerCase();
   const baseline = CROP_YIELD_BASELINES[cropKey] || CROP_YIELD_BASELINES['default'];
-  
+
   // Base yield
   let predictedYield = baseline.average;
-  
+
   // Soil health factor
   const soilFactors = { excellent: 1.15, good: 1.0, average: 0.85, poor: 0.7 };
   predictedYield *= soilFactors[soilHealth] || 1.0;
-  
+
   // Weather impact
   const weatherImpact = WEATHER_IMPACT[weatherCondition] || WEATHER_IMPACT['normal'];
   predictedYield *= weatherImpact.yieldFactor;
-  
+
   // Pest pressure factor
   const pestFactors = { none: 1.05, low: 1.0, medium: 0.85, high: 0.7 };
   predictedYield *= pestFactors[pestPressure] || 1.0;
-  
+
   // Total yield for the area
   const totalYield = Math.round(predictedYield * areaInAcres);
-  
+
   // Confidence based on data quality
   const confidence = Math.round(75 + Math.random() * 15); // 75-90%
-  
+
   // Range calculation
   const minYield = Math.round(totalYield * 0.85);
   const maxYield = Math.round(totalYield * 1.15);
-  
+
   return {
     crop,
     areaAcres: areaInAcres,
@@ -111,20 +104,20 @@ function calculateYieldPrediction(crop, areaInAcres, soilHealth = 'good', weathe
 function generatePriceForecast(crop, months = 6) {
   const cropKey = crop.toLowerCase();
   const priceData = CROP_PRICE_DATA[cropKey] || CROP_PRICE_DATA['default'];
-  
+
   const currentMonth = new Date().getMonth();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
+
   const forecast = [];
   const basePrice = priceData.current;
-  
+
   for (let i = 0; i < months; i++) {
     const monthIndex = (currentMonth + i) % 12;
     const monthName = monthNames[monthIndex];
-    
+
     // Check if this is a peak season month
     const isPeakMonth = priceData.seasonalPeak.includes(monthName);
-    
+
     // Calculate price based on base price (not cumulative)
     // Peak months get 10-20% higher prices
     // Non-peak months get 5-10% lower prices
@@ -134,14 +127,14 @@ function generatePriceForecast(crop, months = 6) {
     } else {
       monthPrice = basePrice * (0.90 + Math.random() * 0.08); // 90-98% of base
     }
-    
+
     // Apply trend adjustment
     const trendAdjustment = { rising: 1 + (i * 0.01), falling: 1 - (i * 0.01), stable: 1, volatile: 1 };
     monthPrice *= trendAdjustment[priceData.trend] || 1;
-    
+
     // Clamp to min/max
     monthPrice = Math.max(priceData.min, Math.min(priceData.max, monthPrice));
-    
+
     forecast.push({
       month: monthName,
       year: new Date().getFullYear() + (monthIndex < currentMonth ? 1 : 0),
@@ -151,12 +144,12 @@ function generatePriceForecast(crop, months = 6) {
       recommendation: isPeakMonth ? '🌟 Good time to sell' : 'Hold if possible'
     });
   }
-  
+
   // Best selling period
-  const bestMonth = forecast.reduce((best, curr) => 
+  const bestMonth = forecast.reduce((best, curr) =>
     curr.predictedPrice > best.predictedPrice ? curr : best
   );
-  
+
   return {
     crop,
     currentPrice: priceData.current,
@@ -174,12 +167,12 @@ function generatePriceForecast(crop, months = 6) {
  */
 function calculateRiskAssessment(crops, weatherForecast, pestAlerts, location) {
   const risks = [];
-  
+
   // Weather-based risks
   if (weatherForecast) {
     const avgRainfall = weatherForecast.reduce((sum, d) => sum + (d.rainfall || 0), 0) / weatherForecast.length;
     const avgTemp = weatherForecast.reduce((sum, d) => sum + (d.temp || 30), 0) / weatherForecast.length;
-    
+
     if (avgRainfall > 50) {
       risks.push({
         type: 'flood',
@@ -209,7 +202,7 @@ function calculateRiskAssessment(crops, weatherForecast, pestAlerts, location) {
         ]
       });
     }
-    
+
     if (avgTemp > 38) {
       risks.push({
         type: 'heat_wave',
@@ -226,7 +219,7 @@ function calculateRiskAssessment(crops, weatherForecast, pestAlerts, location) {
       });
     }
   }
-  
+
   // Pest-based risks
   if (pestAlerts && pestAlerts.length > 0) {
     const highSeverityAlerts = pestAlerts.filter(a => a.severity === 'high' || a.riskLevel === 'Critical');
@@ -247,7 +240,7 @@ function calculateRiskAssessment(crops, weatherForecast, pestAlerts, location) {
       });
     }
   }
-  
+
   // Market risk
   crops.forEach(crop => {
     const priceData = CROP_PRICE_DATA[crop.toLowerCase()] || CROP_PRICE_DATA['default'];
@@ -267,7 +260,7 @@ function calculateRiskAssessment(crops, weatherForecast, pestAlerts, location) {
       });
     }
   });
-  
+
   // Add a general low risk if no major risks
   if (risks.length === 0) {
     risks.push({
@@ -284,14 +277,14 @@ function calculateRiskAssessment(crops, weatherForecast, pestAlerts, location) {
       ]
     });
   }
-  
+
   // Calculate overall risk score
   const severityScores = { critical: 4, high: 3, medium: 2, low: 1 };
   const overallScore = risks.reduce((sum, r) => sum + (severityScores[r.severity] || 1) * (r.probability / 100), 0);
   const maxPossibleScore = risks.length * 4;
-  const overallRiskLevel = overallScore / maxPossibleScore > 0.6 ? 'high' : 
-                           overallScore / maxPossibleScore > 0.3 ? 'medium' : 'low';
-  
+  const overallRiskLevel = overallScore / maxPossibleScore > 0.6 ? 'high' :
+    overallScore / maxPossibleScore > 0.3 ? 'medium' : 'low';
+
   return {
     risks: risks.sort((a, b) => b.probability - a.probability),
     overallRiskLevel,
@@ -311,9 +304,9 @@ async function generateAIInsights(analyticsData) {
       console.log('No Groq API keys available, using default insights');
       return getDefaultInsights(analyticsData);
     }
-    
+
     const groq = new Groq({ apiKey: groqKeys[0] });
-    
+
     const prompt = `You are an agricultural expert. Based on the following farm analytics data, provide 3-4 actionable insights in JSON format.
 
 Analytics Data:
@@ -333,7 +326,7 @@ Example: [{"title": "Optimize Irrigation", "description": "Based on weather fore
       temperature: 0.7,
       max_tokens: 500
     });
-    
+
     const content = response.choices[0]?.message?.content || '';
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
@@ -348,7 +341,7 @@ Example: [{"title": "Optimize Irrigation", "description": "Based on weather fore
 
 function getDefaultInsights(analyticsData) {
   const insights = [];
-  
+
   if (analyticsData.yieldPrediction?.comparedToAverage < -10) {
     insights.push({
       title: 'Yield Below Average',
@@ -357,7 +350,7 @@ function getDefaultInsights(analyticsData) {
       actionType: 'immediate'
     });
   }
-  
+
   if (analyticsData.priceForecast?.trend === 'rising') {
     insights.push({
       title: 'Favorable Price Trend',
@@ -366,7 +359,7 @@ function getDefaultInsights(analyticsData) {
       actionType: 'planned'
     });
   }
-  
+
   if (analyticsData.riskAssessment?.overallRiskLevel === 'high') {
     insights.push({
       title: 'High Risk Alert',
@@ -375,14 +368,14 @@ function getDefaultInsights(analyticsData) {
       actionType: 'immediate'
     });
   }
-  
+
   insights.push({
     title: 'Market Opportunity',
     description: `Best time to sell: ${analyticsData.priceForecast?.bestSellingPeriod || 'Check price forecast'}`,
     priority: 'medium',
     actionType: 'planned'
   });
-  
+
   return insights;
 }
 
@@ -398,10 +391,10 @@ async function getComprehensiveAnalytics(params) {
     pestAlerts = [],
     location = 'Tamil Nadu'
   } = params;
-  
+
   // Generate predictions for the primary crop
   const primaryCrop = crops[0] || 'Rice';
-  
+
   const yieldPrediction = calculateYieldPrediction(
     primaryCrop,
     totalArea,
@@ -409,11 +402,11 @@ async function getComprehensiveAnalytics(params) {
     weatherForecast.length > 0 ? 'normal' : 'normal',
     pestAlerts.filter(a => a.severity === 'high').length > 0 ? 'medium' : 'low'
   );
-  
+
   const priceForecast = generatePriceForecast(primaryCrop, 6);
-  
+
   const riskAssessment = calculateRiskAssessment(crops, weatherForecast, pestAlerts, location);
-  
+
   // Calculate potential revenue
   const potentialRevenue = {
     minimum: Math.round(yieldPrediction.rangeMin * priceForecast.currentPrice),
@@ -421,7 +414,7 @@ async function getComprehensiveAnalytics(params) {
     maximum: Math.round(yieldPrediction.rangeMax * priceForecast.expectedPeakPrice),
     currency: '₹'
   };
-  
+
   const analyticsData = {
     crops,
     yieldPrediction,
@@ -429,10 +422,10 @@ async function getComprehensiveAnalytics(params) {
     riskAssessment,
     potentialRevenue
   };
-  
+
   // Generate AI insights
   const insights = await generateAIInsights(analyticsData);
-  
+
   return {
     ...analyticsData,
     insights,
@@ -440,7 +433,7 @@ async function getComprehensiveAnalytics(params) {
   };
 }
 
-module.exports = {
+export {
   calculateYieldPrediction,
   generatePriceForecast,
   calculateRiskAssessment,

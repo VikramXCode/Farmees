@@ -1,7 +1,7 @@
 // API Routes for AI Interactions
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const AIInteraction = require('../models/AIInteraction');
+import AIInteraction from '../models/AIInteraction.js';
 
 // Save AI interaction
 router.post('/', async (req, res) => {
@@ -48,11 +48,11 @@ router.put('/:interactionId/feedback', async (req, res) => {
       { feedback: req.body },
       { new: true }
     );
-    
+
     if (!interaction) {
       return res.status(404).json({ error: 'Interaction not found' });
     }
-    
+
     res.json(interaction);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -74,7 +74,7 @@ router.get('/stats/:landId', async (req, res) => {
         }
       }
     ]);
-    
+
     res.json(stats[0] || {
       totalInteractions: 0,
       averageRating: 0,
@@ -86,4 +86,4 @@ router.get('/stats/:landId', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

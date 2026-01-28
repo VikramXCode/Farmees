@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const SoilReportSchema = new mongoose.Schema({
   reportId: {
@@ -15,7 +15,7 @@ const SoilReportSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  
+
   // Core soil parameters
   pH: {
     type: Number,
@@ -43,7 +43,7 @@ const SoilReportSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
-  
+
   // Micronutrients
   zinc: Number,
   iron: Number,
@@ -51,7 +51,7 @@ const SoilReportSchema = new mongoose.Schema({
   manganese: Number,
   sulfur: Number,
   boron: Number,
-  
+
   // Soil properties
   texture: {
     type: String,
@@ -59,7 +59,7 @@ const SoilReportSchema = new mongoose.Schema({
   },
   cationExchangeCapacity: Number,
   electricalConductivity: Number,
-  
+
   // Report metadata
   analysisDate: {
     type: Date,
@@ -72,7 +72,7 @@ const SoilReportSchema = new mongoose.Schema({
     enum: ['tesseract', 'easyocr', 'manual', 'fallback'],
     default: 'tesseract'
   },
-  
+
   // OCR extraction details
   extractedText: String,
   extractionAccuracy: {
@@ -80,7 +80,7 @@ const SoilReportSchema = new mongoose.Schema({
     enum: ['high', 'medium', 'low'],
     default: 'medium'
   },
-  
+
   // AI recommendations based on this soil report
   recommendations: [{
     cropName: String,
@@ -96,7 +96,7 @@ const SoilReportSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  
+
   // Status and tracking
   isActive: {
     type: Boolean,
@@ -118,9 +118,9 @@ SoilReportSchema.index({ userId: 1 });
 SoilReportSchema.index({ analysisDate: -1 });
 
 // Update the updatedAt field before saving
-SoilReportSchema.pre('save', function(next) {
+SoilReportSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });
 
-module.exports = mongoose.model('SoilReport', SoilReportSchema);
+export default mongoose.model('SoilReport', SoilReportSchema);

@@ -1,5 +1,5 @@
-const express = require('express');
-const Officer = require('../models/Officer');
+import express from 'express';
+import Officer from '../models/Officer.js';
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -12,10 +12,12 @@ router.get('/', async (req, res) => {
     ];
     if (state) {
       q.$and = q.$and || [];
-      q.$and.push({ $or: [
-        { state: new RegExp('^' + state + '$', 'i') },
-        { 'coverage.states': new RegExp('^' + state + '$', 'i') },
-      ] });
+      q.$and.push({
+        $or: [
+          { state: new RegExp('^' + state + '$', 'i') },
+          { 'coverage.states': new RegExp('^' + state + '$', 'i') },
+        ]
+      });
     }
     if (active !== undefined) q.isActive = active !== 'false';
     const officers = await Officer.find(q).lean();
@@ -26,4 +28,4 @@ router.get('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -41,4 +41,5 @@ function shouldRotate(status, bodyText = '') {
   );
 }
 
-module.exports = { getEnvKeys, shouldRotate };
+export { getEnvKeys, shouldRotate };
+

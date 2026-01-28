@@ -1,18 +1,16 @@
 // MongoDB Initialization Script for FarmEase
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Import models
-const Land = require('../models/Land');
-const AIInteraction = require('../models/AIInteraction');
-const LandRecommendation = require('../models/LandRecommendation');
+import Land from '../models/Land.js';
+import AIInteraction from '../models/AIInteraction.js';
+import LandRecommendation from '../models/LandRecommendation.js';
+import { fileURLToPath } from 'url';
 
 // MongoDB connection
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/farmease', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/farmease');
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
@@ -295,9 +293,10 @@ const main = async () => {
   process.exit(0);
 };
 
-// Run if called directly
-if (require.main === module) {
+// ESM equivalent of require.main === module
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main();
 }
 
-module.exports = { connectDB, initializeCollections };
+export { connectDB, initializeCollections };
+

@@ -1,4 +1,4 @@
-function getEnvKeys(base) {
+export function getEnvKeys(base) {
   const keys = [];
   const csv = process.env[`${base}_API_KEYS`];
   if (csv) {
@@ -25,7 +25,7 @@ function getEnvKeys(base) {
   return keys.filter(k => (seen.has(k) ? false : (seen.add(k), true)));
 }
 
-function shouldRotate(status, bodyText = '') {
+export function shouldRotate(status, bodyText = '') {
   const s = Number(status) || 0;
   const t = String(bodyText || '').toLowerCase();
   if ([401, 403, 429, 402].includes(s)) return true;
@@ -41,4 +41,3 @@ function shouldRotate(status, bodyText = '') {
   );
 }
 
-module.exports = { getEnvKeys, shouldRotate };

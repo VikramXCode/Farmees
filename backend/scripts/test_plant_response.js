@@ -1,6 +1,10 @@
-// Quick test harness to simulate Plant.id v3 response normalization
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const raw = fs.readFileSync(path.join(__dirname, 'sample_plant_v3.json'), 'utf8');
 const data = JSON.parse(raw);
 
@@ -60,9 +64,9 @@ const normalized = normalize(data);
 console.log('Normalized:', JSON.stringify(normalized, null, 2));
 
 // Pick top
-const diseases = (normalized.diseaseSuggestions || []).slice().sort((a,b) => (b.probability||0)-(a.probability||0));
-if (diseases.length>0) console.log('\nTop disease:', JSON.stringify(diseases[0], null, 2));
+const diseases = (normalized.diseaseSuggestions || []).slice().sort((a, b) => (b.probability || 0) - (a.probability || 0));
+if (diseases.length > 0) console.log('\nTop disease:', JSON.stringify(diseases[0], null, 2));
 else {
-  const plants = (normalized.plantSuggestions||[]).slice().sort((a,b) => (b.probability||0)-(a.probability||0));
+  const plants = (normalized.plantSuggestions || []).slice().sort((a, b) => (b.probability || 0) - (a.probability || 0));
   console.log('\nTop plant:', plants[0] ? JSON.stringify(plants[0], null, 2) : 'none');
 }

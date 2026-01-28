@@ -1,14 +1,18 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const Land = require('../models/Land');
-const SoilReport = require('../models/SoilReport');
-const groqService = require('../services/groqService');
-const { isDemoUser, DEMO_CROP_RECOMMENDATION } = require('../middleware/demoMode');
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import os from 'os';
+import Land from '../models/Land.js';
+import SoilReport from '../models/SoilReport.js';
+import groqService from '../services/groqService.js';
+import { isDemoUser, DEMO_CROP_RECOMMENDATION } from '../middleware/demoMode.js';
 
-const os = require('os');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 // Configure multer for audio file uploads
 const audioStorage = multer.diskStorage({
@@ -24,7 +28,7 @@ const audioStorage = multer.diskStorage({
   }
 });
 
-const audioUpload = multer({ 
+const audioUpload = multer({
   storage: audioStorage,
   fileFilter: function (req, file, cb) {
     // Accept audio files only
@@ -74,16 +78,16 @@ router.post('/ai-generate', async (req, res) => {
       }
 
       // Fetch latest soil report for this land
-      soilData = await SoilReport.findOne({ 
-        landId, 
-        userId 
+      soilData = await SoilReport.findOne({
+        landId,
+        userId
       }).sort({ createdAt: -1 });
     }
 
     // Generate recommendation using Groq
     const result = await groqService.generateCropRecommendation(
-      landData, 
-      soilData, 
+      landData,
+      soilData,
       userQuery
     );
 
@@ -115,9 +119,9 @@ router.post('/ai-generate', async (req, res) => {
   } catch (error) {
     console.error('AI crop recommendation generation error:', error);
     if (!res.headersSent) {
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to generate AI crop recommendation',
-        details: error.message 
+        details: error.message
       });
     }
   }
@@ -143,9 +147,9 @@ router.post('/chat', async (req, res) => {
     if (landId) {
       landData = await Land.findOne({ landId: landId, userId });
       if (landData) {
-        soilData = await SoilReport.findOne({ 
-          landId, 
-          userId 
+        soilData = await SoilReport.findOne({
+          landId,
+          userId
         }).sort({ createdAt: -1 });
       }
     }
@@ -168,9 +172,9 @@ router.post('/chat', async (req, res) => {
 
   } catch (error) {
     console.error('Chat error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process chat message',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -213,7 +217,7 @@ router.post('/speech-to-text', audioUpload.single('audio'), async (req, res) => 
 
   } catch (error) {
     console.error('Speech-to-text error:', error);
-    
+
     // Clean up the uploaded file on error
     if (req.file && req.file.path) {
       fs.unlink(req.file.path, (err) => {
@@ -221,9 +225,9 @@ router.post('/speech-to-text', audioUpload.single('audio'), async (req, res) => 
       });
     }
 
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to transcribe audio',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -233,22 +237,22 @@ router.get('/crops/:landId', async (req, res) => {
   try {
     const { landId } = req.params;
     console.log('Generating recommendations for land:', landId);
-    
+
     // Fetch complete land data with soil reports
     const land = await Land.findOne({ landId, isActive: true });
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     // Fetch latest soil report for detailed analysis
     const soilReport = await SoilReport.findOne({ landId }).sort({ analysisDate: -1 });
-    
+
     // Analyze all available data
     const analysis = await analyzeCompleteData(land, soilReport);
-    
+
     // Generate recommendations
     const recommendations = generateIntelligentRecommendations(analysis);
-    
+
     res.json({
       landInfo: {
         name: land.name,
@@ -260,7 +264,7 @@ router.get('/crops/:landId', async (req, res) => {
       recommendations,
       generatedAt: new Date().toISOString()
     });
-    
+
   } catch (error) {
     console.error('Recommendation generation error:', error);
     res.status(500).json({ error: error.message });
@@ -275,7 +279,7 @@ async function analyzeCompleteData(land, soilReport) {
     riskFactors: [],
     opportunities: []
   };
-  
+
   // Soil Health Analysis
   if (soilReport) {
     analysis.soilHealth = {
@@ -309,7 +313,7 @@ async function analyzeCompleteData(land, soilReport) {
   } else {
     analysis.soilHealth = land.soilReport || {};
   }
-  
+
   // Climate Pattern Analysis
   if (land.weatherHistory && land.weatherHistory.length > 0) {
     const recentWeather = land.weatherHistory.slice(-30); // Last 30 days
@@ -320,7 +324,7 @@ async function analyzeCompleteData(land, soilReport) {
       dominantCondition: getMostFrequent(recentWeather.map(w => w.conditions))
     };
   }
-  
+
   // Crop Performance Analysis
   if (land.cropHistory && land.cropHistory.length > 0) {
     analysis.cropPerformance = {
@@ -329,7 +333,7 @@ async function analyzeCompleteData(land, soilReport) {
       seasonalPattern: analyzeSeasonalPattern(land.cropHistory)
     };
   }
-  
+
   // Risk Factor Analysis
   if (land.pestDiseaseHistory && land.pestDiseaseHistory.length > 0) {
     const recentIssues = land.pestDiseaseHistory.slice(-12); // Last 12 records
@@ -340,13 +344,13 @@ async function analyzeCompleteData(land, soilReport) {
       preventionTips: getPestPreventionTips(issue.name)
     }));
   }
-  
+
   return analysis;
 }
 
 function generateIntelligentRecommendations(analysis) {
   const recommendations = [];
-  
+
   // Soil-based recommendations
   if (analysis.soilHealth.pH) {
     if (analysis.soilHealth.pH.value < 6.0) {
@@ -375,11 +379,11 @@ function generateIntelligentRecommendations(analysis) {
       });
     }
   }
-  
+
   // Nutrient-based recommendations
   if (analysis.soilHealth.nutrients) {
     const nutrients = analysis.soilHealth.nutrients;
-    
+
     if (nutrients.nitrogen && nutrients.nitrogen.deficiency) {
       recommendations.push({
         category: 'Nitrogen-efficient crops',
@@ -389,7 +393,7 @@ function generateIntelligentRecommendations(analysis) {
         requirements: ['These crops can fix their own nitrogen', 'Apply nitrogen fertilizer for other crops']
       });
     }
-    
+
     if (nutrients.phosphorus && nutrients.phosphorus.deficiency) {
       recommendations.push({
         category: 'Low phosphorus requirement',
@@ -399,7 +403,7 @@ function generateIntelligentRecommendations(analysis) {
         requirements: ['Apply phosphorus fertilizer', 'Consider rock phosphate application']
       });
     }
-    
+
     if (nutrients.potassium && !nutrients.potassium.deficiency) {
       recommendations.push({
         category: 'Potassium-loving crops',
@@ -410,11 +414,11 @@ function generateIntelligentRecommendations(analysis) {
       });
     }
   }
-  
+
   // Climate-based recommendations
   if (analysis.climatePattern) {
     const climate = analysis.climatePattern;
-    
+
     if (climate.totalRainfall > 1000) {
       recommendations.push({
         category: 'High rainfall crops',
@@ -432,7 +436,7 @@ function generateIntelligentRecommendations(analysis) {
         requirements: ['Implement drip irrigation', 'Mulching recommended']
       });
     }
-    
+
     if (climate.avgTemperature > 30) {
       recommendations.push({
         category: 'Heat-tolerant crops',
@@ -443,7 +447,7 @@ function generateIntelligentRecommendations(analysis) {
       });
     }
   }
-  
+
   // Historical performance recommendations
   if (analysis.cropPerformance && analysis.cropPerformance.successfulCrops) {
     recommendations.push({
@@ -454,10 +458,10 @@ function generateIntelligentRecommendations(analysis) {
       requirements: ['Continue best practices', 'Consider expanding area']
     });
   }
-  
+
   // Sort recommendations by suitability score
   recommendations.sort((a, b) => b.suitabilityScore - a.suitabilityScore);
-  
+
   return recommendations;
 }
 
@@ -482,10 +486,10 @@ function getNutrientStatus(nutrient, value) {
     phosphorus: { low: 20, medium: 40, high: 60 },
     potassium: { low: 150, medium: 300, high: 450 }
   };
-  
+
   const threshold = thresholds[nutrient];
   if (!threshold || !value) return 'unknown';
-  
+
   if (value < threshold.low) return 'low';
   if (value < threshold.medium) return 'medium';
   if (value < threshold.high) return 'high';
@@ -493,7 +497,7 @@ function getNutrientStatus(nutrient, value) {
 }
 
 function getMostFrequent(arr) {
-  return arr.sort((a,b) =>
+  return arr.sort((a, b) =>
     arr.filter(v => v === a).length - arr.filter(v => v === b).length
   ).pop();
 }
@@ -525,4 +529,4 @@ function getPestPreventionTips(pestName) {
   return tips[pestName] || ['Regular monitoring', 'Integrated pest management'];
 }
 
-module.exports = router;
+export default router;

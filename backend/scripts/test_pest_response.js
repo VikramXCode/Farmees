@@ -1,5 +1,9 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const file = path.join(__dirname, 'sample_pest_response.json');
 const raw = fs.readFileSync(file, 'utf8');
@@ -31,7 +35,7 @@ if (data) {
 
 console.log('pestSuggestions:', JSON.stringify(pestSuggestions, null, 2));
 if (pestSuggestions.length > 0) {
-  const top = pestSuggestions.sort((a,b)=>b.probability-a.probability)[0];
+  const top = pestSuggestions.sort((a, b) => b.probability - a.probability)[0];
   console.log('Top pest:', top);
 } else {
   console.log('No suggestions parsed');

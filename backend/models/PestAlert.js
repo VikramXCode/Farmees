@@ -1,6 +1,4 @@
-'use strict';
-
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const PestAlertSchema = new mongoose.Schema(
   {
@@ -22,4 +20,5 @@ const PestAlertSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('PestAlert', PestAlertSchema);
+export default mongoose.model('PestAlert', PestAlertSchema);
+

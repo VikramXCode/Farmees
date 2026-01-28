@@ -1,9 +1,9 @@
-// API Routes for Land Management
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const Land = require('../models/Land');
-const AIInteraction = require('../models/AIInteraction');
-const LandRecommendation = require('../models/LandRecommendation');
+import Land from '../models/Land.js';
+import AIInteraction from '../models/AIInteraction.js';
+import LandRecommendation from '../models/LandRecommendation.js';
+
 
 // Create new land data
 router.post('/', async (req, res) => {
@@ -24,12 +24,12 @@ router.get('/user/:userId', async (req, res) => {
   try {
     console.log('Fetching lands for user:', req.params.userId);
     // In demo mode, only return demo lands
-    const filter = req.isDemo 
+    const filter = req.isDemo
       ? { userId: req.params.userId, isActive: true, isDemo: true }
       : { userId: req.params.userId, isActive: true, isDemo: { $ne: true } };
-    
+
     const lands = await Land.find(filter).sort({ updatedAt: -1 });
-    console.log(`Found ${lands.length} lands for user ${req.params.userId}:`, lands.map(l => ({id: l.landId, name: l.name})));
+    console.log(`Found ${lands.length} lands for user ${req.params.userId}:`, lands.map(l => ({ id: l.landId, name: l.name })));
     res.json(lands);
   } catch (error) {
     console.error('Error fetching user lands:', error.message);
@@ -58,11 +58,11 @@ router.put('/:landId', async (req, res) => {
       { ...req.body, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
-    
+
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     res.json(land);
   } catch (error) {
     console.error('Update error:', error);
@@ -78,11 +78,11 @@ router.delete('/:landId', async (req, res) => {
       { isActive: false, updatedAt: new Date() },
       { new: true }
     );
-    
+
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     res.json({ message: 'Land deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -94,17 +94,17 @@ router.put('/:landId/weather', async (req, res) => {
   try {
     const land = await Land.findOneAndUpdate(
       { landId: req.params.landId },
-      { 
+      {
         $push: { weatherHistory: req.body },
         updatedAt: new Date()
       },
       { new: true }
     );
-    
+
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     res.json(land);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -116,17 +116,17 @@ router.put('/:landId/crop', async (req, res) => {
   try {
     const land = await Land.findOneAndUpdate(
       { landId: req.params.landId },
-      { 
+      {
         $push: { cropHistory: req.body },
         updatedAt: new Date()
       },
       { new: true }
     );
-    
+
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     res.json(land);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -138,17 +138,17 @@ router.put('/:landId/pest-disease', async (req, res) => {
   try {
     const land = await Land.findOneAndUpdate(
       { landId: req.params.landId },
-      { 
+      {
         $push: { pestDiseaseHistory: req.body },
         updatedAt: new Date()
       },
       { new: true }
     );
-    
+
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     res.json(land);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -160,17 +160,17 @@ router.put('/:landId/treatment', async (req, res) => {
   try {
     const land = await Land.findOneAndUpdate(
       { landId: req.params.landId },
-      { 
+      {
         $push: { treatmentHistory: req.body },
         updatedAt: new Date()
       },
       { new: true }
     );
-    
+
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     res.json(land);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -182,17 +182,17 @@ router.put('/:landId/market', async (req, res) => {
   try {
     const land = await Land.findOneAndUpdate(
       { landId: req.params.landId },
-      { 
+      {
         marketData: req.body,
         updatedAt: new Date()
       },
       { new: true }
     );
-    
+
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     res.json(land);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -204,17 +204,17 @@ router.put('/:landId/ai-context', async (req, res) => {
   try {
     const land = await Land.findOneAndUpdate(
       { landId: req.params.landId },
-      { 
+      {
         'aiContext': { ...req.body, lastInteraction: new Date() },
         updatedAt: new Date()
       },
       { new: true }
     );
-    
+
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     res.json(land);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -225,11 +225,11 @@ router.put('/:landId/ai-context', async (req, res) => {
 router.get('/:landId/analytics', async (req, res) => {
   try {
     const land = await Land.findOne({ landId: req.params.landId, isActive: true });
-    
+
     if (!land) {
       return res.status(404).json({ error: 'Land not found' });
     }
-    
+
     // Calculate analytics
     const analytics = {
       totalCrops: land.cropHistory.length,
@@ -239,16 +239,17 @@ router.get('/:landId/analytics', async (req, res) => {
       recentWeather: land.weatherHistory.slice(-7), // Last 7 days
       currentMarketPrice: land.marketData[0]?.currentPrice || 0,
       aiInteractions: await AIInteraction.countDocuments({ landId: req.params.landId }),
-      pendingRecommendations: await LandRecommendation.countDocuments({ 
-        landId: req.params.landId, 
-        status: 'pending' 
+      pendingRecommendations: await LandRecommendation.countDocuments({
+        landId: req.params.landId,
+        status: 'pending'
       })
     };
-    
+
     res.json(analytics);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-module.exports = router;
+export default router;
+

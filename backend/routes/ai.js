@@ -1,9 +1,15 @@
-const express = require('express');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-const Groq = require('groq-sdk');
-const { getEnvKeys, shouldRotate } = require('../utils/apiKeys');
-const { DEMO_AI_CHAT_RESPONSES } = require('../middleware/demoMode');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+import Groq from 'groq-sdk';
+import { getEnvKeys, shouldRotate } from '../utils/apiKeys.js';
+import { DEMO_AI_CHAT_RESPONSES } from '../middleware/demoMode.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 
 const router = express.Router();
 
@@ -18,17 +24,17 @@ router.post('/generate', async (req, res) => {
     if (req.isDemo) {
       const { input } = req.body || {};
       const inputLower = (input || '').toLowerCase();
-      
+
       // Find matching demo response
       const match = DEMO_AI_CHAT_RESPONSES.find(r => inputLower.includes(r.question));
       if (match) {
         return res.json({ success: true, text: match.response });
       }
-      
+
       // Default demo response
-      return res.json({ 
-        success: true, 
-        text: 'I can help you with irrigation, pest control, and fertilizer recommendations for your rice field. What specific information do you need?' 
+      return res.json({
+        success: true,
+        text: 'I can help you with irrigation, pest control, and fertilizer recommendations for your rice field. What specific information do you need?'
       });
     }
 
@@ -82,4 +88,5 @@ router.post('/generate', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
+

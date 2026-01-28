@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const EscalationSchema = new mongoose.Schema(
   {
@@ -23,4 +23,4 @@ const EscalationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Escalation', EscalationSchema);
+export default mongoose.model('Escalation', EscalationSchema);

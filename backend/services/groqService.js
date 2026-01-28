@@ -1,5 +1,6 @@
-const { getEnvKeys, shouldRotate } = require('../utils/apiKeys');
-const { Groq } = require('groq-sdk');
+import { getEnvKeys, shouldRotate } from '../utils/apiKeys.js';
+import { Groq } from 'groq-sdk';
+
 
 class GroqService {
   constructor() {
@@ -25,7 +26,7 @@ class GroqService {
       console.warn('Cannot rotate: Only one or no Groq API keys available');
       return false;
     }
-    
+
     this.currentKeyIndex = (this.currentKeyIndex + 1) % this.availableKeys.length;
     console.log(`Rotated to Groq API key index: ${this.currentKeyIndex + 1}/${this.availableKeys.length}`);
     return true;
@@ -38,7 +39,7 @@ class GroqService {
     while (attempts < maxAttempts) {
       try {
         const apiKey = this.getCurrentKey();
-        
+
         const groq = new Groq({ apiKey });
 
         // Build comprehensive prompt with land and soil data
@@ -76,7 +77,7 @@ class GroqService {
 
       } catch (error) {
         console.error(`Groq API error with key ${this.currentKeyIndex + 1}:`, error.message);
-        
+
         // Check if we should rotate the key
         if (shouldRotate(error)) {
           if (this.rotateKey()) {
@@ -97,7 +98,7 @@ class GroqService {
 
   buildUserPrompt(landData, soilData, userQuery) {
     let prompt = `Please provide crop recommendations based on the following information:\n\n`;
-    
+
     // Land Information
     if (landData) {
       prompt += `**Land Details:**\n`;
@@ -137,7 +138,7 @@ class GroqService {
     while (attempts < maxAttempts) {
       try {
         const apiKey = this.getCurrentKey();
-        
+
         const groq = new Groq({ apiKey });
 
         // Clean messages: remove timestamp and other unsupported properties
@@ -187,7 +188,7 @@ Your role: Help farmers with practical farming advice, crop recommendations, pes
 
       } catch (error) {
         console.error(`Groq chat error with key ${this.currentKeyIndex + 1}:`, error.message);
-        
+
         if (shouldRotate(error)) {
           if (this.rotateKey()) {
             attempts++;
@@ -207,24 +208,24 @@ Your role: Help farmers with practical farming advice, crop recommendations, pes
   addContextToMessage(message, landData, soilData) {
     // Only add context if the message is asking for specific farming advice
     const farmingKeywords = ['crop', 'fertilizer', 'soil', 'pest', 'disease', 'water', 'irrigation', 'harvest', 'plant', 'grow', 'farming', 'agriculture'];
-    const isFarmingQuestion = farmingKeywords.some(keyword => 
+    const isFarmingQuestion = farmingKeywords.some(keyword =>
       message.toLowerCase().includes(keyword)
     );
-    
+
     if (!isFarmingQuestion) {
       return message; // Don't add context for greetings or non-farming questions
     }
-    
+
     let context = '';
-    
+
     if (landData) {
       context += `[Context: ${landData.location}, ${landData.soilType} soil, Current crop: ${landData.currentCrop || 'None'}] `;
     }
-    
+
     if (soilData) {
       context += `[Soil pH: ${soilData.ph}] `;
     }
-    
+
     return context + message;
   }
 
@@ -235,7 +236,7 @@ Your role: Help farmers with practical farming advice, crop recommendations, pes
     while (attempts < maxAttempts) {
       try {
         const apiKey = this.getCurrentKey();
-        
+
         const groq = new Groq({ apiKey });
 
         // Create transcription using Groq's Whisper API
@@ -257,7 +258,7 @@ Your role: Help farmers with practical farming advice, crop recommendations, pes
 
       } catch (error) {
         console.error(`Groq transcription error with key ${this.currentKeyIndex + 1}:`, error.message);
-        
+
         if (shouldRotate(error)) {
           if (this.rotateKey()) {
             attempts++;
@@ -275,4 +276,4 @@ Your role: Help farmers with practical farming advice, crop recommendations, pes
   }
 }
 
-module.exports = new GroqService();
+export default new GroqService();

@@ -34,4 +34,4 @@ function recommendCrops(soil, weather = {}, market = {}) {
   return { recommendations, avoid, summary };
 }
 
-module.exports = { recommendCrops };
+export { recommendCrops };

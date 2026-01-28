@@ -1,9 +1,16 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
+import { fileURLToPath } from 'url';
+import FormData from 'form-data';
+import { getEnvKeys, shouldRotate } from '../utils/apiKeys.js';
+
+// Define __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Use /tmp on Vercel (serverless), local uploads dir otherwise
 const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, '..', 'uploads');
@@ -15,7 +22,7 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2,8)}${ext}`);
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
   }
 });
 
@@ -27,9 +34,8 @@ router.post('/identify', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
 
-  const { getEnvKeys, shouldRotate } = require('../utils/apiKeys');
-  const keys = getEnvKeys('KINDWISE');
-  if (!keys.length) return res.status(400).json({ error: 'No Kindwise keys configured. Use KINDWISE_API_KEYS (csv), KINDWISE_API_KEY_1..N, or KINDWISE_API_KEY in backend/.env' });
+    const keys = getEnvKeys('KINDWISE');
+    if (!keys.length) return res.status(400).json({ error: 'No Kindwise keys configured. Use KINDWISE_API_KEYS (csv), KINDWISE_API_KEY_1..N, or KINDWISE_API_KEY in backend/.env' });
 
     // Read uploaded file and convert to base64
     const imageBase64 = fs.readFileSync(req.file.path, { encoding: 'base64' });
@@ -59,7 +65,7 @@ router.post('/identify', upload.single('image'), async (req, res) => {
       let resp = null;
       for (const attempt of jsonAttempts) {
         try {
-          try { console.log('Kindwise: attempting', attempt.name, 'with key', kIndex); } catch (e) {}
+          try { console.log('Kindwise: attempting', attempt.name, 'with key', kIndex); } catch (e) { }
           resp = await fetch(url, { method: 'POST', headers: attempt.headers, body: JSON.stringify(payload) });
         } catch (e) {
           console.warn('Kindwise network error on', attempt.name, e.message || e);
@@ -70,9 +76,9 @@ router.post('/identify', upload.single('image'), async (req, res) => {
           try {
             const text = await resp.clone().text();
             console.log('Kindwise response (truncated):', text.slice(0, 8192));
-          } catch (e) {}
+          } catch (e) { }
           data = await resp.json();
-          try { console.log('Kindwise: succeeded with', attempt.name); } catch (e) {}
+          try { console.log('Kindwise: succeeded with', attempt.name); } catch (e) { }
           break;
         }
         if (resp && !resp.ok) {
@@ -98,23 +104,21 @@ router.post('/identify', upload.single('image'), async (req, res) => {
         for (const fieldName of multipartFieldNames) {
           for (const hv of multipartHeaderVariants) {
             try {
-              try { console.log('Kindwise: multipart attempt', fieldName, hv.name, 'with key', kIndex); } catch (e) {}
+              try { console.log('Kindwise: multipart attempt', fieldName, hv.name, 'with key', kIndex); } catch (e) { }
               let form;
               let headers = {};
-              if (typeof FormData !== 'undefined') {
-                form = new FormData();
-                form.append(fieldName, fs.createReadStream(req.file.path));
-                form.append('api_key', apiKey);
-                headers = Object.assign({}, hv.extraHeaders);
-                resp = await fetch(url, { method: 'POST', headers, body: form });
-              } else {
-                const FormData = require('form-data');
-                form = new FormData();
-                form.append(fieldName, fs.createReadStream(req.file.path));
-                form.append('api_key', apiKey);
+
+              form = new FormData();
+              form.append(fieldName, fs.createReadStream(req.file.path));
+              form.append('api_key', apiKey);
+
+              if (typeof form.getHeaders === 'function') {
                 headers = Object.assign({}, form.getHeaders(), hv.extraHeaders);
-                resp = await fetch(url, { method: 'POST', headers, body: form });
+              } else {
+                headers = Object.assign({}, hv.extraHeaders);
               }
+
+              resp = await fetch(url, { method: 'POST', headers, body: form });
             } catch (e) {
               console.warn('Kindwise multipart network error', fieldName, hv.name, e.message || e);
               lastErr = e;
@@ -124,9 +128,9 @@ router.post('/identify', upload.single('image'), async (req, res) => {
               try {
                 const text = await resp.clone().text();
                 console.log('Kindwise multipart response (truncated):', text.slice(0, 8192));
-              } catch (e) {}
+              } catch (e) { }
               data = await resp.json();
-              try { console.log('Kindwise: multipart succeeded', fieldName, hv.name); } catch (e) {}
+              try { console.log('Kindwise: multipart succeeded', fieldName, hv.name); } catch (e) { }
               break;
             }
             if (resp && !resp.ok) {
@@ -155,7 +159,7 @@ router.post('/identify', upload.single('image'), async (req, res) => {
 
     // If still no data, return an error with safe diagnostics
     if (!data) {
-      try { fs.unlinkSync(req.file.path); } catch (e) {}
+      try { fs.unlinkSync(req.file.path); } catch (e) { }
       const status = (lastResp && lastResp.status) || 502;
       return res.status(status).json({ error: 'Kindwise insect API did not return a successful response', status, details: lastText || (lastErr && lastErr.message) });
     }
@@ -205,20 +209,21 @@ router.post('/identify', upload.single('image'), async (req, res) => {
     const topResult = pestSuggestions.length ? pestSuggestions[0] : null;
 
     // Cleanup uploaded file
-    try { fs.unlinkSync(req.file.path); } catch (e) {}
+    try { fs.unlinkSync(req.file.path); } catch (e) { }
 
-  // Attach helpful extras for the frontend
-  const raw = Object.assign({}, data);
-  raw.model_version = data.model_version || data.model || null;
-  // ensure raw.input.images[0] is accessible when present
-  if (!raw.input && data.input) raw.input = data.input;
+    // Attach helpful extras for the frontend
+    const raw = Object.assign({}, data);
+    raw.model_version = data.model_version || data.model || null;
+    // ensure raw.input.images[0] is accessible when present
+    if (!raw.input && data.input) raw.input = data.input;
 
-  return res.json({ pestSuggestions, topResult, raw });
+    return res.json({ pestSuggestions, topResult, raw });
   } catch (err) {
     console.error('Error in /api/pests/identify:', err);
-    try { if (req.file) fs.unlinkSync(req.file.path); } catch (e) {}
+    try { if (req.file) fs.unlinkSync(req.file.path); } catch (e) { }
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-module.exports = router;
+export default router;
+

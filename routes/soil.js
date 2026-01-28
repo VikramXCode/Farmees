@@ -1,11 +1,20 @@
-// Soil Report Upload & OCR Route
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const { DEMO_SOIL_REPORT } = require('../middleware/demoMode');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
+import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
+import { DEMO_SOIL_REPORT } from '../middleware/demoMode.js';
+import Land from '../models/Land.js';
+import SoilReport from '../models/SoilReport.js';
+import { recommendCrops } from '../backend/scripts/recommendation_engine.js';
+import groqService from '../services/groqService.js';
+
+// Define __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Use /tmp on Vercel (serverless), local uploads dir otherwise
 const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads', 'soil_reports') : path.join(__dirname, '..', 'uploads', 'soil_reports');
@@ -17,7 +26,7 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname) || '.pdf';
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2,8)}${ext}`);
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
   }
 });
 
@@ -36,9 +45,14 @@ router.post('/upload', upload.single('report'), async (req, res) => {
     const { path: filePath } = req.file;
     const engine = req.body.engine || 'tesseract'; // or 'easyocr'
     const lang = req.body.lang || 'en';
-    const { spawn } = require('child_process');
+
+    // Attempt to point to backend/scripts if root scripts is missing files
+    const ocrScriptPath = fs.existsSync(path.join(__dirname, '../scripts/ocr_soil.py'))
+      ? path.join(__dirname, '../scripts/ocr_soil.py')
+      : path.join(__dirname, '../backend/scripts/ocr_soil.py');
+
     const py = spawn('python', [
-      path.join(__dirname, '../scripts/ocr_soil.py'),
+      ocrScriptPath,
       filePath,
       engine,
       lang
@@ -49,20 +63,20 @@ router.post('/upload', upload.single('report'), async (req, res) => {
     py.on('close', async code => {
       try {
         console.log('OCR script output:', result);
-        
+
         // Handle case where result is empty or malformed
         if (!result || result.trim() === '') {
-          return res.status(500).json({ 
-            error: 'No output from OCR script', 
-            details: 'OCR script produced no output' 
+          return res.status(500).json({
+            error: 'No output from OCR script',
+            details: 'OCR script produced no output'
           });
         }
-        
+
         let soilData;
         try {
           // Extract JSON from the output (filter out error messages)
           let jsonStr = result.trim();
-          
+
           // Look for the last valid JSON object in the output
           const lines = result.split('\n');
           let lastJsonLine = '';
@@ -73,7 +87,7 @@ router.post('/upload', upload.single('report'), async (req, res) => {
               break;
             }
           }
-          
+
           if (lastJsonLine) {
             jsonStr = lastJsonLine;
           } else {
@@ -83,18 +97,18 @@ router.post('/upload', upload.single('report'), async (req, res) => {
               jsonStr = jsonMatch[0];
             }
           }
-          
+
           soilData = JSON.parse(jsonStr);
         } catch (parseError) {
           console.error('JSON parse error:', parseError);
           console.error('Attempted to parse:', jsonStr);
           console.error('Full raw result:', result);
-          
+
           // Provide fallback soil data when parsing fails
           soilData = {
             pH: '6.5',
             N: '45',
-            P: '25', 
+            P: '25',
             K: '180',
             OC: '0.8',
             Zn: '1.2',
@@ -105,15 +119,15 @@ router.post('/upload', upload.single('report'), async (req, res) => {
             fallback: true
           };
         }
-        
+
         // Check if OCR script returned an error
         if (soilData.error) {
-          return res.status(500).json({ 
-            error: 'OCR processing failed', 
-            details: soilData.error 
+          return res.status(500).json({
+            error: 'OCR processing failed',
+            details: soilData.error
           });
         }
-        
+
         // Save to database if landId is provided
         const landId = req.body.landId;
         console.log('Processing landId:', landId);
@@ -121,12 +135,10 @@ router.post('/upload', upload.single('report'), async (req, res) => {
         let soilReportRecord = null;
         let recommendations = null;
         let ollamaSummary = null;
-  let groqRecommendation = null;
-        
+        let groqRecommendation = null;
+
         if (landId) {
           try {
-            const Land = require('../models/Land');
-            const SoilReport = require('../models/SoilReport');
             // Helpers to sanitize OCR values
             const toNumber = (v) => {
               if (v == null) return undefined;
@@ -137,7 +149,7 @@ router.post('/upload', upload.single('report'), async (req, res) => {
               const n = parseFloat(m[0]);
               return Number.isNaN(n) ? undefined : n;
             };
-            const allowedTextures = new Set(['sandy','clay','loam','sandy-loam','clay-loam','silty-clay','silty-loam','silt']);
+            const allowedTextures = new Set(['sandy', 'clay', 'loam', 'sandy-loam', 'clay-loam', 'silty-clay', 'silty-loam', 'silt']);
             const normalizeTexture = (v) => {
               if (!v) return undefined;
               const t = String(v).trim().toLowerCase().replace(/\s+/g, '-');
@@ -166,7 +178,7 @@ router.post('/upload', upload.single('report'), async (req, res) => {
             const sVal = toNumber(soilData.S || soilData.sulfur);
             const bVal = toNumber(soilData.B || soilData.boron);
             const textureVal = normalizeTexture(soilData.texture || soilData.Texture || soilData['soil texture']);
-            
+
             // Create detailed soil report record
             const reportId = `soil-${Date.now()}`;
             soilReportRecord = new SoilReport({
@@ -191,16 +203,16 @@ router.post('/upload', upload.single('report'), async (req, res) => {
               extractionAccuracy: 'medium',
               analysisDate: new Date()
             });
-            
+
             await soilReportRecord.save();
             console.log('Soil report saved with ID:', reportId);
-            
+
             // Update land record with basic soil data and reference to detailed report
             console.log('Updating land with soil data:', soilData);
             dbResult = await Land.findOneAndUpdate(
               { landId },
-              { 
-                $set: { 
+              {
+                $set: {
                   'soilReport.pH': pHVal,
                   'soilReport.organicMatter': organicVal,
                   'soilReport.nitrogen': nVal,
@@ -220,10 +232,9 @@ router.post('/upload', upload.single('report'), async (req, res) => {
           } catch (dbError) {
             console.error('Database update error:', dbError);
           }
-          
+
           // Call AI recommendation engine
           try {
-            const { recommendCrops } = require('../scripts/recommendation_engine');
             recommendations = recommendCrops(soilData);
             console.log('Recommendations generated:', recommendations);
           } catch (recError) {
@@ -232,7 +243,6 @@ router.post('/upload', upload.single('report'), async (req, res) => {
 
           // Call Groq for expert crop recommendations (uses rotating keys if configured)
           try {
-            const groqService = require('../services/groqService');
             // Prepare clean soil object for AI prompt
             const cleanSoil = {
               ph: pHVal ?? toNumber(soilData.pH),
@@ -260,7 +270,7 @@ router.post('/upload', upload.single('report'), async (req, res) => {
             console.error('Groq recommendation error:', groqErr && groqErr.message || groqErr);
             groqRecommendation = { success: false, error: 'Groq recommendation unavailable' };
           }
-          
+
           // Call Ollama for summary
           try {
             const ollamaPrompt = `Soil report: ${JSON.stringify(soilData)}\nRecommendations: ${recommendations?.summary || 'None'}\nGenerate a simple summary for the farmer in English.`;
@@ -278,15 +288,15 @@ router.post('/upload', upload.single('report'), async (req, res) => {
             ollamaSummary = 'Ollama summary unavailable.';
           }
         }
-        res.json({ 
-          filename: req.file.filename, 
-          path: req.file.path, 
-          soilData, 
+        res.json({
+          filename: req.file.filename,
+          path: req.file.path,
+          soilData,
           soilReportId: soilReportRecord?._id,
-          dbResult, 
-          recommendations, 
+          dbResult,
+          recommendations,
           groqRecommendation,
-          ollamaSummary 
+          ollamaSummary
         });
       } catch (err) {
         res.status(500).json({ error: 'Failed to parse OCR result', details: result });
@@ -297,4 +307,5 @@ router.post('/upload', upload.single('report'), async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
+

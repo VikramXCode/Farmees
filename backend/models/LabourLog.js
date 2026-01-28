@@ -1,28 +1,27 @@
-// MongoDB Schema for Labour Event Logs (Accountability Trail)
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const labourLogSchema = new mongoose.Schema({
   // Reference to Request
-  requestId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'LabourRequest', 
-    required: true 
+  requestId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'LabourRequest',
+    required: true
   },
-  
+
   // Actor
-  coordinatorId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Coordinator' 
+  coordinatorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Coordinator'
   },
   actorType: {
     type: String,
     enum: ['system', 'farmer', 'coordinator'],
     required: true
   },
-  
+
   // Event Type
-  eventType: { 
-    type: String, 
+  eventType: {
+    type: String,
     enum: [
       'request_created',
       'coordinator_assigned',
@@ -39,9 +38,9 @@ const labourLogSchema = new mongoose.Schema({
       'request_failed',
       'feedback_submitted'
     ],
-    required: true 
+    required: true
   },
-  
+
   // Event Details
   eventData: {
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker' },
@@ -51,7 +50,7 @@ const labourLogSchema = new mongoose.Schema({
     rating: { type: Number },
     workerCount: { type: Number }
   },
-  
+
   // Timestamp
   timestamp: { type: Date, default: Date.now }
 });
@@ -62,7 +61,7 @@ labourLogSchema.index({ coordinatorId: 1, timestamp: -1 });
 labourLogSchema.index({ eventType: 1, timestamp: -1 });
 
 // Static method to create log entry
-labourLogSchema.statics.logEvent = async function(requestId, eventType, actorType, coordinatorId, eventData = {}) {
+labourLogSchema.statics.logEvent = async function (requestId, eventType, actorType, coordinatorId, eventData = {}) {
   return await this.create({
     requestId,
     eventType,
@@ -72,4 +71,5 @@ labourLogSchema.statics.logEvent = async function(requestId, eventType, actorTyp
   });
 };
 
-module.exports = mongoose.model('LabourLog', labourLogSchema);
+export default mongoose.model('LabourLog', labourLogSchema);
+

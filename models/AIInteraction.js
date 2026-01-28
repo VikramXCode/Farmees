@@ -1,5 +1,5 @@
 // MongoDB Schema for AI Interactions
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const contextSchema = new mongoose.Schema({
   selectedLand: { type: String },
@@ -29,4 +29,4 @@ aiInteractionSchema.index({ landId: 1, timestamp: -1 });
 aiInteractionSchema.index({ userId: 1, timestamp: -1 });
 aiInteractionSchema.index({ timestamp: -1 });
 
-module.exports = mongoose.model('AIInteraction', aiInteractionSchema);
+export default mongoose.model('AIInteraction', aiInteractionSchema);

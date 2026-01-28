@@ -1,11 +1,14 @@
-'use strict';
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { isDemoUser, DEMO_MARKET_DATA } from '../middleware/demoMode.js';
 
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const { isDemoUser, DEMO_MARKET_DATA } = require('../middleware/demoMode');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+
 
 // Fallback market data - use DEMO_MARKET_DATA as fallback for all users
 // when CSV file is not available
@@ -128,4 +131,5 @@ function filterFallbackData(records, commodityFilter) {
   return list.map(item => ({ ...item }));
 }
 
-module.exports = router;
+export default router;
+

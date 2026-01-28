@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const weatherService = require('../services/weatherService');
-const Land = require('../models/Land');
-const { isDemoUser, DEMO_WEATHER } = require('../middleware/demoMode');
+import weatherService from '../services/weatherService.js';
+import Land from '../models/Land.js';
+import { isDemoUser, DEMO_WEATHER } from '../middleware/demoMode.js';
+
 
 // Get current weather by coordinates
 router.get('/current/:lat/:lon', async (req, res) => {
@@ -18,7 +19,7 @@ router.get('/current/:lat/:lon', async (req, res) => {
     // Validate coordinates
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lon);
-    
+
     if (isNaN(latitude) || isNaN(longitude)) {
       return res.status(400).json({ error: 'Invalid coordinates' });
     }
@@ -28,7 +29,7 @@ router.get('/current/:lat/:lon', async (req, res) => {
     }
 
     const result = await weatherService.getCurrentWeather(latitude, longitude, location);
-    
+
     return res.json({
       success: true,
       weather: result.data,
@@ -40,9 +41,9 @@ router.get('/current/:lat/:lon', async (req, res) => {
 
   } catch (error) {
     console.error('Current weather API error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch current weather',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -57,7 +58,7 @@ router.get('/forecast/:lat/:lon', async (req, res) => {
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lon);
     const forecastDays = parseInt(days);
-    
+
     if (isNaN(latitude) || isNaN(longitude)) {
       return res.status(400).json({ error: 'Invalid coordinates' });
     }
@@ -71,7 +72,7 @@ router.get('/forecast/:lat/:lon', async (req, res) => {
     }
 
     const result = await weatherService.getForecast(latitude, longitude, location, forecastDays);
-    
+
     res.json({
       success: true,
       forecast: result.data,
@@ -83,9 +84,9 @@ router.get('/forecast/:lat/:lon', async (req, res) => {
 
   } catch (error) {
     console.error('Weather forecast API error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch weather forecast',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -102,16 +103,16 @@ router.get('/city/:cityName', async (req, res) => {
 
     // First get coordinates for the city
     const cityResult = await weatherService.getWeatherByCity(cityName, country);
-    
+
     if (!cityResult.success) {
       return res.status(404).json({ error: 'City not found' });
     }
 
     const { lat, lon } = cityResult.coordinates;
-    
+
     // Get current weather
     const currentWeather = await weatherService.getCurrentWeather(lat, lon, cityResult.location);
-    
+
     let forecastData = null;
     if (forecast === 'true') {
       const forecastResult = await weatherService.getForecast(lat, lon, cityResult.location);
@@ -130,9 +131,9 @@ router.get('/city/:cityName', async (req, res) => {
 
   } catch (error) {
     console.error('City weather API error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch weather for city',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -155,7 +156,7 @@ router.get('/land/:landId', async (req, res) => {
 
     // Extract coordinates from land location
     let latitude, longitude;
-    
+
     if (land.coordinates && land.coordinates.lat && land.coordinates.lon) {
       latitude = land.coordinates.lat;
       longitude = land.coordinates.lon;
@@ -167,13 +168,13 @@ router.get('/land/:landId', async (req, res) => {
         longitude = cityResult.coordinates.lon;
       } catch (error) {
         console.error('Could not get coordinates for land location:', land.location);
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Could not determine location coordinates',
           details: 'Please ensure land has valid coordinates or location name'
         });
       }
     } else {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Land coordinates not available',
         details: 'Please add coordinates or location to the land record'
       });
@@ -181,7 +182,7 @@ router.get('/land/:landId', async (req, res) => {
 
     // Get current weather
     const currentWeather = await weatherService.getCurrentWeather(latitude, longitude, land.location);
-    
+
     let forecastData = null;
     if (forecast === 'true') {
       const forecastResult = await weatherService.getForecast(latitude, longitude, land.location);
@@ -206,9 +207,9 @@ router.get('/land/:landId', async (req, res) => {
 
   } catch (error) {
     console.error('Land weather API error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch weather for land',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -223,7 +224,7 @@ router.get('/complete/:lat/:lon', async (req, res) => {
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lon);
     const forecastDays = parseInt(days);
-    
+
     if (isNaN(latitude) || isNaN(longitude)) {
       return res.status(400).json({ error: 'Invalid coordinates' });
     }
@@ -237,7 +238,7 @@ router.get('/complete/:lat/:lon', async (req, res) => {
       weatherService.getCurrentWeather(latitude, longitude, location),
       weatherService.getForecast(latitude, longitude, location, forecastDays)
     ]);
-    
+
     res.json({
       success: true,
       weather: currentResult.data,
@@ -250,9 +251,9 @@ router.get('/complete/:lat/:lon', async (req, res) => {
 
   } catch (error) {
     console.error('Complete weather API error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch complete weather data',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -271,4 +272,4 @@ router.get('/test', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

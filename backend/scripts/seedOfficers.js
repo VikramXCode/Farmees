@@ -1,8 +1,13 @@
-const path = require('path');
-const fs = require('fs');
-const mongoose = require('mongoose');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-const Officer = require('../models/Officer');
+import path from 'path';
+import fs from 'fs';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import Officer from '../models/Officer.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/farmease';
 
@@ -28,3 +33,4 @@ async function run() {
 }
 
 run();
+

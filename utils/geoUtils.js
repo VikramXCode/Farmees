@@ -100,8 +100,9 @@ function fuzzCoordinates([lat, lon], radiusKm = 2) {
   return clampToBounds([lat + x, lon + y]);
 }
 
-module.exports = {
+export {
   getCoordinates,
   fuzzCoordinates,
   TAMILNADU_LOCATIONS
 };
+

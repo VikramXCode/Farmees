@@ -1,8 +1,8 @@
-const express = require('express');
-const Escalation = require('../models/Escalation');
-const Officer = require('../models/Officer');
-const Land = require('../models/Land');
-const { matchOfficer } = require('../services/officerMatchingService');
+import express from 'express';
+import Escalation from '../models/Escalation.js';
+import Officer from '../models/Officer.js';
+import Land from '../models/Land.js';
+import { matchOfficer } from '../services/officerMatchingService.js';
 const router = express.Router();
 
 // Create escalation and auto-assign officer
@@ -82,4 +82,4 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,12 +1,12 @@
-// Seed Demo Users for Hackathon Demo
-const mongoose = require('mongoose');
-const User = require('../models/User');
-const Land = require('../models/Land');
-const Coordinator = require('../models/Coordinator');
-const Worker = require('../models/Worker');
-const LabourRequest = require('../models/LabourRequest');
+import mongoose from 'mongoose';
+import User from '../models/User.js';
+import Land from '../models/Land.js';
+import Coordinator from '../models/Coordinator.js';
+import Worker from '../models/Worker.js';
+import LabourRequest from '../models/LabourRequest.js';
+import dotenv from 'dotenv';
 
-require('dotenv').config();
+dotenv.config();
 
 const DEMO_USERS = [
   {
@@ -20,7 +20,7 @@ const DEMO_USERS = [
   },
   {
     name: 'Demo Coordinator',
-    phone: '9999000002', 
+    phone: '9999000002',
     password: 'demo123',
     role: 'coordinator',
     isDemo: true,
@@ -153,7 +153,7 @@ async function seedDemoUsers() {
 
     // Find demo farmer
     const demoFarmer = createdUsers.find(u => u.role === 'farmer' && u.phone === '9999000001');
-    
+
     // Create demo lands for farmer
     if (demoFarmer) {
       for (const landData of DEMO_LANDS) {
@@ -225,7 +225,7 @@ async function seedDemoUsers() {
     // Create demo labour requests for farmer
     if (demoFarmer && demoCoordinator) {
       const landForRequest = await Land.findOne({ userId: demoFarmer._id.toString(), isDemo: true });
-      
+
       if (landForRequest) {
         // Request 1: Pending - Just created by farmer, waiting for coordinator
         const pendingRequest = new LabourRequest({
@@ -314,17 +314,17 @@ async function seedDemoUsers() {
 
         // Now assign workers to the assigned request
         // Find the coordinator model instance
-        const coordinatorProfile = await Coordinator.findOne({ 
-          userId: demoCoordinator._id.toString(), 
-          isDemo: true 
+        const coordinatorProfile = await Coordinator.findOne({
+          userId: demoCoordinator._id.toString(),
+          isDemo: true
         });
-        
+
         if (coordinatorProfile) {
-          const demoWorkers = await Worker.find({ 
-            coordinatorId: coordinatorProfile._id, 
-            isDemo: true 
+          const demoWorkers = await Worker.find({
+            coordinatorId: coordinatorProfile._id,
+            isDemo: true
           }).limit(4);
-          
+
           if (demoWorkers.length >= 4) {
             for (let i = 0; i < 4; i++) {
               confirmedRequest.assignedWorkers.push({

@@ -1,4 +1,4 @@
-const Officer = require('../models/Officer');
+import Officer from '../models/Officer.js';
 
 async function matchOfficer({ district, state }) {
   const criteria = { isActive: true };
@@ -25,4 +25,5 @@ async function matchOfficer({ district, state }) {
   return best;
 }
 
-module.exports = { matchOfficer };
+export { matchOfficer };
+

@@ -1,15 +1,38 @@
-'use strict';
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
-// Backend server for Farmees - Vercel deployment ready
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const path = require('path');
+// Import local middlewares and routes
+import { demoModeMiddleware } from './middleware/demoMode.js';
+import landsRouter from './routes/lands.js';
+import aiInteractionsRouter from './routes/ai-interactions.js';
+import recommendationsRouter from './routes/recommendations.js';
+import diseasesRouter from './routes/diseases.js';
+import pestsRouter from './routes/pests.js';
+import authRouter from './routes/auth.js';
+import soilRouter from './routes/soil.js';
+import cropRecommendationsRouter from './routes/crop-recommendations.js';
+import weatherRouter from './routes/weather.js';
+import aiRouter from './routes/ai.js';
+import officersRouter from './routes/officers.js';
+import escalationsRouter from './routes/escalations.js';
+import alertsRouter from './routes/alerts.js';
+import marketRouter from './routes/market.js';
+import connectRouter from './routes/connect.js';
+import labourRouter from './routes/labour.js';
+import analyticsRouter from './routes/analytics.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Only load dotenv in non-Vercel environments (Vercel uses dashboard env vars)
 if (!process.env.VERCEL) {
-  require('dotenv').config({ path: path.join(__dirname, '.env') });
+  dotenv.config({ path: path.join(__dirname, '.env') });
 }
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -39,17 +62,17 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    
+
     // Check if origin is allowed
     if (allowedOrigins.some(allowed => origin.startsWith(allowed.replace(/\/$/, '')))) {
       return callback(null, true);
     }
-    
+
     // In development, allow all
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    
+
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -64,8 +87,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Simple test route - no database or middleware required
 app.get('/', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'Farmees Backend API',
     timestamp: new Date().toISOString(),
     env: {
@@ -77,8 +100,8 @@ app.get('/', (req, res) => {
 });
 
 // Demo mode middleware - must come after json parsing
-const { demoModeMiddleware } = require('./middleware/demoMode');
 app.use(demoModeMiddleware);
+
 
 async function connectToDatabase() {
   if (mongoose.connection.readyState === 1) {
@@ -116,44 +139,44 @@ if (process.env.VERCEL) {
 // Health check
 app.get('/api/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  res.json({ 
-    status: 'ok', 
-    service: 'farmease-backend', 
+  res.json({
+    status: 'ok',
+    service: 'farmease-backend',
     time: new Date().toISOString(),
     database: dbStatus,
     mongoUri: process.env.MONGODB_URI ? 'configured' : 'missing'
   });
 });
 
-// Routes
 app.get('/api', (req, res) => {
   res.json({ status: 'ok', message: 'FarmEase API root', endpoints: ['/api/health', '/api/lands', '/api/ai-interactions', '/api/recommendations', '/api/diseases', '/api/pests', '/api/auth', '/api/soil', '/api/crop-recommendations', '/api/weather', '/api/officers', '/api/escalations'] });
 });
-app.use('/api/lands', require('./routes/lands'));
-app.use('/api/ai-interactions', require('./routes/ai-interactions'));
-app.use('/api/recommendations', require('./routes/recommendations'));
-app.use('/api/diseases', require('./routes/diseases'));
-app.use('/api/pests', require('./routes/pests'));
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/soil', require('./routes/soil'));
-app.use('/api/crop-recommendations', require('./routes/crop-recommendations'));
-app.use('/api/weather', require('./routes/weather'));
-app.use('/api/ai', require('./routes/ai'));
-app.use('/api/officers', require('./routes/officers'));
-app.use('/api/escalations', require('./routes/escalations'));
-app.use('/api/alerts', require('./routes/alerts'));
-app.use('/api/market', require('./routes/market'));
-app.use('/api/connect', require('./routes/connect'));
-app.use('/api/labour', require('./routes/labour'));
-app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/lands', landsRouter);
+app.use('/api/ai-interactions', aiInteractionsRouter);
+app.use('/api/recommendations', recommendationsRouter);
+app.use('/api/diseases', diseasesRouter);
+app.use('/api/pests', pestsRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/soil', soilRouter);
+app.use('/api/crop-recommendations', cropRecommendationsRouter);
+app.use('/api/weather', weatherRouter);
+app.use('/api/ai', aiRouter);
+app.use('/api/officers', officersRouter);
+app.use('/api/escalations', escalationsRouter);
+app.use('/api/alerts', alertsRouter);
+app.use('/api/market', marketRouter);
+app.use('/api/connect', connectRouter);
+app.use('/api/labour', labourRouter);
+app.use('/api/analytics', analyticsRouter);
+
 
 async function startServer() {
   console.log('🚀 Starting FarmEase Backend Server...');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+
   try {
     await connectToDatabase();
-    
+
     const server = app.listen(PORT, () => {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('✅ Server started successfully!');
@@ -185,4 +208,5 @@ if (process.env.VERCEL) {
   startServer();
 }
 
-module.exports = app;
+export default app;
+
