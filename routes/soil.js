@@ -9,7 +9,8 @@ import { spawn } from 'child_process';
 import { DEMO_SOIL_REPORT } from '../middleware/demoMode.js';
 import Land from '../models/Land.js';
 import SoilReport from '../models/SoilReport.js';
-import { recommendCrops } from '../backend/scripts/recommendation_engine.js';
+import { recommendCrops } from '../services/recommendationEngine.js';
+
 import groqService from '../services/groqService.js';
 
 // Define __dirname for ESM
@@ -47,9 +48,10 @@ router.post('/upload', upload.single('report'), async (req, res) => {
     const lang = req.body.lang || 'en';
 
     // Attempt to point to backend/scripts if root scripts is missing files
-    const ocrScriptPath = fs.existsSync(path.join(__dirname, '../scripts/ocr_soil.py'))
-      ? path.join(__dirname, '../scripts/ocr_soil.py')
+    const ocrScriptPath = fs.existsSync(path.join(__dirname, '../services/ocr_soil.py'))
+      ? path.join(__dirname, '../services/ocr_soil.py')
       : path.join(__dirname, '../backend/scripts/ocr_soil.py');
+
 
     const py = spawn('python', [
       ocrScriptPath,

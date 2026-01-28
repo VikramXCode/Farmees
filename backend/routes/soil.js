@@ -10,7 +10,8 @@ import { DEMO_SOIL_REPORT } from '../middleware/demoMode.js';
 import Land from '../models/Land.js';
 import SoilReport from '../models/SoilReport.js';
 import groqService from '../services/groqService.js';
-import { recommendCrops } from '../scripts/recommendation_engine.js';
+import { recommendCrops } from '../../services/recommendationEngine.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,8 +46,11 @@ router.post('/upload', upload.single('report'), async (req, res) => {
     const { path: filePath } = req.file;
     const engine = req.body.engine || 'tesseract'; // or 'easyocr'
     const lang = req.body.lang || 'en';
+    const ocrScriptPath = fs.existsSync(path.join(__dirname, '../../services/ocr_soil.py'))
+      ? path.join(__dirname, '../../services/ocr_soil.py')
+      : path.join(__dirname, '../scripts/ocr_soil.py');
     const py = spawn('python', [
-      path.join(__dirname, '../scripts/ocr_soil.py'),
+      ocrScriptPath,
       filePath,
       engine,
       lang
