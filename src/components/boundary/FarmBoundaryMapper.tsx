@@ -322,9 +322,15 @@ export default function FarmBoundaryMapper({
 
     const handleMouseDown = (e: any) => {
       if (mode === 'draw' && !isDrawing) {
+        // Check if it's a multi-touch (2+ fingers) - allow map panning
+        if (e.originalEvent && e.originalEvent.touches && e.originalEvent.touches.length > 1) {
+          return; // Let map handle multi-touch for panning
+        }
+        
         setIsDrawing(true);
         setDrawPath([]);
         map.dragging.disable(); // Disable map dragging during draw
+        map.touchZoom.disable(); // Disable pinch zoom during draw
         
         const coord: Coordinate = {
           lat: e.latlng.lat,
@@ -350,6 +356,7 @@ export default function FarmBoundaryMapper({
       if (mode === 'draw' && isDrawing) {
         setIsDrawing(false);
         map.dragging.enable(); // Re-enable map dragging
+        map.touchZoom.enable(); // Re-enable pinch zoom
         
         // Convert draw path to simplified points
         if (drawPath.length > 5) {
@@ -361,16 +368,25 @@ export default function FarmBoundaryMapper({
       }
     };
 
+    // Attach both mouse and touch events
     map.on('click', handleMapClick);
     map.on('mousedown', handleMouseDown);
     map.on('mousemove', handleMouseMove);
     map.on('mouseup', handleMouseUp);
+    
+    // Touch events for mobile
+    map.on('touchstart', handleMouseDown);
+    map.on('touchmove', handleMouseMove);
+    map.on('touchend', handleMouseUp);
 
     return () => {
       map.off('click', handleMapClick);
       map.off('mousedown', handleMouseDown);
       map.off('mousemove', handleMouseMove);
       map.off('mouseup', handleMouseUp);
+      map.off('touchstart', handleMouseDown);
+      map.off('touchmove', handleMouseMove);
+      map.off('touchend', handleMouseUp);
     };
   }, [mode, mapReady, isDrawing, drawPath]);
 
@@ -439,67 +455,95 @@ export default function FarmBoundaryMapper({
       
       // Handle point dragging (only in point mode)
       if (mode === 'point') {
-        marker.on('mousedown', function(e: any) {
+        const setupDragHandlers = (startEvent: any) => {
           const map = mapInstanceRef.current;
           if (!map) return;
 
           // Prevent map dragging while dragging marker
           map.dragging.disable();
+          map.touchZoom.disable();
         
-        let currentMarker = marker;
-        
-        const onMouseMove = (moveEvent: any) => {
-          const newLatLng = map.mouseEventToLatLng(moveEvent.originalEvent);
-          currentMarker.setLatLng(newLatLng);
+          let currentMarker = marker;
           
-          // Update the point in state
-          setDrawPoints(prevPoints => {
-            const newPoints = [...prevPoints];
-            newPoints[index] = {
-              lat: newLatLng.lat,
-              lng: newLatLng.lng,
-              timestamp: Date.now(),
-            };
-            return newPoints;
-          });
-        };
-        
-        const onMouseUp = () => {
-          map.dragging.enable();
-          map.off('mousemove', onMouseMove);
-          map.off('mouseup', onMouseUp);
-          
-          // Check for point merging (within 10 meters)
-          const MERGE_THRESHOLD = 0.0001; // ~10 meters
-          const draggedPoint = {
-            lat: currentMarker.getLatLng().lat,
-            lng: currentMarker.getLatLng().lng,
-            timestamp: Date.now(),
+          const getMoveEvent = (e: any) => {
+            // Handle both mouse and touch events
+            if (e.touches && e.touches.length > 0) {
+              return e.touches[0];
+            }
+            return e;
           };
           
-          setDrawPoints(prevPoints => {
-            let merged = false;
-            const newPoints = prevPoints.map((p, i) => {
-              if (i !== index) {
-                const distance = Math.sqrt(
-                  Math.pow(p.lat - draggedPoint.lat, 2) + 
-                  Math.pow(p.lng - draggedPoint.lng, 2)
-                );
-                if (distance < MERGE_THRESHOLD) {
-                  merged = true;
-                  return null; // Mark for removal
-                }
-              }
-              return i === index ? draggedPoint : p;
-            }).filter(p => p !== null) as Coordinate[];
+          const onMove = (moveEvent: any) => {
+            const touchEvent = getMoveEvent(moveEvent.originalEvent || moveEvent);
+            let newLatLng;
             
-            return newPoints;
-          });
+            if (touchEvent.clientX !== undefined) {
+              // Convert screen coordinates to map coordinates
+              const point = map.containerPointToLatLng([touchEvent.clientX, touchEvent.clientY]);
+              newLatLng = point;
+            } else {
+              newLatLng = map.mouseEventToLatLng(moveEvent.originalEvent);
+            }
+            
+            currentMarker.setLatLng(newLatLng);
+            
+            // Update the point in state
+            setDrawPoints(prevPoints => {
+              const newPoints = [...prevPoints];
+              newPoints[index] = {
+                lat: newLatLng.lat,
+                lng: newLatLng.lng,
+                timestamp: Date.now(),
+              };
+              return newPoints;
+            });
+          };
+          
+          const onEnd = () => {
+            map.dragging.enable();
+            map.touchZoom.enable();
+            map.off('mousemove', onMove);
+            map.off('mouseup', onEnd);
+            map.off('touchmove', onMove);
+            map.off('touchend', onEnd);
+            
+            // Check for point merging (within 10 meters)
+            const MERGE_THRESHOLD = 0.0001; // ~10 meters
+            const draggedPoint = {
+              lat: currentMarker.getLatLng().lat,
+              lng: currentMarker.getLatLng().lng,
+              timestamp: Date.now(),
+            };
+            
+            setDrawPoints(prevPoints => {
+              let merged = false;
+              const newPoints = prevPoints.map((p, i) => {
+                if (i !== index) {
+                  const distance = Math.sqrt(
+                    Math.pow(p.lat - draggedPoint.lat, 2) + 
+                    Math.pow(p.lng - draggedPoint.lng, 2)
+                  );
+                  if (distance < MERGE_THRESHOLD) {
+                    merged = true;
+                    return null; // Mark for removal
+                  }
+                }
+                return i === index ? draggedPoint : p;
+              }).filter(p => p !== null) as Coordinate[];
+              
+              return newPoints;
+            });
+          };
+          
+          map.on('mousemove', onMove);
+          map.on('mouseup', onEnd);
+          map.on('touchmove', onMove);
+          map.on('touchend', onEnd);
         };
         
-        map.on('mousemove', onMouseMove);
-        map.on('mouseup', onMouseUp);
-        });
+        // Attach both mouse and touch handlers
+        marker.on('mousedown', setupDragHandlers);
+        marker.on('touchstart', setupDragHandlers);
       }
       
       markersLayerRef.current.addLayer(marker);
