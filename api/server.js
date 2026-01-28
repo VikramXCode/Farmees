@@ -82,63 +82,52 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-// Import routes from backend (using createRequire for CommonJS modules)
-const backendPath = path.join(__dirname, '..', 'backend');
-const localRoutesPath = path.join(__dirname, 'routes');
+// Import routes from local routes folder (using createRequire for CommonJS modules)
+const routesPath = path.join(__dirname, 'routes');
 
-// Try to load routes with error handling - prefer local routes, fallback to backend
+// Load routes with error handling
 let routesLoaded = {};
-const loadRoute = (name, localPath, backendRoutePath) => {
-  // Try local route first (in api folder)
+const loadRoute = (name) => {
   try {
-    const route = require(localPath);
-    routesLoaded[name] = 'local';
+    const route = require(path.join(routesPath, name));
+    routesLoaded[name] = 'loaded';
     return route;
-  } catch (localErr) {
-    // Try backend route as fallback
-    try {
-      const route = require(backendRoutePath);
-      routesLoaded[name] = 'backend';
-      return route;
-    } catch (backendErr) {
-      console.error(`Failed to load route ${name}:`, backendErr.message);
-      routesLoaded[name] = backendErr.message;
-      // Return a placeholder router that returns error
-      const placeholder = express.Router();
-      placeholder.all('*', (req, res) => {
-        res.status(500).json({ error: `Route ${name} failed to load`, details: backendErr.message });
-      });
-      return placeholder;
-    }
+  } catch (err) {
+    console.error(`Failed to load route ${name}:`, err.message);
+    routesLoaded[name] = `error: ${err.message}`;
+    // Return a placeholder router that returns error
+    const placeholder = express.Router();
+    placeholder.all('*', (req, res) => {
+      res.status(500).json({ error: `Route ${name} failed to load`, details: err.message });
+    });
+    return placeholder;
   }
 };
 
-// Auth route - use local version
-app.use('/api/auth', loadRoute('auth', path.join(localRoutesPath, 'auth'), path.join(backendPath, 'routes', 'auth')));
-
-// Other routes - try backend first (will fail on Vercel, use placeholder)
-app.use('/api/lands', loadRoute('lands', path.join(localRoutesPath, 'lands'), path.join(backendPath, 'routes', 'lands')));
-app.use('/api/ai-interactions', loadRoute('ai-interactions', path.join(localRoutesPath, 'ai-interactions'), path.join(backendPath, 'routes', 'ai-interactions')));
-app.use('/api/recommendations', loadRoute('recommendations', path.join(localRoutesPath, 'recommendations'), path.join(backendPath, 'routes', 'recommendations')));
-app.use('/api/diseases', loadRoute('diseases', path.join(localRoutesPath, 'diseases'), path.join(backendPath, 'routes', 'diseases')));
-app.use('/api/pests', loadRoute('pests', path.join(localRoutesPath, 'pests'), path.join(backendPath, 'routes', 'pests')));
-app.use('/api/soil', loadRoute('soil', path.join(localRoutesPath, 'soil'), path.join(backendPath, 'routes', 'soil')));
-app.use('/api/crop-recommendations', loadRoute('crop-recommendations', path.join(localRoutesPath, 'crop-recommendations'), path.join(backendPath, 'routes', 'crop-recommendations')));
-app.use('/api/weather', loadRoute('weather', path.join(localRoutesPath, 'weather'), path.join(backendPath, 'routes', 'weather')));
-app.use('/api/ai', loadRoute('ai', path.join(localRoutesPath, 'ai'), path.join(backendPath, 'routes', 'ai')));
-app.use('/api/officers', loadRoute('officers', path.join(localRoutesPath, 'officers'), path.join(backendPath, 'routes', 'officers')));
-app.use('/api/escalations', loadRoute('escalations', path.join(localRoutesPath, 'escalations'), path.join(backendPath, 'routes', 'escalations')));
-app.use('/api/alerts', loadRoute('alerts', path.join(localRoutesPath, 'alerts'), path.join(backendPath, 'routes', 'alerts')));
-app.use('/api/market', loadRoute('market', path.join(localRoutesPath, 'market'), path.join(backendPath, 'routes', 'market')));
-app.use('/api/connect', loadRoute('connect', path.join(localRoutesPath, 'connect'), path.join(backendPath, 'routes', 'connect')));
-app.use('/api/labour', loadRoute('labour', path.join(localRoutesPath, 'labour'), path.join(backendPath, 'routes', 'labour')));
-app.use('/api/analytics', loadRoute('analytics', path.join(localRoutesPath, 'analytics'), path.join(backendPath, 'routes', 'analytics')));
+// Load all routes from local routes folder
+app.use('/api/auth', loadRoute('auth'));
+app.use('/api/lands', loadRoute('lands'));
+app.use('/api/ai-interactions', loadRoute('ai-interactions'));
+app.use('/api/recommendations', loadRoute('recommendations'));
+app.use('/api/diseases', loadRoute('diseases'));
+app.use('/api/pests', loadRoute('pests'));
+app.use('/api/soil', loadRoute('soil'));
+app.use('/api/crop-recommendations', loadRoute('crop-recommendations'));
+app.use('/api/weather', loadRoute('weather'));
+app.use('/api/ai', loadRoute('ai'));
+app.use('/api/officers', loadRoute('officers'));
+app.use('/api/escalations', loadRoute('escalations'));
+app.use('/api/alerts', loadRoute('alerts'));
+app.use('/api/market', loadRoute('market'));
+app.use('/api/connect', loadRoute('connect'));
+app.use('/api/labour', loadRoute('labour'));
+app.use('/api/analytics', loadRoute('analytics'));
 
 // Debug endpoint to check route loading status
 app.get('/api/debug/routes', (req, res) => {
   res.json({ 
-    routesLoaded, 
-    backendPath,
+    routesLoaded,
+    routesPath,
     dirname: __dirname
   });
 });

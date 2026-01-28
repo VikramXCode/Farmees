@@ -1,7 +1,9 @@
-// Auth Routes for Vercel API
+// Auth Routes: Signup & Signin
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Worker = require('../models/Worker');
+const Coordinator = require('../models/Coordinator');
 
 // Signup Route
 router.post('/signup', async (req, res) => {
@@ -33,9 +35,56 @@ router.post('/signup', async (req, res) => {
     });
     await user.save();
     
+    // Auto-create Worker profile if role is 'worker'
+    if (userRole === 'worker') {
+      // Find a coordinator to assign to (prefer one from same district, or use first available)
+      let coordinator = await Coordinator.findOne({ district: user.district, isActive: true });
+      if (!coordinator) {
+        coordinator = await Coordinator.findOne({ isActive: true });
+      }
+      
+      if (coordinator) {
+        const worker = new Worker({
+          coordinatorId: coordinator._id,
+          name: user.name,
+          phone: user.phone,
+          skills: [], // Empty initially, worker can update via profile
+          isActive: true,
+          isDemo: false
+        });
+        await worker.save();
+        
+        // Update coordinator's worker count
+        coordinator.workerCount = await Worker.countDocuments({ 
+          coordinatorId: coordinator._id, 
+          isActive: true 
+        });
+        await coordinator.save();
+      } else {
+        console.warn(`Worker ${user.phone} created but no coordinator available to assign`);
+      }
+    }
+    
+    // Auto-create Coordinator profile if role is 'coordinator'
+    if (userRole === 'coordinator') {
+      const coordinator = new Coordinator({
+        userId: user._id,
+        name: user.name,
+        phone: user.phone,
+        location: {
+          district: user.district || 'Coimbatore',
+          area: user.area || 'Pollachi'
+        },
+        skillsOffered: ['land_preparation', 'sowing', 'weeding', 'harvesting', 'general'], // Default skills
+        workerCount: 0,
+        isActive: true,
+        isDemo: false
+      });
+      await coordinator.save();
+    }
+    
     res.status(201).json({ id: user._id, name: user.name, phone: user.phone, role: user.role });
   } catch (err) {
-    console.error('Signup error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -60,13 +109,67 @@ router.post('/signin', async (req, res) => {
     const demoPhones = ['9999000001', '9999000002', '9999000003'];
     const isDemo = demoPhones.includes(user.phone) ? true : (user.isDemo || false);
 
-    // Ensure demo accounts return the correct role
+    // Ensure demo accounts return the correct role even if DB was seeded incorrectly
     const demoRoleByPhone = {
       '9999000001': 'farmer',
       '9999000002': 'coordinator',
       '9999000003': 'worker'
     };
     const effectiveRole = (isDemo && demoRoleByPhone[user.phone]) ? demoRoleByPhone[user.phone] : user.role;
+    
+    // Auto-create Worker profile if missing and role is 'worker'
+    if (effectiveRole === 'worker' && !isDemo) {
+      const existingWorker = await Worker.findOne({ phone: user.phone });
+      if (!existingWorker) {
+        // Find a coordinator to assign to
+        let coordinator = await Coordinator.findOne({ district: user.district, isActive: true });
+        if (!coordinator) {
+          coordinator = await Coordinator.findOne({ isActive: true });
+        }
+        
+        if (coordinator) {
+          const worker = new Worker({
+            coordinatorId: coordinator._id,
+            name: user.name,
+            phone: user.phone,
+            skills: [],
+            isActive: true,
+            isDemo: false
+          });
+          await worker.save();
+          
+          // Update coordinator's worker count
+          coordinator.workerCount = await Worker.countDocuments({ 
+            coordinatorId: coordinator._id, 
+            isActive: true 
+          });
+          await coordinator.save();
+        } else {
+          console.warn(`Worker ${user.phone} needs Worker profile but no coordinator available`);
+        }
+      }
+    }
+    
+    // Auto-create Coordinator profile if missing and role is 'coordinator'
+    if (effectiveRole === 'coordinator' && !isDemo) {
+      const existingCoordinator = await Coordinator.findOne({ userId: user._id });
+      if (!existingCoordinator) {
+        const coordinator = new Coordinator({
+          userId: user._id,
+          name: user.name,
+          phone: user.phone,
+          location: {
+            district: user.district || 'Coimbatore',
+            area: user.area || 'Pollachi'
+          },
+          skillsOffered: ['land_preparation', 'sowing', 'weeding', 'harvesting', 'general'], // Default skills
+          workerCount: 0,
+          isActive: true,
+          isDemo: false
+        });
+        await coordinator.save();
+      }
+    }
     
     res.json({ 
       id: user._id, 
@@ -78,7 +181,6 @@ router.post('/signin', async (req, res) => {
       area: user.area || 'Pollachi'
     });
   } catch (err) {
-    console.error('Signin error:', err);
     res.status(500).json({ error: err.message });
   }
 });
