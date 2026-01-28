@@ -1,7 +1,8 @@
 // Soil Report Service: Upload and extract soil data
 import { getApiHeaders } from './api';
+import { API_BASE_URL } from '../config/api';
 
-const baseUrl = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
+const baseUrl = API_BASE_URL;
 
 export async function uploadSoilReport(landId: string, file: File, engine: 'tesseract' | 'easyocr' = 'tesseract', lang: string = 'en') {
   const formData = new FormData();

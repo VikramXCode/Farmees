@@ -22,10 +22,35 @@ if (process.env.VERCEL) {
 }
 
 // CORS configuration
+const allowedOrigins = [
+  'https://farmees.vercel.app',
+  'https://farm-ease.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+// Add custom frontend URL if specified
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL 
-    ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000']
-    : true, // Allow all origins in development
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is allowed
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed.replace(/\/$/, '')))) {
+      return callback(null, true);
+    }
+    
+    // In development, allow all
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Demo-Mode', 'X-Requested-With']

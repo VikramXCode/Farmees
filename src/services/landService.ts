@@ -2,9 +2,10 @@
 
 import { LandData, AIInteraction, LandRecommendation } from '../types/land';
 import { getApiHeaders } from './api';
+import { API_BASE_URL } from '../config/api';
 
 class LandService {
-  private baseUrl = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
+  private baseUrl = API_BASE_URL;
 
   // Land Data Management
   async createLandData(landData: Omit<LandData, '_id' | 'createdAt' | 'updatedAt'>): Promise<LandData> {

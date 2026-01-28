@@ -3,6 +3,7 @@ import { Bug, Camera, Upload, FileText, X, CheckCircle } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { aiService } from '../../services/aiService';
 import { useFarm } from '../../contexts/FarmContext';
+import { API_BASE_URL } from '../../config/api';
 
 export default function DiseaseDiagnosis() {
   const [activeTab, setActiveTab] = useState('crop');
@@ -58,7 +59,6 @@ export default function DiseaseDiagnosis() {
       const form = new FormData();
       form.append('image', uploadedFile);
 
-      const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
       const res = await fetch(`${API_BASE_URL}/diseases/identify`, {
         method: 'POST',
         body: form
@@ -110,7 +110,6 @@ export default function DiseaseDiagnosis() {
       const form = new FormData();
       form.append('image', uploadedFile);
 
-      const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
       const res = await fetch(`${API_BASE_URL}/pests/identify`, {
         method: 'POST',
         body: form

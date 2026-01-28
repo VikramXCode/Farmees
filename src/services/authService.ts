@@ -1,7 +1,6 @@
 // Auth Service: Handles signup and signin API calls
 import { getApiHeaders } from './api';
-
-const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
+import { API_BASE_URL } from '../config/api';
 
 export async function signup(name: string, phone: string, password: string, role: string = 'farmer') {
   const res = await fetch(`${API_BASE_URL}/auth/signup`, {

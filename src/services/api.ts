@@ -1,9 +1,8 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
-// Base URL configuration
-// In production, use VITE_API_URL env var pointing to your backend Vercel deployment
-// In development, use relative path for Vite proxy
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Base URL configuration - uses centralized config
+const BASE_URL = API_BASE_URL;
 
 // Helper function to get headers with demo mode
 export const getApiHeaders = (): Record<string, string> => {
