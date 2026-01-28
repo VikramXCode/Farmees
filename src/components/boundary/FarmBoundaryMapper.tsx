@@ -85,8 +85,10 @@ const translations = {
     subtitle: 'Map your farm boundary for accurate area calculation',
     walkMode: 'Walk Mode',
     walkModeDesc: 'Walk around your farm boundary with GPS tracking',
+    pointMode: 'Point Mode',
+    pointModeDesc: 'Tap points on the map to mark boundary corners',
     drawMode: 'Draw Mode',
-    drawModeDesc: 'Tap on the map to draw your farm boundary',
+    drawModeDesc: 'Draw freely on the map with your finger (2-finger to pan)',
     startMapping: 'Start Mapping',
     stopMapping: 'Stop Mapping',
     reset: 'Reset',
@@ -103,6 +105,7 @@ const translations = {
     minPoints: 'Need at least 3 points to form a boundary',
     gpsError: 'GPS Error',
     tapToAddPoint: 'Tap on map to add boundary points',
+    drawInstructions: 'Hold and drag to draw boundary (2-finger to move map)',
     walkInstructions: 'Walk slowly along your farm boundary',
     draftLoaded: 'Previous draft loaded',
     excellent: 'Excellent',
@@ -115,8 +118,43 @@ const translations = {
     subtitle: 'துல்லியமான பரப்பளவு கணக்கிற்கு உங்கள் பண்ணை எல்லையை வரையுங்கள்',
     walkMode: 'நடை முறை',
     walkModeDesc: 'GPS கண்காணிப்புடன் உங்கள் பண்ணை எல்லையை நடந்து செல்லுங்கள்',
+    pointMode: 'புள்ளி முறை',
+    pointModeDesc: 'எல்லை மூலைகளை குறிக்க வரைபடத்தில் புள்ளிகளை தட்டவும்',
     drawMode: 'வரைதல் முறை',
-    drawModeDesc: 'வரைபடத்தில் தட்டி உங்கள் பண்ணை எல்லையை வரையுங்கள்',
+    drawModeDesc: 'உங்கள் விரலால் வரைபடத்தில் சுதந்திரமாக வரையுங்கள் (2-விரல் நகர்த்த)',
+    startMapping: 'வரைபடம் தொடங்கு',
+    stopMapping: 'Stop Mapping',
+    reset: 'Reset',
+    saveBoundary: 'Save Boundary',
+    cancel: 'Cancel',
+    gpsAccuracy: 'GPS Accuracy',
+    meters: 'meters',
+    pointsCaptured: 'Points Captured',
+    estimatedArea: 'Estimated Area',
+    perimeter: 'Perimeter',
+    offline: 'Offline - Data will sync when connected',
+    online: 'Online',
+    disclaimer: 'Approximate mapping for advisory purposes. Not survey-accurate.',
+    minPoints: 'Need at least 3 points to form a boundary',
+    gpsError: 'GPS Error',
+    tapToAddPoint: 'Tap on map to add boundary points',
+    drawInstructions: 'Hold and drag to draw boundary (2-finger to move map)',
+    walkInstructions: 'Walk slowly along your farm boundary',
+    draftLoaded: 'Previous draft loaded',
+    excellent: 'Excellent',
+    good: 'Good',
+    fair: 'Fair',
+    poor: 'Poor',
+  },
+  tamil: {
+    title: 'ஸ்மார்ட் பண்ணை எல்லை வரைபடம்',
+    subtitle: 'துல்லியமான பரப்பளவு கணக்கிற்கு உங்கள் பண்ணை எல்லையை வரையுங்கள்',
+    walkMode: 'நடை முறை',
+    walkModeDesc: 'GPS கண்காணிப்புடன் உங்கள் பண்ணை எல்லையை நடந்து செல்லுங்கள்',
+    pointMode: 'புள்ளி முறை',
+    pointModeDesc: 'எல்லை மூலைகளை குறிக்க வரைபடத்தில் புள்ளிகளை தட்டவும்',
+    drawMode: 'வரைதல் முறை',
+    drawModeDesc: 'உங்கள் விரலால் வரைபடத்தில் சுதந்திரமாக வரையுங்கள் (2-விரல் நகர்த்த)',
     startMapping: 'வரைபடம் தொடங்கு',
     stopMapping: 'வரைபடம் நிறுத்து',
     reset: 'மீட்டமை',
@@ -133,6 +171,7 @@ const translations = {
     minPoints: 'எல்லை உருவாக்க குறைந்தது 3 புள்ளிகள் தேவை',
     gpsError: 'GPS பிழை',
     tapToAddPoint: 'எல்லை புள்ளிகளைச் சேர்க்க வரைபடத்தில் தட்டவும்',
+    drawInstructions: 'எல்லையை வரைய பிடித்து இழுக்கவும் (வரைபடத்தை நகர்த்த 2-விரல்)',
     walkInstructions: 'உங்கள் பண்ணை எல்லையில் மெதுவாக நடக்கவும்',
     draftLoaded: 'முந்தைய வரைவு ஏற்றப்பட்டது',
     excellent: 'அருமை',
@@ -151,12 +190,14 @@ export default function FarmBoundaryMapper({
   const t = translations[language];
   
   // State
-  const [mode, setMode] = useState<'walk' | 'draw'>('walk');
+  const [mode, setMode] = useState<'walk' | 'point' | 'draw'>('walk');
   const [isExpanded, setIsExpanded] = useState(true);
   const [isConnected, setIsConnected] = useState(isOnline());
   const [drawPoints, setDrawPoints] = useState<Coordinate[]>(initialCoordinates || []);
   const [mapReady, setMapReady] = useState(false);
   const [showDraftNotice, setShowDraftNotice] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawPath, setDrawPath] = useState<Coordinate[]>([]);
 
   // Refs
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -164,6 +205,7 @@ export default function FarmBoundaryMapper({
   const polygonLayerRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
   const currentPosMarkerRef = useRef<any>(null);
+  const drawLayerRef = useRef<any>(null);
 
   // GPS tracking hook
   const {
@@ -239,6 +281,7 @@ export default function FarmBoundaryMapper({
     // Create layers for polygon and markers
     polygonLayerRef.current = L.layerGroup().addTo(map);
     markersLayerRef.current = L.layerGroup().addTo(map);
+    drawLayerRef.current = L.layerGroup().addTo(map);
 
     mapInstanceRef.current = map;
     setMapReady(true);
@@ -258,30 +301,97 @@ export default function FarmBoundaryMapper({
     };
   }, []);
 
-  // Handle map clicks for draw mode
+  // Handle map interactions for point and draw modes
   useEffect(() => {
     if (!mapInstanceRef.current || !mapReady) return;
+    // @ts-ignore
+    const L = (window as any).L;
+    const map = mapInstanceRef.current;
 
     const handleMapClick = (e: any) => {
-      if (mode !== 'draw') return;
-      
-      const coord: Coordinate = {
-        lat: e.latlng.lat,
-        lng: e.latlng.lng,
-        timestamp: Date.now(),
-      };
-      
-      setDrawPoints(prev => [...prev, coord]);
-    };
-
-    mapInstanceRef.current.on('click', handleMapClick);
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.off('click', handleMapClick);
+      if (mode === 'point') {
+        // Point mode: single tap to add point
+        const coord: Coordinate = {
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+          timestamp: Date.now(),
+        };
+        setDrawPoints(prev => [...prev, coord]);
       }
     };
-  }, [mode, mapReady]);
+
+    const handleMouseDown = (e: any) => {
+      if (mode === 'draw' && !isDrawing) {
+        setIsDrawing(true);
+        setDrawPath([]);
+        map.dragging.disable(); // Disable map dragging during draw
+        
+        const coord: Coordinate = {
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+          timestamp: Date.now(),
+        };
+        setDrawPath([coord]);
+      }
+    };
+
+    const handleMouseMove = (e: any) => {
+      if (mode === 'draw' && isDrawing) {
+        const coord: Coordinate = {
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+          timestamp: Date.now(),
+        };
+        setDrawPath(prev => [...prev, coord]);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (mode === 'draw' && isDrawing) {
+        setIsDrawing(false);
+        map.dragging.enable(); // Re-enable map dragging
+        
+        // Convert draw path to simplified points
+        if (drawPath.length > 5) {
+          // Simplify the path (keep every 5th point for smoother boundary)
+          const simplified = drawPath.filter((_, idx) => idx % 5 === 0);
+          setDrawPoints(prev => [...prev, ...simplified]);
+        }
+        setDrawPath([]);
+      }
+    };
+
+    map.on('click', handleMapClick);
+    map.on('mousedown', handleMouseDown);
+    map.on('mousemove', handleMouseMove);
+    map.on('mouseup', handleMouseUp);
+
+    return () => {
+      map.off('click', handleMapClick);
+      map.off('mousedown', handleMouseDown);
+      map.off('mousemove', handleMouseMove);
+      map.off('mouseup', handleMouseUp);
+    };
+  }, [mode, mapReady, isDrawing, drawPath]);
+
+  // Visualize active drawing path
+  useEffect(() => {
+    // @ts-ignore
+    const L = (window as any).L;
+    if (!L || !mapInstanceRef.current || !drawLayerRef.current) return;
+
+    drawLayerRef.current.clearLayers();
+
+    if (drawPath.length > 1) {
+      const latlngs = drawPath.map(p => [p.lat, p.lng]);
+      const polyline = L.polyline(latlngs, {
+        color: '#3B82F6',
+        weight: 3,
+        opacity: 0.8,
+      });
+      drawLayerRef.current.addLayer(polyline);
+    }
+  }, [drawPath]);
 
   // Update map visualization
   useEffect(() => {
@@ -295,7 +405,7 @@ export default function FarmBoundaryMapper({
 
     if (currentPoints.length === 0) return;
 
-    // Add draggable markers for each point
+    // Add draggable markers for each point (only in point mode)
     currentPoints.forEach((point, index) => {
       const isFirst = index === 0;
       const isLast = index === currentPoints.length - 1;
@@ -307,26 +417,34 @@ export default function FarmBoundaryMapper({
         weight: 2,
         opacity: 1,
         fillOpacity: 0.8,
-        draggable: mode === 'draw', // Enable dragging in draw mode
       });
       
-      if (isFirst) {
-        marker.bindTooltip('Start (Drag to move)', { permanent: false });
-      } else if (isLast && currentPoints.length > 1) {
-        marker.bindTooltip('End (Drag to move)', { permanent: false });
+      if (mode === 'point') {
+        // Only show drag tooltips in point mode
+        if (isFirst) {
+          marker.bindTooltip('Start (Drag to move)', { permanent: false });
+        } else if (isLast && currentPoints.length > 1) {
+          marker.bindTooltip('End (Drag to move)', { permanent: false });
+        } else {
+          marker.bindTooltip(`Point ${index + 1} (Drag to move)`, { permanent: false });
+        }
       } else {
-        marker.bindTooltip(`Point ${index + 1} (Drag to move)`, { permanent: false });
+        // Simple tooltips for draw mode
+        if (isFirst) {
+          marker.bindTooltip('Start', { permanent: false });
+        } else if (isLast && currentPoints.length > 1) {
+          marker.bindTooltip('End', { permanent: false });
+        }
       }
       
-      // Handle point dragging
-      marker.on('mousedown', function(e: any) {
-        if (mode !== 'draw') return;
-        
-        const map = mapInstanceRef.current;
-        if (!map) return;
+      // Handle point dragging (only in point mode)
+      if (mode === 'point') {
+        marker.on('mousedown', function(e: any) {
+          const map = mapInstanceRef.current;
+          if (!map) return;
 
-        // Prevent map dragging while dragging marker
-        map.dragging.disable();
+          // Prevent map dragging while dragging marker
+          map.dragging.disable();
         
         let currentMarker = marker;
         
@@ -381,7 +499,8 @@ export default function FarmBoundaryMapper({
         
         map.on('mousemove', onMouseMove);
         map.on('mouseup', onMouseUp);
-      });
+        });
+      }
       
       markersLayerRef.current.addLayer(marker);
     });
@@ -564,7 +683,7 @@ export default function FarmBoundaryMapper({
           )}
 
           {/* Mode Selection */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => handleModeChange('walk')}
@@ -580,6 +699,23 @@ export default function FarmBoundaryMapper({
               }`} />
               <div className="text-sm font-medium">{t.walkMode}</div>
               <div className="text-xs text-gray-500">{t.walkModeDesc}</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleModeChange('point')}
+              disabled={isTracking}
+              className={`p-3 rounded-lg border-2 transition-all ${
+                mode === 'point'
+                  ? 'border-green-500 bg-green-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              } ${isTracking ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <MapPin className={`w-6 h-6 mx-auto mb-1 ${
+                mode === 'point' ? 'text-green-600' : 'text-gray-500'
+              }`} />
+              <div className="text-sm font-medium">{t.pointMode}</div>
+              <div className="text-xs text-gray-500">{t.pointModeDesc}</div>
             </button>
 
             <button
@@ -609,10 +745,18 @@ export default function FarmBoundaryMapper({
             />
             
             {/* Map Overlay Instructions */}
-            {mode === 'draw' && !isTracking && currentPoints.length === 0 && (
+            {mode === 'point' && !isTracking && currentPoints.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                 <div className="bg-white px-4 py-2 rounded-full shadow-lg text-sm">
                   {t.tapToAddPoint}
+                </div>
+              </div>
+            )}
+            
+            {mode === 'draw' && !isTracking && currentPoints.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+                <div className="bg-white px-4 py-2 rounded-full shadow-lg text-sm">
+                  {t.drawInstructions}
                 </div>
               </div>
             )}
