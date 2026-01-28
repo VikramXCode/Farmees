@@ -25,6 +25,7 @@ if (process.env.VERCEL) {
 // CORS configuration
 const allowedOrigins = [
   'https://farmees.vercel.app',
+  'https://farmees-elyt.vercel.app',
   'https://farm-ease.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000'
@@ -35,12 +36,22 @@ if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
 }
 
+// Add any Vercel preview URLs
+if (process.env.VERCEL_URL) {
+  allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
+}
+
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
 
-    // Check if origin is allowed
+    // Allow any vercel.app subdomain in production
+    if (origin && origin.includes('.vercel.app')) {
+      return callback(null, true);
+    }
+
+    // Check if origin is in allowed list
     if (allowedOrigins.some(allowed => origin.startsWith(allowed.replace(/\/$/, '')))) {
       return callback(null, true);
     }
