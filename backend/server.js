@@ -66,6 +66,20 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 const { demoModeMiddleware } = require('./middleware/demoMode');
 app.use(demoModeMiddleware);
 
+// Simple test route - no database required
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'Farmees Backend API',
+    timestamp: new Date().toISOString(),
+    env: {
+      nodeEnv: process.env.NODE_ENV,
+      isVercel: !!process.env.VERCEL,
+      hasMongoUri: !!process.env.MONGODB_URI
+    }
+  });
+});
+
 async function connectToDatabase() {
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
