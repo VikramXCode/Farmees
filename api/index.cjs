@@ -1,4 +1,4 @@
-// Vercel serverless function entry point
+// Vercel serverless function entry point (CommonJS)
 // This wraps the Express app to work with Vercel's serverless platform
 
 const path = require('path');
