@@ -35,8 +35,8 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-// Demo mode middleware (shared with backend)
-const { demoModeMiddleware } = require('../backend/middleware/demoMode');
+// Demo mode middleware
+import { demoModeMiddleware } from './middleware/demoMode.js';
 app.use(demoModeMiddleware);
 
 // Database connection
