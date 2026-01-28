@@ -3,14 +3,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/**/*.{js,mjs}": {
-      "includeFiles": "api/**"
+    "api/index.js": {
+      "includeFiles": "{routes/**,models/**,services/**,utils/**,middleware/**}"
     }
   },
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "/api/server"
+      "destination": "/api"
     },
     {
       "source": "/(.*)",
