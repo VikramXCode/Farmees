@@ -8,13 +8,22 @@ const require = createRequire(import.meta.url);
 
 const app = express();
 
+// Set Vercel environment flag for child modules
+process.env.VERCEL = '1';
+
 // Environment variables (from Vercel dashboard)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/farmease';
 let connectionPromise = null;
 
 // Middlewares
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Demo-Mode', 'X-Requested-With']
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Demo mode middleware (shared with backend)
 const { demoModeMiddleware } = require('../backend/middleware/demoMode');
@@ -74,20 +83,31 @@ app.use('/api/alerts', require('../backend/routes/alerts'));
 app.use('/api/market', require('../backend/routes/market'));
 app.use('/api/connect', require('../backend/routes/connect'));
 app.use('/api/labour', require('../backend/routes/labour'));
+app.use('/api/analytics', require('../backend/routes/analytics'));
 
 // Root API endpoint
 app.get('/api', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'Farmees API', 
-    endpoints: ['/api/health', '/api/auth', '/api/lands', '/api/weather', '/api/market']
+    version: '1.0.0',
+    environment: 'vercel',
+    endpoints: ['/api/health', '/api/auth', '/api/lands', '/api/weather', '/api/market', '/api/analytics']
   });
+});
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found', path: req.originalUrl });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
   console.error('API Error:', err);
-  res.status(500).json({ error: err.message || 'Internal server error' });
+  res.status(err.status || 500).json({ 
+    error: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+  });
 });
 
 export default app;
