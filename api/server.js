@@ -22,8 +22,18 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Demo-Mode', 'X-Requested-With']
 }));
+
+// Body parser with error handling
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Handle JSON parsing errors
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ error: 'Invalid JSON in request body' });
+  }
+  next(err);
+});
 
 // Demo mode middleware (shared with backend)
 const { demoModeMiddleware } = require('../backend/middleware/demoMode');
@@ -110,4 +120,5 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Export for Vercel serverless functions
 export default app;

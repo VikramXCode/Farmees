@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { FarmProvider } from './contexts/FarmContext';
@@ -7,25 +7,32 @@ import { LanguageProvider } from './contexts/LanguageContext';
 // Universal layout component
 import AppShell from './components/layout/AppShell';
 
-// Pages
-import AuthPage from './pages/AuthPage';
-import HomePage from './pages/HomePage';
-import RemindersPage from './pages/RemindersPage';
-import SchemesPage from './pages/SchemesPage';
-import ConnectPage from './pages/ConnectPage';
-import LabourPage from './pages/LabourPage';
-import CoordinatorPage from './pages/CoordinatorPage';
-import WorkerPage from './pages/WorkerPage';
-import MobileAuthPage from './pages/MobileAuthPage';
-import FarmerDashboard from './pages/FarmerDashboard';
-import AIPage from './pages/AIPage';
-import MorePage from './pages/MorePage';
-import DiagnosePage from './pages/DiagnosePage';
-import AddLandPage from './pages/AddLandPage';
-import MarketPage from './pages/MarketPage';
-import SoilReportPage from './pages/SoilReportPage';
-import WeatherPage from './pages/WeatherPage';
-import AnalyticsPage from './pages/AnalyticsPage';
+// Lazy-loaded Pages
+const AuthPage = lazy(() => import('./pages/AuthPage'));
+const HomePage = lazy(() => import('./pages/HomePage'));
+const RemindersPage = lazy(() => import('./pages/RemindersPage'));
+const SchemesPage = lazy(() => import('./pages/SchemesPage'));
+const ConnectPage = lazy(() => import('./pages/ConnectPage'));
+const LabourPage = lazy(() => import('./pages/LabourPage'));
+const CoordinatorPage = lazy(() => import('./pages/CoordinatorPage'));
+const WorkerPage = lazy(() => import('./pages/WorkerPage'));
+const MobileAuthPage = lazy(() => import('./pages/MobileAuthPage'));
+const FarmerDashboard = lazy(() => import('./pages/FarmerDashboard'));
+const AIPage = lazy(() => import('./pages/AIPage'));
+const MorePage = lazy(() => import('./pages/MorePage'));
+const DiagnosePage = lazy(() => import('./pages/DiagnosePage'));
+const AddLandPage = lazy(() => import('./pages/AddLandPage'));
+const MarketPage = lazy(() => import('./pages/MarketPage'));
+const SoilReportPage = lazy(() => import('./pages/SoilReportPage'));
+const WeatherPage = lazy(() => import('./pages/WeatherPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+
+// Loading component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen text-green-700 text-lg">
+    Loading...
+  </div>
+);
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -57,7 +64,8 @@ function App() {
       <AuthProvider>
         <FarmProvider>
           <Router>
-            <Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
               {/* Auth Route - No navigation */}
               <Route path="/auth" element={<MobileAuthPage />} />
               
@@ -181,7 +189,8 @@ function App() {
                   </AppShell>
                 </ProtectedRoute>
               } />
-            </Routes>
+              </Routes>
+            </Suspense>
           </Router>
         </FarmProvider>
       </AuthProvider>

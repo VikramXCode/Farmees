@@ -50,11 +50,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Login failed');
+        let errorMessage = 'Login failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = `Login failed: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const userData = await response.json();
+      let userData;
+      try {
+        userData = await response.json();
+      } catch (e) {
+        throw new Error('Invalid response from server. Please try again.');
+      }
+
       const newUser: User = {
         id: userData.id || userData._id || '',
         name: userData.name || '',
@@ -83,11 +96,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Registration failed');
+        let errorMessage = 'Registration failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = `Registration failed: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const userData = await response.json();
+      let userData;
+      try {
+        userData = await response.json();
+      } catch (e) {
+        throw new Error('Invalid response from server. Please try again.');
+      }
+
       const newUser: User = {
         id: userData.id || userData._id || '',
         name: userData.name || data.name,

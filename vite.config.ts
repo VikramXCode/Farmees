@@ -16,5 +16,15 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['lucide-react'],
-  },
-});
+  },  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'map-vendor': ['leaflet', 'react-leaflet'],
+          'chart-vendor': ['recharts'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },});
