@@ -12,23 +12,23 @@ const getApiBaseUrl = () => {
   const isProd = import.meta.env.PROD;
   
   if (apiUrl) {
+    console.log('[API Config] Using env VITE_API_URL:', apiUrl);
     return apiUrl;
   }
   
   // In production builds (Vercel), always use the backend URL
   if (isProd) {
+    console.log('[API Config] Production mode detected, using:', PRODUCTION_API_URL);
     return PRODUCTION_API_URL;
   }
   
   // In development, use the proxy
+  console.log('[API Config] Development mode, using proxy:', DEVELOPMENT_API_URL);
   return DEVELOPMENT_API_URL;
 };
 
 export const API_BASE_URL = getApiBaseUrl();
 
-// Debug log in development
-if (import.meta.env.DEV) {
-  console.log('[API Config] Using API Base URL:', API_BASE_URL);
-}
+console.log('[API Config] Final API_BASE_URL:', API_BASE_URL);
 
 export default API_BASE_URL;
