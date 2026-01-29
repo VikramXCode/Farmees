@@ -76,6 +76,8 @@ interface FarmBoundaryMapperProps {
   onCancel?: () => void;
   initialCoordinates?: Coordinate[];
   language?: 'english' | 'tamil';
+  initialCenter?: { lat: number; lng: number };
+  defaultMode?: 'walk' | 'point' | 'draw';
 }
 
 // Translations
@@ -153,11 +155,13 @@ export default function FarmBoundaryMapper({
   onCancel,
   initialCoordinates,
   language = 'english',
+  initialCenter,
+  defaultMode = 'walk',
 }: FarmBoundaryMapperProps) {
   const t = translations[language];
   
   // State
-  const [mode, setMode] = useState<'walk' | 'point' | 'draw'>('walk');
+  const [mode, setMode] = useState<'walk' | 'point' | 'draw'>(defaultMode);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isConnected, setIsConnected] = useState(isOnline());
   const [drawPoints, setDrawPoints] = useState<Coordinate[]>(initialCoordinates || []);
@@ -237,7 +241,10 @@ export default function FarmBoundaryMapper({
 
     // Default center (Tamil Nadu)
     const defaultCenter: [number, number] = [11.1271, 78.6569];
-    const map = L.map(mapContainerRef.current).setView(defaultCenter, 15);
+    const centerCoords: [number, number] = initialCenter 
+      ? [initialCenter.lat, initialCenter.lng] 
+      : defaultCenter;
+    const map = L.map(mapContainerRef.current).setView(centerCoords, initialCenter ? 17 : 15);
 
     // Add tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -253,12 +260,14 @@ export default function FarmBoundaryMapper({
     mapInstanceRef.current = map;
     setMapReady(true);
 
-    // Get initial position and center map
-    getCurrentPosition().then((pos) => {
-      if (pos && mapInstanceRef.current) {
-        mapInstanceRef.current.setView([pos.lat, pos.lng], 17);
-      }
-    });
+    // Get initial position and center map only if no initialCenter provided
+    if (!initialCenter) {
+      getCurrentPosition().then((pos) => {
+        if (pos && mapInstanceRef.current) {
+          mapInstanceRef.current.setView([pos.lat, pos.lng], 17);
+        }
+      });
+    }
 
     return () => {
       if (mapInstanceRef.current) {

@@ -2,17 +2,11 @@ import express from 'express';
 const router = express.Router();
 import weatherService from '../services/weatherService.js';
 import Land from '../models/Land.js';
-import { isDemoUser, DEMO_WEATHER } from '../middleware/demoMode.js';
 
 
 // Get current weather by coordinates
 router.get('/current/:lat/:lon', async (req, res) => {
   try {
-    // Check if demo mode
-    if (req.isDemo) {
-      return res.json(DEMO_WEATHER);
-    }
-
     const { lat, lon } = req.params;
     const { location } = req.query;
 

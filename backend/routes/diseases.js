@@ -5,7 +5,6 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import { fileURLToPath } from 'url';
-import { isDemoUser, DEMO_DISEASE_ANALYSIS } from '../middleware/demoMode.js';
 import { getEnvKeys, shouldRotate } from '../utils/apiKeys.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -32,11 +31,6 @@ const upload = multer({ storage });
 // This route calls Plant.id API for plant disease identification. Supports key rotation via env vars.
 router.post('/identify', upload.single('image'), async (req, res) => {
   try {
-    // Check if demo mode
-    if (req.isDemo) {
-      return res.json(DEMO_DISEASE_ANALYSIS);
-    }
-
     if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
 
     const keys = getEnvKeys('PLANT_ID');

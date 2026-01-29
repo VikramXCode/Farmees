@@ -1,0 +1,80 @@
+crop,soil_type,ph_min,ph_max,nitrogen_requirement,phosphorus_requirement,potassium_requirement,organic_carbon_requirement,ec_max,climate,temp_min_c,temp_max_c,season,duration_months,water_need
+Rice,Clay,5.5,7.0,High,Medium,Medium,Medium,2.0,Tropical,20,35,Kharif,4,High
+Rice,Loamy,5.5,7.0,High,Medium,Medium,Medium,2.0,Tropical,20,35,Kharif,4,High
+Rice,Alluvial,5.5,7.0,High,Medium,Medium,Medium,2.0,Tropical,20,35,Whole Year,4,High
+Rice,Clay,5.5,7.0,High,Medium,Medium,Medium,2.0,Subtropical,20,35,Kharif,4,High
+Wheat,Loamy,6.0,7.5,Medium,Medium,Medium,Medium,4.0,Subtropical,10,25,Rabi,5,Medium
+Wheat,Alluvial,6.0,7.5,Medium,Medium,Medium,Medium,4.0,Subtropical,10,25,Rabi,5,Medium
+Wheat,Black,6.0,7.5,Medium,Medium,Medium,Medium,4.0,Subtropical,10,25,Rabi,5,Medium
+Maize,Loamy,5.5,7.5,Medium,Medium,Low,Medium,4.0,Subtropical,18,30,Kharif,4,Medium
+Maize,Alluvial,5.5,7.5,Medium,Medium,Low,Medium,4.0,Subtropical,18,30,Kharif,4,Medium
+Maize,Red,5.5,7.5,Medium,Medium,Low,Medium,4.0,Subtropical,18,30,Kharif,4,Medium
+Maize,Sandy,5.5,7.5,Medium,Medium,Low,Medium,4.0,Subtropical,18,30,Rabi,3,Medium
+Banana,Loamy,6.0,7.5,High,High,High,High,2.0,Tropical,15,35,Whole Year,12,High
+Banana,Alluvial,6.0,7.5,High,High,High,High,2.0,Tropical,15,35,Whole Year,12,High
+Banana,Red,6.0,7.5,High,High,High,High,2.0,Tropical,15,35,Whole Year,12,High
+Cotton,Black,6.0,8.0,High,Medium,High,Medium,4.0,Tropical,21,30,Kharif,6,Medium
+Cotton,Alluvial,6.0,8.0,High,Medium,High,Medium,4.0,Tropical,21,30,Kharif,6,Medium
+Cotton,Red,6.0,8.0,High,Medium,High,Medium,4.0,Semi-arid,21,30,Kharif,6,Medium
+Sugarcane,Loamy,6.5,7.5,High,High,High,High,4.0,Tropical,20,35,Whole Year,12,High
+Sugarcane,Alluvial,6.5,7.5,High,High,High,High,4.0,Tropical,20,35,Whole Year,12,High
+Sugarcane,Black,6.5,7.5,High,High,High,High,4.0,Subtropical,20,35,Whole Year,12,High
+Groundnut,Sandy,6.0,7.0,Low,Medium,Medium,Medium,4.0,Tropical,20,30,Kharif,4,Low
+Groundnut,Loamy,6.0,7.0,Low,Medium,Medium,Medium,4.0,Tropical,20,30,Kharif,4,Low
+Groundnut,Red,6.0,7.0,Low,Medium,Medium,Medium,4.0,Semi-arid,20,30,Kharif,4,Low
+Groundnut,Sandy,6.0,7.0,Low,Medium,Medium,Medium,4.0,Tropical,20,30,Rabi,4,Low
+Turmeric,Loamy,5.5,7.5,High,Medium,High,High,2.0,Tropical,20,35,Kharif,9,Medium
+Turmeric,Red,5.5,7.5,High,Medium,High,High,2.0,Tropical,20,35,Kharif,9,Medium
+Turmeric,Alluvial,5.5,7.5,High,Medium,High,High,2.0,Tropical,20,35,Kharif,9,Medium
+Chilli,Loamy,6.0,7.0,High,Medium,High,Medium,4.0,Tropical,20,30,Kharif,5,Medium
+Chilli,Red,6.0,7.0,High,Medium,High,Medium,4.0,Tropical,20,30,Kharif,5,Medium
+Chilli,Black,6.0,7.0,High,Medium,High,Medium,4.0,Semi-arid,20,30,Rabi,4,Medium
+Tomato,Loamy,6.0,7.0,Medium,High,High,Medium,2.5,Subtropical,15,30,Rabi,4,Medium
+Tomato,Alluvial,6.0,7.0,Medium,High,High,Medium,2.5,Subtropical,15,30,Rabi,4,Medium
+Tomato,Red,6.0,7.0,Medium,High,High,Medium,2.5,Subtropical,15,30,Kharif,4,Medium
+Tomato,Sandy,6.0,7.0,Medium,High,High,Medium,2.5,Subtropical,15,30,Zaid,3,Medium
+Onion,Loamy,6.0,7.5,Medium,Medium,High,Medium,4.0,Subtropical,15,25,Rabi,5,Medium
+Onion,Alluvial,6.0,7.5,Medium,Medium,High,Medium,4.0,Subtropical,15,25,Rabi,5,Medium
+Onion,Black,6.0,7.5,Medium,Medium,High,Medium,4.0,Subtropical,15,25,Kharif,4,Medium
+Potato,Loamy,5.5,6.5,Medium,High,High,High,2.0,Temperate,15,25,Rabi,3,Medium
+Potato,Sandy,5.5,6.5,Medium,High,High,High,2.0,Subtropical,15,25,Rabi,3,Medium
+Potato,Alluvial,5.5,6.5,Medium,High,High,High,2.0,Subtropical,15,25,Rabi,3,Medium
+Sorghum,Black,6.0,8.5,Medium,Medium,Medium,Low,8.0,Semi-arid,20,32,Kharif,4,Low
+Sorghum,Red,6.0,8.5,Medium,Medium,Medium,Low,8.0,Semi-arid,20,32,Kharif,4,Low
+Sorghum,Loamy,6.0,8.5,Medium,Medium,Medium,Low,8.0,Tropical,20,32,Rabi,4,Low
+Pearl Millet,Sandy,6.5,8.0,Low,Low,Low,Low,8.0,Semi-arid,25,35,Kharif,3,Low
+Pearl Millet,Loamy,6.5,8.0,Low,Low,Low,Low,8.0,Semi-arid,25,35,Kharif,3,Low
+Pearl Millet,Red,6.5,8.0,Low,Low,Low,Low,8.0,Semi-arid,25,35,Kharif,3,Low
+Finger Millet,Red,5.0,8.2,Low,Low,Low,Low,4.0,Tropical,12,27,Kharif,4,Low
+Finger Millet,Loamy,5.0,8.2,Low,Low,Low,Low,4.0,Tropical,12,27,Kharif,4,Low
+Finger Millet,Sandy,5.0,8.2,Low,Low,Low,Low,4.0,Semi-arid,12,27,Kharif,4,Low
+Soybean,Black,6.0,7.5,Low,Medium,Medium,Medium,4.0,Subtropical,20,30,Kharif,4,Medium
+Soybean,Loamy,6.0,7.5,Low,Medium,Medium,Medium,4.0,Subtropical,20,30,Kharif,4,Medium
+Soybean,Alluvial,6.0,7.5,Low,Medium,Medium,Medium,4.0,Subtropical,20,30,Kharif,4,Medium
+Mustard,Loamy,6.0,7.5,Medium,Medium,Low,Medium,4.0,Subtropical,10,25,Rabi,4,Low
+Mustard,Alluvial,6.0,7.5,Medium,Medium,Low,Medium,4.0,Subtropical,10,25,Rabi,4,Low
+Mustard,Sandy,6.0,7.5,Medium,Medium,Low,Medium,4.0,Subtropical,10,25,Rabi,4,Low
+Sunflower,Loamy,6.5,8.0,Medium,High,Medium,Medium,4.0,Tropical,20,30,Kharif,4,Medium
+Sunflower,Black,6.5,8.0,Medium,High,Medium,Medium,4.0,Tropical,20,30,Kharif,4,Medium
+Sunflower,Alluvial,6.5,8.0,Medium,High,Medium,Medium,4.0,Subtropical,20,30,Rabi,3,Medium
+Chickpea,Black,6.0,7.5,Low,Medium,Medium,Medium,4.0,Subtropical,10,25,Rabi,5,Low
+Chickpea,Loamy,6.0,7.5,Low,Medium,Medium,Medium,4.0,Subtropical,10,25,Rabi,5,Low
+Chickpea,Red,6.0,7.5,Low,Medium,Medium,Medium,4.0,Semi-arid,10,25,Rabi,5,Low
+Pigeon Pea,Black,6.0,7.5,Low,Medium,Medium,Low,4.0,Tropical,20,30,Kharif,6,Low
+Pigeon Pea,Red,6.0,7.5,Low,Medium,Medium,Low,4.0,Semi-arid,20,30,Kharif,6,Low
+Pigeon Pea,Loamy,6.0,7.5,Low,Medium,Medium,Low,4.0,Subtropical,20,30,Kharif,6,Low
+Green Gram,Loamy,6.5,7.5,Low,Medium,Low,Low,4.0,Tropical,25,35,Kharif,3,Low
+Green Gram,Sandy,6.5,7.5,Low,Medium,Low,Low,4.0,Tropical,25,35,Kharif,3,Low
+Green Gram,Black,6.5,7.5,Low,Medium,Low,Low,4.0,Semi-arid,25,35,Zaid,2,Low
+Black Gram,Loamy,6.5,7.5,Low,Medium,Low,Low,4.0,Tropical,25,35,Kharif,3,Low
+Black Gram,Red,6.5,7.5,Low,Medium,Low,Low,4.0,Tropical,25,35,Kharif,3,Low
+Black Gram,Sandy,6.5,7.5,Low,Medium,Low,Low,4.0,Semi-arid,25,35,Kharif,3,Low
+Coconut,Sandy,5.0,8.0,High,Medium,High,High,4.0,Tropical,20,32,Whole Year,60,High
+Coconut,Loamy,5.0,8.0,High,Medium,High,High,4.0,Tropical,20,32,Whole Year,60,High
+Coconut,Alluvial,5.0,8.0,High,Medium,High,High,4.0,Tropical,20,32,Whole Year,60,High
+Arecanut,Loamy,5.5,7.5,High,Medium,High,High,2.0,Tropical,14,36,Whole Year,48,High
+Arecanut,Red,5.5,7.5,High,Medium,High,High,2.0,Tropical,14,36,Whole Year,48,High
+Arecanut,Alluvial,5.5,7.5,High,Medium,High,High,2.0,Tropical,14,36,Whole Year,48,High
+Tea,Loamy,4.5,5.5,High,Medium,High,High,1.0,Tropical,20,30,Whole Year,36,High
+Tea,Red,4.5,5.5,High,Medium,High,High,1.0,Subtropical,20,30,Whole Year,36,High
+Tea,Sandy,4.5,5.5,High,Medium,High,High,1.0,Temperate,15,25,Whole Year,36,High

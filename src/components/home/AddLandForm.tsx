@@ -5,15 +5,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import AutocompleteInput from '../common/AutocompleteInput';
 import ChipInput from '../common/ChipInput';
+import Toast, { type ToastType } from '../common/Toast';
 import { getCropSuggestions, filterCrops, COMMON_CROPS } from '../../data/cropSuggestions';
 import { getSoilTypeSuggestions, filterSoilTypes } from '../../data/soilTypes';
-import { getLocationSuggestions, type LocationSuggestion } from '../../services/geocodingService';
+import { getLocationSuggestions, geocodePincode, type LocationSuggestion } from '../../services/geocodingService';
 import { debounce } from '../../utils/debounce';
 import FarmBoundaryMapper from '../boundary/FarmBoundaryMapper';
 import type { FarmBoundary } from '../../types/boundary';
 
 interface AddLandFormProps {
-  onClose: () => void;
+  onClose: (landId?: string) => void;
 }
 
 export default function AddLandForm({ onClose }: AddLandFormProps) {
@@ -24,25 +25,32 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
     name: '',
     location: '',
     postalCode: '',
+    district: '',
+    country: '',
     currentCrop: '',
     waterAvailability: 'medium' as 'high' | 'medium' | 'low',
     soilType: '',
   });
   const [selectedCrops, setSelectedCrops] = useState<string[]>([]);
   const [soilReportFile, setSoilReportFile] = useState<File | null>(null);
+  const [ocrExtractedText, setOcrExtractedText] = useState<string>('');
+  const [ocrLoading, setOcrLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Smart Farm Boundary Mapping state
-  const [enableBoundaryMapping, setEnableBoundaryMapping] = useState(false);
+  const [enableBoundaryMapping, setEnableBoundaryMapping] = useState(true);
   const [showBoundaryMapper, setShowBoundaryMapper] = useState(false);
   const [farmBoundary, setFarmBoundary] = useState<FarmBoundary | null>(null);
+  const [pincodeCenter, setPincodeCenter] = useState<{ lat: number; lng: number } | undefined>(undefined);
 
   // Smart input states
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
   const [cropSuggestions, setCropSuggestions] = useState<Array<{ name: string; icon?: string }>>([]);
   const [cropSearchResults, setCropSearchResults] = useState<string[]>([]);
   const [soilSuggestions, setSoilSuggestions] = useState(getSoilTypeSuggestions(''));
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,21 +85,65 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
         // Upload soil report if file selected, using the returned landId
         if (soilReportFile) {
           try {
+            setOcrLoading(true);
             const { uploadSoilReport } = await import('../../services/soilService');
             const result = await uploadSoilReport(createdLandId, soilReportFile);
-            alert('Land created and soil data extracted: ' + JSON.stringify(result.soilData));
+            setOcrLoading(false);
+            
+            console.log('Soil report result:', result);
+            
+            // Display extracted data
+            const extractedData = result.soilData || {};
+            
+            // Check if we have raw text from OCR
+            const rawText = extractedData._raw_text;
+            
+            // Format the parsed values
+            const parsedValues = Object.entries(extractedData)
+              .filter(([key]) => key !== 'error' && key !== 'fallback' && key !== '_raw_text')
+              .map(([key, value]) => `${key}: ${value}`)
+              .join('\n');
+            
+            // Show raw text if available, otherwise show parsed values
+            const displayText = rawText 
+              ? `RAW EXTRACTED TEXT:\n${rawText}\n\n${parsedValues ? 'PARSED VALUES:\n' + parsedValues : ''}`
+              : parsedValues || 'No data extracted';
+            
+            setOcrExtractedText(displayText);
+            setToast({ 
+              message: language === 'english' 
+                ? 'Land created and soil data extracted successfully!' 
+                : 'நிலம் உருவாக்கப்பட்டு மண் தரவு வெற்றிகரமாக பிரித்தெடுக்கப்பட்டது!',
+              type: 'success' 
+            });
           } catch (err) {
+            setOcrLoading(false);
             console.error('Soil report upload error:', err);
-            alert('Land created but soil report upload failed: ' + err);
+            setToast({ 
+              message: language === 'english'
+                ? 'Land created but soil report upload failed'
+                : 'நிலம் உருவாக்கப்பட்டது ஆனால் மண் அறிக்கை பதிவேற்றம் தோல்வியடைந்தது',
+              type: 'warning'
+            });
           }
         } else {
-          alert('Land created successfully!');
+          setToast({ 
+            message: language === 'english' 
+              ? 'Land created successfully!' 
+              : 'நிலம் வெற்றிகரமாக உருவாக்கப்பட்டது!',
+            type: 'success'
+          });
         }
         
-        onClose();
+        onClose(createdLandId);
       } catch (error) {
         console.error('Error adding land:', error);
-        alert('Failed to add land. Please try again.');
+        setToast({ 
+          message: language === 'english'
+            ? 'Failed to add land. Please try again.'
+            : 'நிலத்தைச் சேர்க்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+          type: 'error'
+        });
       }
     })();
   };
@@ -124,6 +176,7 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
     }, 500),
     []
   );
+  
   // Update crop suggestions when location changes
   useEffect(() => {
     if (formData.location) {
@@ -138,6 +191,7 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
       setCropSuggestions(majorCrops);
     }
   }, [formData.location]);
+  
   // Handle crop input change (autocomplete)
   const handleCropInputChange = (query: string) => {
     setFormData(prev => ({ ...prev, currentCrop: query }));
@@ -176,6 +230,38 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
     setFormData(prev => ({ ...prev, soilType: query }));
   };
 
+  // Geocode pincode when it changes (6 digits) and auto-populate location, district, and country
+  useEffect(() => {
+    const pincode = formData.postalCode;
+    if (pincode && pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+      setPincodeLoading(true);
+      geocodePincode(pincode).then(result => {
+        if (result) {
+          setPincodeCenter({ lat: result.lat, lng: result.lng });
+          // Auto-populate location, district, and country fields
+          setFormData(prev => ({ 
+            ...prev, 
+            location: result.displayName,
+            district: result.state || '',
+            country: 'India'
+          }));
+        }
+        setPincodeLoading(false);
+      }).catch(() => {
+        setPincodeLoading(false);
+      });
+    } else if (pincode.length === 0) {
+      // Clear location, district, and country when pincode is cleared
+      setPincodeCenter(undefined);
+      setFormData(prev => ({ 
+        ...prev, 
+        location: '',
+        district: '',
+        country: ''
+      }));
+    }
+  }, [formData.postalCode]);
+
   return (
     <div className="p-6 border-b">
       <div className="flex justify-between items-center mb-4">
@@ -207,6 +293,37 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <MapPin className="w-4 h-4 inline mr-1" />
+            {language === 'english' ? 'Postal/PIN Code' : 'அஞ்சல் குறியீடு'}
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              name="postalCode"
+              value={formData.postalCode}
+              onChange={handleInputChange}
+              placeholder={language === 'english' ? 'e.g., 642001' : 'உதாரணம்: 642001'}
+              maxLength={6}
+              pattern="[0-9]{6}"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+            />
+            {pincodeLoading && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            {language === 'english' 
+              ? 'Location will be auto-filled from PIN code' 
+              : 'PIN குறியீட்டிலிருந்து இருப்பிடம் தானாக நிரப்பப்படும்'}
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            <MapPin className="w-4 h-4 inline mr-1" />
             {t('location')}
           </label>
           <AutocompleteInput
@@ -225,37 +342,50 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
                   latitude: fullLocation.latitude,
                   longitude: fullLocation.longitude
                 });
-                // Store lat/lng for future use (can be saved to backend)
               }
             }}
             suggestions={locationSuggestions.map(loc => loc.displayName)}
             loading={locationLoading}
-            placeholder={language === 'english' ? 'e.g., Kochi, Kerala' : 'உதாரணம்: கோச்சி, கேரளா'}
+            placeholder={language === 'english' ? 'Auto-filled from PIN code' : 'PIN குறியீட்டிலிருந்து நிரப்பப்பட்டது'}
             showSuggestionsOnFocus={false}
             minCharsForSuggestions={2}
           />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            <MapPin className="w-4 h-4 inline mr-1" />
-            {language === 'english' ? 'Postal/PIN Code (for map)' : 'அஞ்சல் குறியீடு (வரைபடத்திற்கு)'}
-          </label>
-          <input
-            type="text"
-            name="postalCode"
-            value={formData.postalCode}
-            onChange={handleInputChange}
-            placeholder={language === 'english' ? 'e.g., 642001' : 'உதாரணம்: 642001'}
-            maxLength={6}
-            pattern="[0-9]{6}"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-          />
           <p className="text-xs text-gray-500 mt-1">
             {language === 'english' 
-              ? '6-digit PIN code helps show your land on the map' 
-              : '6 இலக்க PIN குறியீடு வரைபடத்தில் உங்கள் நிலத்தைக் காட்ட உதவுகிறது'}
+              ? 'Auto-populated from PIN code. You can edit if needed.'
+              : 'PIN குறியீட்டிலிருந்து தானாக நிரப்பப்பட்டது. தேவைப்பட்டால் திருத்தலாம்.'}
           </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {language === 'english' ? 'District/State' : 'மாவட்டம்/மாநிலம்'}
+            </label>
+            <input
+              type="text"
+              name="district"
+              value={formData.district}
+              onChange={handleInputChange}
+              placeholder={language === 'english' ? 'Auto-filled from PIN' : 'PIN இலிருந்து நிரப்பப்பட்டது'}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-gray-50"
+              readOnly
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {language === 'english' ? 'Country' : 'நாடு'}
+            </label>
+            <input
+              type="text"
+              name="country"
+              value={formData.country}
+              onChange={handleInputChange}
+              placeholder={language === 'english' ? 'Auto-filled from PIN' : 'PIN இலிருந்து நிரப்பப்பட்டது'}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-gray-50"
+              readOnly
+            />
+          </div>
         </div>
 
         <div>
@@ -320,6 +450,7 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {t('soil_type')}
+            <span className="text-red-500 ml-1">*</span>
           </label>
           <AutocompleteInput
             value={formData.soilType}
@@ -331,6 +462,7 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
             placeholder={language === 'english' ? 'e.g., Red Soil, Black Soil' : 'உதாரணம்: சிவப்பு மண், கருப்பு மண்'}
             showSuggestionsOnFocus={true}
             minCharsForSuggestions={0}
+            required
           />
         </div>
 
@@ -338,11 +470,13 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <Droplets className="w-4 h-4 inline mr-1" />
             {t('water_availability')}
+            <span className="text-red-500 ml-1">*</span>
           </label>
           <select
             name="waterAvailability"
             value={formData.waterAvailability}
             onChange={handleInputChange}
+            required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
           >
             <option value="high">{t('high')}</option>
@@ -409,6 +543,8 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
                   }}
                   onCancel={() => setShowBoundaryMapper(false)}
                   language={language}
+                  initialCenter={pincodeCenter}
+                  defaultMode="draw"
                 />
               )}
 
@@ -478,6 +614,8 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
           )}
         </div>
 
+        {/* Crop recommendation functionality has been moved to its own dedicated flow. */}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <Upload className="w-4 h-4 inline mr-1" />
@@ -486,11 +624,12 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="application/pdf"
+            accept="application/pdf,image/*"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0] || null;
               setSoilReportFile(file);
+              setOcrExtractedText(''); // Clear previous extraction
             }}
           />
           <button
@@ -502,8 +641,34 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
             <p className="text-sm text-gray-600">
               {soilReportFile ? soilReportFile.name : t('upload_pdf')}
             </p>
-            <p className="text-xs text-gray-500">PDF</p>
+            <p className="text-xs text-gray-500">
+              {language === 'english' ? 'PDF or Image (JPG, PNG)' : 'PDF அல்லது படம் (JPG, PNG)'}
+            </p>
           </button>
+          
+          {/* Show loading state during OCR */}
+          {ocrLoading && (
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm text-blue-700">
+                  {language === 'english' ? 'Extracting soil data from report...' : 'மண் தரவை பிரிக்கப்படுகிறது...'}
+                </span>
+              </div>
+            </div>
+          )}
+          
+          {/* Display extracted OCR text */}
+          {ocrExtractedText && !ocrLoading && (
+            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm font-medium text-green-800 mb-2">
+                {language === 'english' ? 'Extracted Soil Data:' : 'பிரிக்கப்பட்ட மண் தரவு:'}
+              </p>
+              <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono bg-white p-2 rounded border border-green-200">
+                {ocrExtractedText}
+              </pre>
+            </div>
+          )}
         </div>
 
         <div className="flex space-x-3 pt-4">
@@ -522,6 +687,15 @@ export default function AddLandForm({ onClose }: AddLandFormProps) {
           </button>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

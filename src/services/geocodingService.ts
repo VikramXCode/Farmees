@@ -109,3 +109,98 @@ export async function getLocationSuggestions(query: string): Promise<LocationSug
     return offlineSuggestions;
   }
 }
+
+/**
+ * Geocode a pincode to get coordinates and location details
+ * @param pincode Indian postal code (6 digits)
+ * @returns Promise of location details or null if not found
+ */
+export async function geocodePincode(pincode: string): Promise<{
+  lat: number;
+  lng: number;
+  area?: string;
+  city?: string;
+  state?: string;
+  displayName: string;
+} | null> {
+  if (!pincode || pincode.length !== 6 || !/^\d{6}$/.test(pincode)) {
+    return null;
+  }
+
+  try {
+    const url = new URL('https://nominatim.openstreetmap.org/search');
+    url.searchParams.set('postalcode', pincode);
+    url.searchParams.set('country', 'India');
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('addressdetails', '1');
+    url.searchParams.set('limit', '1');
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'User-Agent': 'Farmees/1.0'
+      }
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (data && data.length > 0) {
+      const item = data[0];
+      const address = item.address || {};
+      
+      // Extract area/locality/suburb (specific area name under the pincode)
+      const area = address.suburb ||
+                   address.neighbourhood ||
+                   address.locality ||
+                   address.hamlet ||
+                   address.quarter ||
+                   '';
+      
+      // Extract city/town/village
+      const city = address.city || 
+                   address.town || 
+                   address.village || 
+                   address.municipality || 
+                   address.county ||
+                   address.state_district ||
+                   '';
+      
+      const state = address.state || '';
+      
+      // Build displayName with area name first if available
+      let displayName = '';
+      if (area && city && state) {
+        displayName = `${area}, ${city}, ${state}`;
+      } else if (area && state) {
+        displayName = `${area}, ${state}`;
+      } else if (city && state) {
+        displayName = `${city}, ${state}`;
+      } else if (area) {
+        displayName = area;
+      } else if (city) {
+        displayName = city;
+      } else if (state) {
+        displayName = state;
+      } else {
+        displayName = item.display_name;
+      }
+      
+      return {
+        lat: parseFloat(item.lat),
+        lng: parseFloat(item.lon),
+        area,
+        city,
+        state,
+        displayName
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Pincode geocoding error:', error);
+    return null;
+  }
+}

@@ -82,31 +82,33 @@ export default function LandCards() {
         temp: Math.round(cached.current.temperature),
         condition: cached.current.condition.toLowerCase(),
         humidity: cached.current.humidity,
-        loading: false
+        loading: false,
+        hasData: true
       };
     }
 
-    // Return loading state or fallback data
+    // Return null state when no data
     return {
-      temp: loadingWeather[landId] ? null : 28,
-      condition: 'sunny',
-      humidity: loadingWeather[landId] ? null : 70,
-      loading: loadingWeather[landId] || false
+      temp: null,
+      condition: null,
+      humidity: null,
+      loading: loadingWeather[landId] || false,
+      hasData: false
     };
   };
 
   const getMarketData = (crop: string) => {
-    const marketData: { [key: string]: { price: number; trend: 'up' | 'down' | 'stable'; change: string } } = {
-      'Rice': { price: 2850, trend: 'up', change: '+1.8%' },
-      'Coconut': { price: 18500, trend: 'down', change: '-3.6%' },
-      'Pepper': { price: 48000, trend: 'stable', change: '0.0%' },
-    };
-    return marketData[crop] || { price: 0, trend: 'stable', change: '0.0%' };
+    // Market data should be fetched from API, not hardcoded
+    return { price: 0, trend: 'stable' as const, change: '0.0%' };
   };
 
-  const getWeatherIcon = (condition: string, loading: boolean = false) => {
+  const getWeatherIcon = (condition: string | null, loading: boolean = false) => {
     if (loading) {
       return <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />;
+    }
+    
+    if (!condition) {
+      return null;
     }
     
     switch (condition) {
@@ -265,32 +267,40 @@ export default function LandCards() {
                   </span>
                 </div>
 
-                {/* Weather Summary */}
-                <div className="pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-gray-600 text-xs">{t('current_weather')}</span>
-                    <div className="flex items-center text-gray-600">
-                      {getWeatherIcon(weather.condition, weather.loading)}
-                      <span className="ml-1 text-xs capitalize">
-                        {weather.loading ? 'Loading...' : weather.condition}
-                      </span>
+                {/* Weather Summary - Only show if data available */}
+                {(weather.hasData || weather.loading) && (
+                  <div className="pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="text-gray-600 text-xs">{t('current_weather')}</span>
+                      {weather.hasData && (
+                        <div className="flex items-center text-gray-600">
+                          {getWeatherIcon(weather.condition, weather.loading)}
+                          <span className="ml-1 text-xs capitalize">
+                            {weather.condition}
+                          </span>
+                        </div>
+                      )}
+                      {weather.loading && (
+                        <div className="flex items-center text-gray-600">
+                          <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                          <span className="ml-1 text-xs">Loading...</span>
+                        </div>
+                      )}
                     </div>
+                    {weather.hasData && (
+                      <div className="flex justify-between text-sm">
+                        <div className="flex items-center text-blue-600">
+                          <Thermometer className="w-4 h-4 mr-1" />
+                          <span>{weather.temp}°C</span>
+                        </div>
+                        <div className="flex items-center text-gray-600">
+                          <Droplets className="w-4 h-4 mr-1" />
+                          <span>{weather.humidity}%</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <div className="flex items-center text-blue-600">
-                      <Thermometer className="w-4 h-4 mr-1" />
-                      <span>
-                        {weather.loading ? '...' : `${weather.temp}°C`}
-                      </span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Droplets className="w-4 h-4 mr-1" />
-                      <span>
-                        {weather.loading ? '...' : `${weather.humidity}%`}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                )}
 
                 {/* Market Status */}
                 {market.price > 0 && (

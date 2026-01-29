@@ -40,6 +40,8 @@ export interface LandData {
   name: string;
   location: string;
   postalCode?: string; // Postal/PIN code for approximate location
+  district?: string; // District/State from PIN code
+  country?: string; // Country from PIN code
   soilType: string;
   currentCrop: string;
   waterAvailability: 'high' | 'medium' | 'low';
@@ -68,6 +70,27 @@ export interface LandData {
     analysisDate: string;
     reportUrl?: string;
   };
+  
+  // Structured soil data from OCR/lab reports (for crop recommendations)
+  soilData?: {
+    state?: string;
+    district?: string;
+    village?: string;
+    soilType?: string;
+    pH?: number;
+    ec?: number; // Electrical Conductivity
+    nutrients?: {
+      nitrogen?: number;
+      phosphorus?: number;
+      potassium?: number;
+      zinc?: number;
+      iron?: number;
+      boron?: number;
+    };
+    healthStatus?: string;
+    recommendations?: string[];
+  };
+  lastSoilUpdate?: string;
   
   // Weather Data
   weatherHistory: {

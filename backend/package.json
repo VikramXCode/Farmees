@@ -2,7 +2,7 @@
   "name": "farmease-backend",
   "version": "1.0.0",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
   "main": "server.js",
   "engines": {
     "node": ">=18.0.0"
@@ -16,6 +16,7 @@
     "seed:officers": "node scripts/seedOfficers.js"
   },
   "dependencies": {
+    "axios": "^1.13.4",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

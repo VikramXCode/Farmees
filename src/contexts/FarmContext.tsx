@@ -60,6 +60,8 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
     const seq = ++loadSeqRef.current;
 
+    console.log(`[FarmContext] Effect triggered. userId=${userId}, seq=${seq}`);
+
     const loadUserLands = async () => {
       if (!userId) {
         if (isMounted) {
@@ -78,7 +80,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       }
 
       try {
+        console.log(`[FarmContext] Fetching lands for user ${userId}...`);
         const userLands: LandData[] = await landService.getAllUserLands(userId);
+        console.log(`[FarmContext] Successfully fetched ${userLands.length} lands`);
 
         if (isMounted && loadSeqRef.current === seq) {
           const mapped: Land[] = userLands.map(ld => ({
@@ -107,7 +111,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (err: any) {
-        console.error('Failed to load user lands:', err);
+        console.error('[FarmContext] Failed to load user lands:', err);
         if (isMounted && loadSeqRef.current === seq) {
           // Do not clear lands on error to prevent flashing or loops. Just set error.
           setLoadError(err?.message || 'Failed to load lands');
@@ -122,6 +126,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     loadUserLands();
 
     return () => {
+      console.log(`[FarmContext] Cleanup for seq=${seq}`);
       isMounted = false;
     };
   }, [userId]);

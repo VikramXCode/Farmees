@@ -6,7 +6,8 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
 // Import local middlewares and routes
-import { demoModeMiddleware } from './middleware/demoMode.js';
+// Demo mode middleware disabled - using real data only
+// import { demoModeMiddleware } from './middleware/demoMode.js';
 import landsRouter from './routes/lands.js';
 import aiInteractionsRouter from './routes/ai-interactions.js';
 import recommendationsRouter from './routes/recommendations.js';
@@ -14,6 +15,8 @@ import diseasesRouter from './routes/diseases.js';
 import pestsRouter from './routes/pests.js';
 import authRouter from './routes/auth.js';
 import soilRouter from './routes/soil.js';
+import soilNewRouter from './routes/soilNew.js'; // New soil report flow with OCR simulation
+import soilAnalyzerRouter from './routes/soilAnalyzer.js'; // Farmer-friendly soil analyzer
 import cropRecommendationsRouter from './routes/crop-recommendations.js';
 import weatherRouter from './routes/weather.js';
 import aiRouter from './routes/ai.js';
@@ -24,6 +27,7 @@ import marketRouter from './routes/market.js';
 import connectRouter from './routes/connect.js';
 import labourRouter from './routes/labour.js';
 import analyticsRouter from './routes/analytics.js';
+import cropRecommendationRouter from './routes/crop-recommendation.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,8 +103,8 @@ app.get('/', (req, res) => {
   });
 });
 
-// Demo mode middleware - must come after json parsing
-app.use(demoModeMiddleware);
+// Demo mode middleware disabled - using real data only
+// app.use(demoModeMiddleware);
 
 
 async function connectToDatabase() {
@@ -149,15 +153,24 @@ app.get('/api/health', async (req, res) => {
 });
 
 app.get('/api', (req, res) => {
-  res.json({ status: 'ok', message: 'FarmEase API root', endpoints: ['/api/health', '/api/lands', '/api/ai-interactions', '/api/recommendations', '/api/diseases', '/api/pests', '/api/auth', '/api/soil', '/api/crop-recommendations', '/api/weather', '/api/officers', '/api/escalations'] });
+  res.json({ status: 'ok', message: 'FarmEase API root', endpoints: ['/api/health', '/api/lands', '/api/ai-interactions', '/api/recommendations', '/api/diseases', '/api/pests', '/api/auth', '/api/soil', '/api/crop-recommendations', '/api/weather', '/api/officers', '/api/escalations', '/api/crop-recommendation'] });
 });
+
+// Dummy OCR display route (debug/demo)
+app.get('/dummy', (req, res) => {
+  res.redirect('/api/soil/dummy');
+});
+
 app.use('/api/lands', landsRouter);
 app.use('/api/ai-interactions', aiInteractionsRouter);
 app.use('/api/recommendations', recommendationsRouter);
 app.use('/api/diseases', diseasesRouter);
 app.use('/api/pests', pestsRouter);
 app.use('/api/auth', authRouter);
-app.use('/api/soil', soilRouter);
+// New soil routes with OCR simulation (replaces old soil router)
+app.use('/api/soil', soilNewRouter);
+app.use('/api/soil-report', soilNewRouter); // Alias for soil routes
+app.use('/api/soil-analyzer', soilAnalyzerRouter); // Farmer-friendly analyzer
 app.use('/api/crop-recommendations', cropRecommendationsRouter);
 app.use('/api/weather', weatherRouter);
 app.use('/api/ai', aiRouter);
@@ -168,6 +181,7 @@ app.use('/api/market', marketRouter);
 app.use('/api/connect', connectRouter);
 app.use('/api/labour', labourRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/crop-recommendation', cropRecommendationRouter);
 
 
 async function startServer() {

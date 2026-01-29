@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import './styles/design-system.css';
 
 // Add app-loaded class when the app loads
 // Add app-loaded class when the app loads

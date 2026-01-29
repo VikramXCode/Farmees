@@ -17,15 +17,17 @@ const LabourPage = lazy(() => import('./pages/LabourPage'));
 const CoordinatorPage = lazy(() => import('./pages/CoordinatorPage'));
 const WorkerPage = lazy(() => import('./pages/WorkerPage'));
 const MobileAuthPage = lazy(() => import('./pages/MobileAuthPage'));
-const FarmerDashboard = lazy(() => import('./pages/FarmerDashboard'));
+const FarmerDashboard = lazy(() => import('./pages/FarmerDashboardNew'));
 const AIPage = lazy(() => import('./pages/AIPage'));
 const MorePage = lazy(() => import('./pages/MorePage'));
 const DiagnosePage = lazy(() => import('./pages/DiagnosePage'));
 const AddLandPage = lazy(() => import('./pages/AddLandPage'));
 const MarketPage = lazy(() => import('./pages/MarketPage'));
 const SoilReportPage = lazy(() => import('./pages/SoilReportPage'));
+const SoilAnalyzerPage = lazy(() => import('./pages/SoilAnalyzerPage'));
 const WeatherPage = lazy(() => import('./pages/WeatherPage'));
-const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPageNew'));
+const CropRecommendationPage = lazy(() => import('./pages/CropRecommendationPage'));
 
 // Loading component
 const PageLoader = () => (
@@ -43,7 +45,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   const path = location.pathname;
   const allowedByRole: Record<string, string[]> = {
-    farmer: ['/', '/reminders', '/schemes', '/connect', '/labour', '/ai', '/more', '/add-land', '/diagnose', '/soil-report', '/market', '/weather', '/analytics', '/profile', '/help', '/about'],
+    farmer: ['/', '/reminders', '/schemes', '/connect', '/labour', '/ai', '/more', '/add-land', '/diagnose', '/soil-report', '/soil-analyzer', '/market', '/weather', '/analytics', '/crop-recommendation', '/profile', '/help', '/about'],
     coordinator: ['/coordinator', '/connect', '/more'],
     worker: ['/worker', '/connect', '/more']
   };
@@ -69,12 +71,17 @@ function App() {
               {/* Auth Route - No navigation */}
               <Route path="/auth" element={<MobileAuthPage />} />
               
-              {/* All protected routes use AppShell (which includes nav) */}
+              {/* Dashboard with new layout (has its own sidebar) */}
               <Route path="/" element={
                 <ProtectedRoute>
-                  <AppShell>
-                    <FarmerDashboard />
-                  </AppShell>
+                  <FarmerDashboard />
+                </ProtectedRoute>
+              } />
+
+              {/* Analytics with new layout */}
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <AnalyticsPage />
                 </ProtectedRoute>
               } />
 
@@ -126,6 +133,14 @@ function App() {
                 </ProtectedRoute>
               } />
 
+              <Route path="/soil-analyzer" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <SoilAnalyzerPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
               <Route path="/weather" element={
                 <ProtectedRoute>
                   <AppShell>
@@ -134,10 +149,10 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              <Route path="/analytics" element={
+              <Route path="/crop-recommendation" element={
                 <ProtectedRoute>
                   <AppShell>
-                    <AnalyticsPage />
+                    <CropRecommendationPage />
                   </AppShell>
                 </ProtectedRoute>
               } />

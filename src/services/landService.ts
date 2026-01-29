@@ -61,29 +61,49 @@ class LandService {
   }
 
   async getAllUserLands(userId: string): Promise<LandData[]> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
-    try {
-      const response = await fetch(`${this.baseUrl}/lands/user/${userId}`, {
-        headers: getApiHeaders(),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeout);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch user lands');
-      }
+    const maxRetries = 2;
+    let lastError: Error | null = null;
 
-      return response.json();
-    } catch (error: any) {
-      clearTimeout(timeout);
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout - slow connection detected. Please try again later.');
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      try {
+        console.log(`[LandService] Fetching lands for user ${userId} (attempt ${attempt + 1}/${maxRetries + 1})`);
+        const response = await fetch(`${this.baseUrl}/lands/user/${userId}`, {
+          headers: getApiHeaders(),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeout);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user lands: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log(`[LandService] Successfully fetched ${data.length} lands`);
+        return data;
+      } catch (error: any) {
+        clearTimeout(timeout);
+        lastError = error;
+        
+        if (error.name === 'AbortError') {
+          console.error(`[LandService] Request timeout on attempt ${attempt + 1}`);
+          if (attempt < maxRetries) {
+            console.log(`[LandService] Retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+            continue;
+          }
+          throw new Error('Request timeout - slow connection detected. Please try again later.');
+        }
+        
+        // For other errors, don't retry
+        throw error;
       }
-      throw error;
     }
+    
+    throw lastError || new Error('Failed to fetch user lands');
   }
 
   async deleteLandData(landId: string): Promise<void> {

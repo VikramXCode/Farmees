@@ -5,10 +5,12 @@ import { API_BASE_URL } from '../config/api';
 const BASE_URL = API_BASE_URL;
 
 // Helper function to get headers with demo mode
-export const getApiHeaders = (): Record<string, string> => {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
+export const getApiHeaders = (skipContentType = false): Record<string, string> => {
+    const headers: Record<string, string> = {};
+    
+    if (!skipContentType) {
+        headers['Content-Type'] = 'application/json';
+    }
     
     try {
         const savedUser = localStorage.getItem('farmease_user');

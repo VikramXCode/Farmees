@@ -6,7 +6,6 @@ import fs from 'fs';
 import os from 'os';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
-import { DEMO_SOIL_REPORT } from '../middleware/demoMode.js';
 import Land from '../models/Land.js';
 import SoilReport from '../models/SoilReport.js';
 import groqService from '../services/groqService.js';
@@ -36,11 +35,6 @@ const upload = multer({ storage });
 // POST /api/soil/upload - accepts PDF or image file under field `report`
 router.post('/upload', upload.single('report'), async (req, res) => {
   try {
-    // Demo mode - return mock soil report
-    if (req.isDemo) {
-      return res.json(DEMO_SOIL_REPORT);
-    }
-
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     // Call Python OCR script
     const { path: filePath } = req.file;
@@ -49,7 +43,7 @@ router.post('/upload', upload.single('report'), async (req, res) => {
     const ocrScriptPath = fs.existsSync(path.join(__dirname, '../../services/ocr_soil.py'))
       ? path.join(__dirname, '../../services/ocr_soil.py')
       : path.join(__dirname, '../scripts/ocr_soil.py');
-    const py = spawn('python', [
+    const py = spawn('python3', [
       ocrScriptPath,
       filePath,
       engine,
@@ -103,20 +97,10 @@ router.post('/upload', upload.single('report'), async (req, res) => {
           console.error('Attempted to parse:', jsonStr);
           console.error('Full raw result:', result);
 
-          // Provide fallback soil data when parsing fails
-          soilData = {
-            pH: '6.5',
-            N: '45',
-            P: '25',
-            K: '180',
-            OC: '0.8',
-            Zn: '1.2',
-            Fe: '8.5',
-            Cu: '0.9',
-            Mn: '3.4',
-            S: '15',
-            fallback: true
-          };
+          return res.status(500).json({
+            error: 'Failed to parse OCR results',
+            details: parseError.message
+          });
         }
 
         // Check if OCR script returned an error

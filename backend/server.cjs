@@ -138,7 +138,7 @@ app.get('/api/health', async (req, res) => {
 
 // Routes
 app.get('/api', (req, res) => {
-  res.json({ status: 'ok', message: 'FarmEase API root', endpoints: ['/api/health', '/api/lands', '/api/ai-interactions', '/api/recommendations', '/api/diseases', '/api/pests', '/api/auth', '/api/soil', '/api/crop-recommendations', '/api/weather', '/api/officers', '/api/escalations'] });
+  res.json({ status: 'ok', message: 'FarmEase API root', endpoints: ['/api/health', '/api/lands', '/api/ai-interactions', '/api/recommendations', '/api/diseases', '/api/pests', '/api/auth', '/api/soil', '/api/crop-recommendations', '/api/weather', '/api/officers', '/api/escalations', '/api/crop-recommendation'] });
 });
 app.use('/api/lands', require('./routes/lands'));
 app.use('/api/ai-interactions', require('./routes/ai-interactions'));
@@ -157,6 +157,7 @@ app.use('/api/market', require('./routes/market'));
 app.use('/api/connect', require('./routes/connect'));
 app.use('/api/labour', require('./routes/labour'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/crop-recommendation', require('./routes/crop-recommendation'));
 
 async function startServer() {
   console.log('🚀 Starting FarmEase Backend Server...');

@@ -13,10 +13,12 @@ import {
   Info,
   Heart,
   Star,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitch from '../components/common/LanguageSwitch';
+import { clearAppDataCache } from '../utils/clearCache';
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -55,6 +57,8 @@ export default function MorePage() {
     settings: language === 'english' ? 'Settings' : 'அமைப்புகள்',
     general: language === 'english' ? 'General' : 'பொது',
     support: language === 'english' ? 'Support' : 'ஆதரவு',
+    clearCache: language === 'english' ? 'Clear Cache' : 'தற்காலிக சேமிப்பை அழிக்கவும்',
+    clearCacheDesc: language === 'english' ? 'Clear app data & refresh' : 'செயலி தரவை அழித்து புதுப்பிக்கவும்',
     madeWith: language === 'english' ? 'Made with' : 'உருவாக்கப்பட்டது',
     forFarmers: language === 'english' ? 'for Indian farmers' : 'இந்திய விவசாயிகளுக்காக',
   };
@@ -62,6 +66,14 @@ export default function MorePage() {
   const handleLogout = () => {
     logout();
     navigate('/auth');
+  };
+  
+  const handleClearCache = () => {
+    if (confirm(language === 'english' 
+      ? 'This will clear all cached data and refresh the app. Continue?' 
+      : 'இது அனைத்து தற்காலிக சேமிப்பு தரவையும் அழித்து செயலியை புதுப்பிக்கும். தொடரவா?')) {
+      clearAppDataCache();
+    }
   };
 
   const profileSection: MenuItem[] = [
@@ -86,6 +98,13 @@ export default function MorePage() {
       label: t.notifications,
       sublabel: t.notificationsDesc,
       action: () => navigate('/settings/notifications'),
+      rightElement: <ChevronRight className="w-5 h-5 text-text-muted" />,
+    },
+    {
+      icon: <Trash2 className="w-5 h-5" />,
+      label: t.clearCache,
+      sublabel: t.clearCacheDesc,
+      action: handleClearCache,
       rightElement: <ChevronRight className="w-5 h-5 text-text-muted" />,
     },
   ];

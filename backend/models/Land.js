@@ -112,10 +112,12 @@ const landSchema = new mongoose.Schema({
 
   // Basic Land Information
   name: { type: String, required: true },
-  location: { type: String, required: true },
+  location: { type: String, default: '' },
   postalCode: { type: String }, // Postal/PIN code for approximate location
-  soilType: { type: String, required: true },
-  currentCrop: { type: String, required: true },
+  district: { type: String, default: '' }, // District/State from PIN code
+  country: { type: String, default: 'India' }, // Country from PIN code
+  soilType: { type: String, default: '' },
+  currentCrop: { type: String, default: '' },
   waterAvailability: { type: String, enum: ['high', 'medium', 'low'], required: true },
 
   // Coordinates for map display (can be derived from postal code)
@@ -141,6 +143,27 @@ const landSchema = new mongoose.Schema({
   },
   // Keep basic soil info for quick access
   soilReport: soilReportSchema,
+  
+  // Structured soil data from OCR/lab reports (for crop recommendations)
+  soilData: {
+    state: { type: String },
+    district: { type: String },
+    village: { type: String },
+    soilType: { type: String },
+    pH: { type: Number },
+    ec: { type: Number }, // Electrical Conductivity
+    nutrients: {
+      nitrogen: { type: Number },
+      phosphorus: { type: Number },
+      potassium: { type: Number },
+      zinc: { type: Number },
+      iron: { type: Number },
+      boron: { type: Number }
+    },
+    healthStatus: { type: String },
+    recommendations: [{ type: String }]
+  },
+  lastSoilUpdate: { type: Date }, // Track when soil data was last updated
 
   // Historical Data
   weatherHistory: [weatherHistorySchema],

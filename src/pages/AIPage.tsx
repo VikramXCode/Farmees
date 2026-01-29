@@ -76,29 +76,8 @@ export default function AIPage() {
     viewAll: language === 'english' ? 'View All' : 'அனைத்தையும் காண்க',
   };
 
-  // Sample recommendations
-  const recommendations: Recommendation[] = [
-    {
-      id: '1',
-      title: language === 'english' ? 'Switch to SRI Method' : 'SRI முறைக்கு மாறுங்கள்',
-      description: language === 'english'
-        ? 'Based on your soil and water availability, SRI method can increase yield by 20-30%'
-        : 'உங்கள் மண் மற்றும் நீர் கிடைக்கும் தன்மையின் அடிப்படையில், SRI முறை மகசூலை 20-30% அதிகரிக்கும்',
-      confidence: 87,
-      impact: 'high',
-      riskIfIgnored: language === 'english' ? 'Lower yield, higher water cost' : 'குறைந்த மகசூல், அதிக நீர் செலவு',
-    },
-    {
-      id: '2',
-      title: language === 'english' ? 'Apply Neem-based Pesticide' : 'வேப்ப எண்ணெய் பூச்சிக்கொல்லி பயன்படுத்துங்கள்',
-      description: language === 'english'
-        ? 'Early pest detection suggests preventive treatment needed'
-        : 'ஆரம்ப பூச்சி கண்டறிதல் தடுப்பு சிகிச்சை தேவை என்று கூறுகிறது',
-      confidence: 92,
-      impact: 'high',
-      riskIfIgnored: language === 'english' ? 'Potential 40% crop loss' : 'சாத்தியமான 40% பயிர் இழப்பு',
-    },
-  ];
+  // Recommendations will be loaded from backend in future
+  const recommendations: Recommendation[] = [];
 
   useEffect(() => {
     scrollToBottom();

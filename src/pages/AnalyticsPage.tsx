@@ -133,10 +133,18 @@ const AnalyticsPage: React.FC = () => {
   const loadAnalytics = async () => {
     setLoading(true);
     setError(null);
+    
+    // Don't load analytics if user has no lands
+    if (lands.length === 0 || userCrops.length === 0) {
+      setError('Add lands to see analytics');
+      setLoading(false);
+      return;
+    }
+    
     try {
       const data = await getAnalytics({
-        crops: userCrops.length > 0 ? userCrops : ['Rice'],
-        area: totalArea || 5,
+        crops: userCrops,
+        area: totalArea,
         location: user?.district || 'Tamil Nadu'
       });
       setAnalytics(data);

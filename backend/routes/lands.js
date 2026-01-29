@@ -8,14 +8,15 @@ import LandRecommendation from '../models/LandRecommendation.js';
 // Create new land data
 router.post('/', async (req, res) => {
   try {
-    console.log('Creating land with data:', req.body);
+    console.log('Creating land with data:', JSON.stringify(req.body, null, 2));
     const landData = new Land(req.body);
     await landData.save();
     console.log('Land created successfully:', landData.landId, landData.name);
     res.status(201).json(landData);
   } catch (error) {
     console.error('Land creation error:', error.message);
-    res.status(400).json({ error: error.message });
+    console.error('Error details:', error);
+    res.status(400).json({ error: error.message, details: error.errors });
   }
 });
 

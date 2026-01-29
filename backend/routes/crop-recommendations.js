@@ -67,22 +67,31 @@ router.post('/ai-generate', async (req, res) => {
       return res.status(400).json({ error: 'userId is required' });
     }
 
-    let landData = null;
-    let soilData = null;
-
-    // Fetch land data if landId is provided
-    if (landId) {
-      landData = await Land.findOne({ landId: landId, userId });
-      if (!landData) {
-        return res.status(404).json({ error: 'Land not found' });
-      }
-
-      // Fetch latest soil report for this land
-      soilData = await SoilReport.findOne({
-        landId,
-        userId
-      }).sort({ createdAt: -1 });
+    if (!landId) {
+      return res.status(400).json({ 
+        error: 'landId is required',
+        message: 'Please select a land first to get crop recommendations'
+      });
     }
+
+    // Fetch land data
+    const landData = await Land.findOne({ landId: landId, userId });
+    if (!landData) {
+      return res.status(404).json({ error: 'Land not found' });
+    }
+
+    // Check if land has soil data attached
+    if (!landData.soilData || !landData.soilData.soilType) {
+      return res.status(400).json({ 
+        error: 'No soil data attached',
+        message: 'Please upload a soil report for this land first',
+        requiresSoilReport: true,
+        landId: landId
+      });
+    }
+
+    // Use soil data from land record (not from separate SoilReport collection)
+    const soilData = landData.soilData;
 
     // Generate recommendation using Groq
     const result = await groqService.generateCropRecommendation(
@@ -102,12 +111,17 @@ router.post('/ai-generate', async (req, res) => {
         currentCrop: landData.currentCrop
       } : null,
       soilData: soilData ? {
-        ph: soilData.ph,
-        nitrogen: soilData.nitrogen,
-        phosphorus: soilData.phosphorus,
-        potassium: soilData.potassium,
-        organicMatter: soilData.organicMatter,
-        moisture: soilData.moisture
+        ph: soilData.pH,
+        nitrogen: soilData.nutrients?.nitrogen,
+        phosphorus: soilData.nutrients?.phosphorus,
+        potassium: soilData.nutrients?.potassium,
+        zinc: soilData.nutrients?.zinc,
+        iron: soilData.nutrients?.iron,
+        boron: soilData.nutrients?.boron,
+        ec: soilData.ec,
+        soilType: soilData.soilType,
+        healthStatus: soilData.healthStatus,
+        recommendations: soilData.recommendations
       } : null,
       metadata: {
         keyUsed: result.keyUsed,
@@ -147,10 +161,8 @@ router.post('/chat', async (req, res) => {
     if (landId) {
       landData = await Land.findOne({ landId: landId, userId });
       if (landData) {
-        soilData = await SoilReport.findOne({
-          landId,
-          userId
-        }).sort({ createdAt: -1 });
+        // Use soil data from land record
+        soilData = landData.soilData || null;
       }
     }
 

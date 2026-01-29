@@ -1,22 +1,12 @@
 import express from 'express';
 const router = express.Router();
 import PestAlert from '../models/PestAlert.js';
-import { DEMO_PEST_ALERTS } from '../middleware/demoMode.js';
 import { fuzzCoordinates } from '../utils/geoUtils.js';
 
 
 // GET /api/alerts/pests?district=&area=&limit=
 router.get('/pests', async (req, res) => {
   try {
-    console.log('GET /api/alerts/pests - isDemo:', req.isDemo, 'header:', req.headers['x-demo-mode']);
-
-    // Demo mode - return mock pest alerts
-    // Also check header directly as fallback
-    if (req.isDemo || req.headers['x-demo-mode'] === 'true') {
-      console.log('Returning demo pest alerts:', DEMO_PEST_ALERTS.length);
-      return res.json(DEMO_PEST_ALERTS);
-    }
-
     const { district, area, limit = 50 } = req.query;
     const query = {};
     if (district) query.district = district;
@@ -26,11 +16,7 @@ router.get('/pests', async (req, res) => {
       .sort({ timestamp: -1 })
       .limit(Number(limit));
 
-    // If no alerts in database, return demo alerts for better UX
-    if (alerts.length === 0) {
-      console.log('No alerts in DB, returning demo alerts as fallback');
-      return res.json(DEMO_PEST_ALERTS);
-    }
+    return res.json(alerts);
 
 
 

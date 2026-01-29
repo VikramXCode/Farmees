@@ -2,17 +2,11 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { isDemoUser, DEMO_MARKET_DATA } from '../middleware/demoMode.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
-
-
-// Fallback market data - use DEMO_MARKET_DATA as fallback for all users
-// when CSV file is not available
-const fallbackKeralaMarketData = DEMO_MARKET_DATA;
 
 function parseCsv(text) {
   const rows = [];
@@ -98,24 +92,17 @@ function normalizeRecords(rows, commodityFilter) {
 
 router.get('/kerala', async (req, res) => {
   try {
-    // Check if demo mode
-    if (req.isDemo) {
-      return res.json({ success: true, data: DEMO_MARKET_DATA });
-    }
-
     const csvPath = process.env.MARKET_CSV_PATH || path.join(__dirname, '..', 'data', 'today_market.csv');
     const commodityFilter = req.query.commodity;
 
     if (!fs.existsSync(csvPath)) {
-      const filteredFallback = filterFallbackData(fallbackKeralaMarketData, commodityFilter);
-      return res.json({ count: filteredFallback.length, records: filteredFallback, source: 'fallback' });
+      return res.status(404).json({ error: 'Market data not available' });
     }
     const text = fs.readFileSync(csvPath, 'utf8');
     const rows = parseCsv(text);
     const records = normalizeRecords(rows, commodityFilter);
     if (!records.length) {
-      const filteredFallback = filterFallbackData(fallbackKeralaMarketData, commodityFilter);
-      return res.json({ count: filteredFallback.length, records: filteredFallback, source: 'fallback' });
+      return res.json({ count: 0, records: [], source: 'csv' });
     }
     res.json({ count: records.length, records, source: 'csv' });
   } catch (err) {
