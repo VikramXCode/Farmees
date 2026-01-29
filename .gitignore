@@ -27,5 +27,12 @@ dist-ssr
 .env
 backend/.env
 
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+python-service/venv/
+
 # Uploads (user generated content)
 backend/uploads/
