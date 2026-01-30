@@ -28,6 +28,9 @@ const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
+// Google Maps API Key (for static maps)
+export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+
 console.log('[API Config] Final API_BASE_URL:', API_BASE_URL);
 
 export default API_BASE_URL;

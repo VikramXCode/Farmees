@@ -181,7 +181,11 @@ router.post('/signin', async (req, res) => {
       area: user.area || 'Pollachi'
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Signin error:', err);
+    res.status(500).json({ 
+      error: err.message || 'Internal server error during signin',
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 });
 

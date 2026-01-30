@@ -8,6 +8,7 @@ import os from 'os';
 import Land from '../models/Land.js';
 import SoilReport from '../models/SoilReport.js';
 import groqService from '../services/groqService.js';
+import budgetPlanningService from '../services/budgetPlanningService.js';
 import { isDemoUser, DEMO_CROP_RECOMMENDATION } from '../middleware/demoMode.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -540,5 +541,93 @@ function getPestPreventionTips(pestName) {
   };
   return tips[pestName] || ['Regular monitoring', 'Integrated pest management'];
 }
+
+// Detailed Budget Planning Endpoint
+router.post('/budget-plan', async (req, res) => {
+  try {
+    const {
+      cropName,
+      totalBudget,
+      availableLandAcres,
+      soilType,
+      state,
+      district,
+      includeFertilizers = true,
+      season
+    } = req.body;
+
+    // Validate required fields
+    if (!cropName || !totalBudget || !availableLandAcres) {
+      return res.status(400).json({
+        error: 'Missing required fields: cropName, totalBudget, availableLandAcres'
+      });
+    }
+
+    // Validate numeric values
+    if (totalBudget <= 0 || availableLandAcres <= 0) {
+      return res.status(400).json({
+        error: 'Budget and land area must be positive numbers'
+      });
+    }
+
+    const location = `${district || ''}, ${state || ''}`.trim();
+
+    // Generate detailed budget plan using Groq AI
+    const budgetPlan = await budgetPlanningService.generateBudgetPlan({
+      cropName,
+      totalBudget,
+      availableLandAcres,
+      soilType: soilType || 'Loamy',
+      location: location || 'India',
+      includeFertilizers,
+      season: season || getCurrentSeason()
+    });
+
+    res.json({
+      success: true,
+      budgetPlan,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Budget planning error:', error);
+    res.status(500).json({
+      error: 'Failed to generate budget plan',
+      details: error.message
+    });
+  }
+});
+
+// Quick Budget Feasibility Check
+router.post('/budget-check', async (req, res) => {
+  try {
+    const { totalBudget, cropName, landAcres } = req.body;
+
+    if (!totalBudget || !cropName || !landAcres) {
+      return res.status(400).json({
+        error: 'Missing required fields: totalBudget, cropName, landAcres'
+      });
+    }
+
+    const feasibility = await budgetPlanningService.checkBudgetFeasibility(
+      totalBudget,
+      cropName,
+      landAcres
+    );
+
+    res.json({
+      success: true,
+      feasibility,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Budget check error:', error);
+    res.status(500).json({
+      error: 'Failed to check budget feasibility',
+      details: error.message
+    });
+  }
+});
 
 export default router;

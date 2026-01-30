@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Camera,
   Upload,
@@ -31,12 +32,21 @@ interface DiagnosisResult {
 
 export default function DiagnosePage() {
   const { language } = useLanguage();
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<DiagnosisResult | null>(null);
   const [, setShowEscalationForm] = useState(false);
+  const [selectedLandId] = useState<string | null>(location.state?.landId || null);
+
+  // Clear location state after reading
+  useEffect(() => {
+    if (location.state?.landId) {
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const t = {
     title: language === 'english' ? 'Disease & Pest Detection' : 'நோய் & பூச்சி கண்டறிதல்',

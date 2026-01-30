@@ -28,6 +28,10 @@ const SoilAnalyzerPage = lazy(() => import('./pages/SoilAnalyzerPage'));
 const WeatherPage = lazy(() => import('./pages/WeatherPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPageNew'));
 const CropRecommendationPage = lazy(() => import('./pages/CropRecommendationPage'));
+const FarmingPlansPage = lazy(() => import('./pages/FarmingPlansPage'));
+const FarmingPlanDetailPage = lazy(() => import('./pages/FarmingPlanDetailPage'));
+const MyLandsPage = lazy(() => import('./pages/MyLandsPage'));
+const LandDetailsPage = lazy(() => import('./pages/LandDetailsPage'));
 
 // Loading component
 const PageLoader = () => (
@@ -45,7 +49,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   const path = location.pathname;
   const allowedByRole: Record<string, string[]> = {
-    farmer: ['/', '/reminders', '/schemes', '/connect', '/labour', '/ai', '/more', '/add-land', '/diagnose', '/soil-report', '/soil-analyzer', '/market', '/weather', '/analytics', '/crop-recommendation', '/profile', '/help', '/about'],
+    farmer: ['/', '/reminders', '/schemes', '/connect', '/labour', '/ai', '/more', '/add-land', '/my-lands', '/land', '/diagnose', '/soil-report', '/soil-analyzer', '/market', '/weather', '/analytics', '/crop-recommendation', '/farming-plans', '/profile', '/help', '/about'],
     coordinator: ['/coordinator', '/connect', '/more'],
     worker: ['/worker', '/connect', '/more']
   };
@@ -117,6 +121,20 @@ function App() {
                 </ProtectedRoute>
               } />
 
+              <Route path="/my-lands" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <MyLandsPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/land/:landId" element={
+                <ProtectedRoute>
+                  <LandDetailsPage />
+                </ProtectedRoute>
+              } />
+
               <Route path="/market" element={
                 <ProtectedRoute>
                   <AppShell>
@@ -153,6 +171,22 @@ function App() {
                 <ProtectedRoute>
                   <AppShell>
                     <CropRecommendationPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/farming-plans" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <FarmingPlansPage />
+                  </AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/farming-plans/:planId" element={
+                <ProtectedRoute>
+                  <AppShell>
+                    <FarmingPlanDetailPage />
                   </AppShell>
                 </ProtectedRoute>
               } />

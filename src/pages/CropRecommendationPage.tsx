@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Sprout, MapPin, ThermometerSun, Loader2, TrendingUp, Calendar, DollarSign, AlertCircle, Upload, ChevronDown, Check } from 'lucide-react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { Sprout, MapPin, ThermometerSun, Loader2, TrendingUp, Calendar, DollarSign, AlertCircle, Upload, ChevronDown, Check, CheckCircle2 } from 'lucide-react';
 import { PageContainer, Section } from '../components/layout/AppShell';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,11 +8,14 @@ import weatherService from '../services/weatherService';
 import { getCropRecommendation, type CropRecommendationResponse } from '../services/cropRecommendationProxy';
 import { landService } from '../services/landService';
 import type { LandData as Land } from '../types/land';
+import { API_BASE_URL } from '../config/api';
+import { getApiHeaders } from '../services/api';
 
 export default function CropRecommendationPage() {
   const { language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   
   const [lands, setLands] = useState<Land[]>([]);
@@ -28,6 +31,7 @@ export default function CropRecommendationPage() {
     district: '',
     landAreaAcre: '',
     budgetInr: '',
+    includeFertilizers: false,
     planningMonths: '6',
     date: new Date().toISOString().split('T')[0]
   });
@@ -41,6 +45,9 @@ export default function CropRecommendationPage() {
   const [showComparison, setShowComparison] = useState(false);
   const [selectedCropsForComparison, setSelectedCropsForComparison] = useState<string[]>([]);
   const [comparisonData, setComparisonData] = useState<CropRecommendationResponse[]>([]);
+  const [finalizingPlan, setFinalizingPlan] = useState(false);
+  const [detailedBudgetPlan, setDetailedBudgetPlan] = useState<any>(null);
+  const [loadingBudgetPlan, setLoadingBudgetPlan] = useState(false);
 
   // Fetch user's lands on mount
   useEffect(() => {
@@ -51,7 +58,16 @@ export default function CropRecommendationPage() {
         const userLands = await landService.getAllUserLands(user.id);
         setLands(userLands);
         
-        // Check if returning from add-land page with a new landId
+        // Priority 1: Check if land was passed via location state (from LandDetailsPage)
+        const landIdFromState = location.state?.landId;
+        if (landIdFromState) {
+          setSelectedLandId(landIdFromState);
+          // Clear the state to prevent re-selection on subsequent renders
+          window.history.replaceState({}, document.title);
+          return;
+        }
+        
+        // Priority 2: Check if returning from add-land page with a new landId
         const landIdFromUrl = searchParams.get('landId');
         const returningFromAddLand = sessionStorage.getItem('crop_recommendation_return');
         
@@ -71,7 +87,7 @@ export default function CropRecommendationPage() {
       }
     };
     fetchLands();
-  }, [user, searchParams, navigate]);
+  }, [user, searchParams, navigate, location.state]);
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -139,7 +155,7 @@ export default function CropRecommendationPage() {
     }
   }, []);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -193,10 +209,155 @@ export default function CropRecommendationPage() {
     try {
       const data = await getCropRecommendation(payload);
       setRecommendation(data);
+      
+      // After getting the recommendation, fetch detailed budget plan from Groq
+      if (data.recommended_crop) {
+        fetchDetailedBudgetPlan(data.recommended_crop, parseFloat(budgetInr), parseFloat(landAreaAcre));
+      }
     } catch (error: any) {
       setRecommendationError(error?.message || 'Failed to fetch crop recommendation');
     } finally {
       setRecommendationLoading(false);
+    }
+  };
+
+  const fetchDetailedBudgetPlan = async (cropName: string, totalBudget: number, availableLandAcres: number) => {
+    setLoadingBudgetPlan(true);
+    setDetailedBudgetPlan(null);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/crop-recommendations/budget-plan`, {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({
+          cropName,
+          totalBudget,
+          availableLandAcres,
+          soilType: selectedLand?.soilData?.soilType || selectedLand?.soilType || 'Loamy',
+          state: formData.state,
+          district: formData.district,
+          includeFertilizers: formData.includeFertilizers,
+          season: getCurrentSeason()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch detailed budget plan');
+      }
+
+      const data = await response.json();
+      setDetailedBudgetPlan(data.budgetPlan);
+    } catch (error) {
+      console.error('Error fetching detailed budget plan:', error);
+      // Don't show error to user, budget breakdown is supplementary info
+    } finally {
+      setLoadingBudgetPlan(false);
+    }
+  };
+
+  const getCurrentSeason = () => {
+    const month = new Date().getMonth() + 1; // 1-12
+    if (month >= 6 && month <= 9) return 'kharif';
+    if (month >= 10 || month <= 2) return 'rabi';
+    return 'zaid';
+  };
+
+  const handleFinalizePlan = async () => {
+    if (!recommendation || !selectedLand || !user) return;
+
+    setFinalizingPlan(true);
+    try {
+      // Calculate planned area in acres - use AI breakdown if available, else API value
+      const plannedAreaAcres = detailedBudgetPlan 
+        ? detailedBudgetPlan.landAllocation.recommendedAcres 
+        : (recommendation.planned_area_hectare / 0.404686);
+      
+      // Calculate yield per acre
+      const yieldPerAcre = recommendation.expected_yield_ton_per_hectare / 0.404686;
+      
+      const planData = {
+        userId: user.id,
+        landId: selectedLand.landId,
+        planName: `${recommendation.recommended_crop} Cultivation Plan - ${new Date().toLocaleDateString()}`,
+        cropName: recommendation.recommended_crop,
+        totalBudget: parseFloat(formData.budgetInr),
+        includeFertilizers: formData.includeFertilizers,
+        plannedAreaHectares: plannedAreaAcres, // Already in acres
+        budgetAllocation: {
+          seedCost: recommendation.budget_summary.seed_cost || 0,
+          fertilizerCost: recommendation.budget_summary.fertilizer_cost || 0,
+          laborCost: recommendation.budget_summary.labor_cost || 0,
+          otherCosts: recommendation.budget_summary.other_costs || 0,
+          totalAllocated: recommendation.budget_summary.estimated_cost
+        },
+        seedDetails: {
+          variety: recommendation.recommended_crop,
+          quantityKg: 0, // To be filled
+          costPerKg: 0,
+          totalCost: recommendation.budget_summary.seed_cost || 0
+        },
+        fertilizerDetails: formData.includeFertilizers ? [
+          {
+            name: 'NPK Fertilizer',
+            type: 'Compound',
+            quantityKg: 0,
+            costPerKg: 0,
+            totalCost: recommendation.budget_summary.fertilizer_cost || 0,
+            applicationStage: 'basal'
+          }
+        ] : [],
+        expectedYield: recommendation.financials ? {
+          tonsPerHectare: yieldPerAcre, // Yield per acre
+          totalTons: yieldPerAcre * plannedAreaAcres, // Total production
+          marketPricePerTon: recommendation.financials.market_price_per_ton,
+          expectedRevenue: recommendation.financials.gross_revenue,
+          expectedProfit: recommendation.financials.net_profit,
+          roi: recommendation.financials.roi_percentage
+        } : undefined,
+        startDate: new Date(formData.date),
+        planningMonths: parseInt(formData.planningMonths),
+        expectedHarvestDate: new Date(new Date(formData.date).setMonth(new Date(formData.date).getMonth() + parseInt(formData.planningMonths))),
+        progress: {
+          currentStage: 'planning',
+          percentage: 0
+        },
+        notes: recommendation.explanation
+      };
+
+      const response = await fetch(`${API_BASE_URL}/farming-plans`, {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify(planData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create farming plan');
+      }
+
+      const createdPlan = await response.json();
+
+      // Finalize the plan to activate it
+      const finalizeResponse = await fetch(`${API_BASE_URL}/farming-plans/${createdPlan._id}/finalize`, {
+        method: 'POST',
+        headers: getApiHeaders()
+      });
+
+      if (!finalizeResponse.ok) {
+        throw new Error('Failed to finalize plan');
+      }
+
+      alert(language === 'english' 
+        ? 'Plan created successfully! You can now track your farming activities in the Plans section.' 
+        : 'திட்டம் வெற்றிகரமாக உருவாக்கப்பட்டது! திட்டங்கள் பிரிவில் உங்கள் விவசாய செயல்பாடுகளைக் கண்காணிக்கலாம்.');
+      
+      navigate('/farming-plans');
+    } catch (error) {
+      console.error('Error finalizing plan:', error);
+      alert(language === 'english' 
+        ? 'Failed to create plan. Please try again.' 
+        : 'திட்டத்தை உருவாக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.');
+    } finally {
+      setFinalizingPlan(false);
     }
   };
 
@@ -322,7 +483,12 @@ export default function CropRecommendationPage() {
                       </p>
                       <div className="flex gap-3">
                         <button
-                          onClick={() => navigate('/soil-analyzer')}
+                          onClick={() => {
+                            // Store selected land ID and set return flag for soil analyzer
+                            sessionStorage.setItem('crop_recommendation_selected_land', selectedLandId);
+                            sessionStorage.setItem('crop_recommendation_return', 'true');
+                            navigate('/soil-analyzer', { state: { landId: selectedLandId, returnTo: 'crop-recommendation' } });
+                          }}
                           className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
                         >
                           <Upload className="w-4 h-4" />
@@ -462,6 +628,30 @@ export default function CropRecommendationPage() {
                       placeholder="e.g., 200000"
                     />
                   </div>
+                  
+                  {/* Include Fertilizers Checkbox */}
+                  <div className="flex items-center">
+                    <label className="flex items-center cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={formData.includeFertilizers}
+                        onChange={(e) => handleInputChange('includeFertilizers', e.target.checked)}
+                        className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                      />
+                      <span className="ml-3 text-sm font-medium text-gray-700 group-hover:text-green-600 transition-colors">
+                        <Sprout className="w-4 h-4 inline mr-1" />
+                        {language === 'english' ? 'Include Fertilizers in Budget' : 'பட்ஜெட்டில் உரங்களை சேர்க்கவும்'}
+                      </span>
+                    </label>
+                    <div className="ml-2 relative group">
+                      <AlertCircle className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
+                      <div className="hidden group-hover:block absolute left-0 bottom-full mb-2 w-64 bg-gray-800 text-white text-xs rounded p-2 z-10">
+                        {language === 'english' 
+                          ? 'Check this to get fertilizer recommendations and cost breakdown based on your budget'
+                          : 'உங்கள் பட்ஜெட்டின் அடிப்படையில் உர பரிந்துரைகள் மற்றும் செலவு விவரங்களைப் பெற இதை தேர்ந்தெடுக்கவும்'}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Planning Months & Date */}
@@ -581,19 +771,29 @@ export default function CropRecommendationPage() {
                   <p className="text-xs text-gray-600 mb-1">
                     {language === 'english' ? 'Planned Area' : 'திட்டமிடப்பட்ட பரப்பு'}
                   </p>
-                  <p className="text-lg font-semibold text-blue-700">{recommendation.planned_area_hectare} ha</p>
+                  <p className="text-lg font-semibold text-blue-700">
+                    {detailedBudgetPlan 
+                      ? `${detailedBudgetPlan.landAllocation.recommendedAcres} acres`
+                      : `${(recommendation.planned_area_hectare / 0.404686).toFixed(2)} acres`
+                    }
+                  </p>
                 </div>
                 <div className="bg-purple-50 rounded-lg p-3">
                   <p className="text-xs text-gray-600 mb-1">
-                    {language === 'english' ? 'Yield per Hectare' : 'ஹெக்டேருக்கு விளைச்சல்'}
+                    {language === 'english' ? 'Yield per Acre' : 'ஏக்கருக்கு விளைச்சல்'}
                   </p>
-                  <p className="text-lg font-semibold text-purple-700">{recommendation.expected_yield_ton_per_hectare} tons</p>
+                  <p className="text-lg font-semibold text-purple-700">{(recommendation.expected_yield_ton_per_hectare / 0.404686).toFixed(2)} tons</p>
                 </div>
                 <div className="bg-orange-50 rounded-lg p-3">
                   <p className="text-xs text-gray-600 mb-1">
                     {language === 'english' ? 'Total Production' : 'மொத்த உற்பத்தி'}
                   </p>
-                  <p className="text-lg font-semibold text-orange-700">{recommendation.total_production_tons} tons</p>
+                  <p className="text-lg font-semibold text-orange-700">
+                    {detailedBudgetPlan 
+                      ? ((recommendation.expected_yield_ton_per_hectare / 0.404686) * detailedBudgetPlan.landAllocation.recommendedAcres).toFixed(2)
+                      : ((recommendation.expected_yield_ton_per_hectare / 0.404686) * (recommendation.planned_area_hectare / 0.404686)).toFixed(2)
+                    } tons
+                  </p>
                 </div>
               </div>
 
@@ -619,10 +819,13 @@ export default function CropRecommendationPage() {
                   </div>
                   <div>
                     <span className="text-gray-600">
-                      {language === 'english' ? 'Cost/Hectare:' : 'ஹெக்டேருக்கு செலவு:'}
+                      {language === 'english' ? 'Cost/Acre:' : 'ஏக்கருக்கு செலவு:'}
                     </span>
                     <span className="ml-2 font-medium text-gray-800">
-                      ₹{recommendation.budget_summary.cost_per_hectare.toLocaleString()}
+                      ₹{detailedBudgetPlan 
+                        ? detailedBudgetPlan.budgetBreakdown.perAcre.totalPerAcre.toLocaleString()
+                        : (recommendation.budget_summary.cost_per_hectare * 0.404686).toLocaleString()
+                      }
                     </span>
                   </div>
                   <div>
@@ -780,6 +983,604 @@ export default function CropRecommendationPage() {
                   </p>
                 </div>
               )}
+
+              {/* Detailed Budget Plan from Groq AI */}
+              {detailedBudgetPlan && (
+                <div className="mb-4 border-2 border-blue-300 rounded-lg overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4">
+                    <h3 className="font-bold text-xl flex items-center gap-2">
+                      <DollarSign className="w-6 h-6" />
+                      {language === 'english' ? 'Detailed Budget & Land Allocation Plan (AI Generated)' : 'விரிவான பட்ஜெட் மற்றும் நில ஒதுக்கீடு திட்டம் (AI உருவாக்கியது)'}
+                    </h3>
+                  </div>
+
+                  <div className="p-5 bg-white">
+                    {/* Land Allocation Alert */}
+                    {!detailedBudgetPlan.landAllocation.isFullLand && (
+                      <div className="mb-4 bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg">
+                        <div className="flex items-start gap-3">
+                          <AlertCircle className="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="font-bold text-orange-900 mb-1">
+                              {language === 'english' ? '⚠️ Budget Limitation Alert' : '⚠️ பட்ஜெட் வரம்பு எச்சரிக்கை'}
+                            </h4>
+                            <p className="text-orange-800 text-sm mb-2">
+                              {language === 'english' 
+                                ? `Your budget can only cover ${detailedBudgetPlan.landAllocation.recommendedAcres} acres out of ${formData.landAreaAcre} available acres.`
+                                : `உங்கள் பட்ஜெட் ${formData.landAreaAcre} கிடைக்கக்கூடிய ஏக்கரில் ${detailedBudgetPlan.landAllocation.recommendedAcres} ஏக்கர் மட்டுமே உள்ளடக்கும்.`}
+                            </p>
+                            <p className="text-orange-700 text-sm font-medium">
+                              {detailedBudgetPlan.landAllocation.reasoning}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {detailedBudgetPlan.landAllocation.isFullLand && (
+                      <div className="mb-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="font-bold text-green-900 mb-1">
+                              {language === 'english' ? '✓ Budget is Sufficient' : '✓ பட்ஜெட் போதுமானது'}
+                            </h4>
+                            <p className="text-green-800 text-sm">
+                              {language === 'english' 
+                                ? `You can cultivate all ${formData.landAreaAcre} acres with your budget of ₹${formData.budgetInr}.`
+                                : `உங்கள் ₹${formData.budgetInr} பட்ஜெட்டில் அனைத்து ${formData.landAreaAcre} ஏக்கரையும் சாகுபடி செய்யலாம்.`}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Land to Use */}
+                    <div className="mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-700 mb-1">
+                          {language === 'english' ? 'Land to Use' : 'பயன்படுத்த நிலம்'}
+                        </p>
+                        <p className="text-2xl font-bold text-blue-900">
+                          {detailedBudgetPlan.landAllocation.recommendedAcres} acres
+                        </p>
+                      </div>
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-sm text-green-700 mb-1">
+                          {language === 'english' ? 'Total Budget' : 'மொத்த பட்ஜெட்'}
+                        </p>
+                        <p className="text-2xl font-bold text-green-900">
+                          ₹{detailedBudgetPlan.budgetBreakdown.totalCosts.grandTotal.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <p className="text-sm text-purple-700 mb-1">
+                          {language === 'english' ? 'Cost per Acre' : 'ஏக்கருக்கு செலவு'}
+                        </p>
+                        <p className="text-2xl font-bold text-purple-900">
+                          ₹{detailedBudgetPlan.budgetBreakdown.perAcre.totalPerAcre.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Detailed Cost Breakdown */}
+                    <div className="mb-5">
+                      <h4 className="font-semibold text-gray-800 mb-3 text-lg">
+                        {language === 'english' ? 'Cost Breakdown (Per Acre & Total)' : 'செலவு விவரம் (ஏக்கருக்கு மற்றும் மொத்தம்)'}
+                      </h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-gray-100 border-b-2 border-gray-300">
+                              <th className="text-left p-3 font-semibold">
+                                {language === 'english' ? 'Cost Category' : 'செலவு வகை'}
+                              </th>
+                              <th className="text-right p-3 font-semibold">
+                                {language === 'english' ? 'Per Acre' : 'ஏக்கருக்கு'}
+                              </th>
+                              <th className="text-right p-3 font-semibold">
+                                {language === 'english' ? 'Total (All Acres)' : 'மொத்தம் (அனைத்து ஏக்கர்)'}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b hover:bg-gray-50">
+                              <td className="p-3 font-medium">
+                                {language === 'english' ? 'Land Preparation' : 'நில தயாரிப்பு'}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.perAcre.landPreparation.toLocaleString()}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.totalCosts.landPreparation.toLocaleString()}
+                              </td>
+                            </tr>
+                            <tr className="border-b hover:bg-gray-50">
+                              <td className="p-3">
+                                <div className="font-medium">
+                                  {language === 'english' ? 'Seeds' : 'விதைகள்'}
+                                </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  {detailedBudgetPlan.budgetBreakdown.perAcre.seeds.variety} 
+                                  ({detailedBudgetPlan.budgetBreakdown.perAcre.seeds.quantityKg} kg/acre)
+                                </div>
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.perAcre.seeds.cost.toLocaleString()}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.totalCosts.seeds.toLocaleString()}
+                              </td>
+                            </tr>
+                            {detailedBudgetPlan.budgetBreakdown.perAcre.fertilizers && (
+                              <tr className="border-b hover:bg-gray-50 bg-green-50">
+                                <td className="p-3">
+                                  <div className="font-medium text-green-900">
+                                    {language === 'english' ? 'Fertilizers' : 'உரங்கள்'}
+                                  </div>
+                                  <div className="text-xs text-green-700 mt-1">
+                                    DAP: {detailedBudgetPlan.budgetBreakdown.perAcre.fertilizers.basalDose.dap.kg}kg, 
+                                    Urea: {detailedBudgetPlan.budgetBreakdown.perAcre.fertilizers.basalDose.urea.kg}kg, 
+                                    Potash: {detailedBudgetPlan.budgetBreakdown.perAcre.fertilizers.basalDose.potash.kg}kg
+                                  </div>
+                                </td>
+                                <td className="text-right p-3 text-green-900 font-medium">
+                                  ₹{detailedBudgetPlan.budgetBreakdown.perAcre.fertilizers.totalCost.toLocaleString()}
+                                </td>
+                                <td className="text-right p-3 text-green-900 font-medium">
+                                  ₹{detailedBudgetPlan.budgetBreakdown.totalCosts.fertilizers.toLocaleString()}
+                                </td>
+                              </tr>
+                            )}
+                            <tr className="border-b hover:bg-gray-50">
+                              <td className="p-3">
+                                <div className="font-medium">
+                                  {language === 'english' ? 'Labor' : 'தொழிலாளர்'}
+                                </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  Prep, Sowing, Weeding, Harvesting
+                                </div>
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.perAcre.labor.totalCost.toLocaleString()}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.totalCosts.labor.toLocaleString()}
+                              </td>
+                            </tr>
+                            <tr className="border-b hover:bg-gray-50">
+                              <td className="p-3 font-medium">
+                                {language === 'english' ? 'Irrigation' : 'நீர்ப்பாசனம்'}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.perAcre.irrigation.toLocaleString()}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.totalCosts.irrigation.toLocaleString()}
+                              </td>
+                            </tr>
+                            <tr className="border-b hover:bg-gray-50">
+                              <td className="p-3 font-medium">
+                                {language === 'english' ? 'Pesticides/Herbicides' : 'பூச்சிக்கொல்லிகள்'}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.perAcre.pesticides.toLocaleString()}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.totalCosts.pesticides.toLocaleString()}
+                              </td>
+                            </tr>
+                            <tr className="border-b hover:bg-gray-50">
+                              <td className="p-3 font-medium">
+                                {language === 'english' ? 'Other Costs (10% contingency)' : 'பிற செலவுகள் (10% அவசர)'}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.perAcre.otherCosts.toLocaleString()}
+                              </td>
+                              <td className="text-right p-3">
+                                ₹{detailedBudgetPlan.budgetBreakdown.totalCosts.otherCosts.toLocaleString()}
+                              </td>
+                            </tr>
+                            <tr className="bg-blue-100 border-t-2 border-blue-300 font-bold">
+                              <td className="p-3 text-blue-900">
+                                {language === 'english' ? 'GRAND TOTAL' : 'மொத்த செலவு'}
+                              </td>
+                              <td className="text-right p-3 text-blue-900">
+                                ₹{detailedBudgetPlan.budgetBreakdown.perAcre.totalPerAcre.toLocaleString()}
+                              </td>
+                              <td className="text-right p-3 text-blue-900">
+                                ₹{detailedBudgetPlan.budgetBreakdown.totalCosts.grandTotal.toLocaleString()}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Financial Projections from Budget Plan */}
+                    <div className="mb-5 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-300 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-800 mb-3 text-lg flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-green-600" />
+                        {language === 'english' ? 'Expected Returns' : 'எதிர்பார்க்கப்படும் வருமானம்'}
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-white rounded-lg p-3 border border-green-200">
+                          <p className="text-xs text-gray-600 mb-1">
+                            {language === 'english' ? 'Yield/Acre' : 'ஏக்கருக்கு விளைச்சல்'}
+                          </p>
+                          <p className="text-lg font-bold text-gray-800">
+                            {detailedBudgetPlan.financialProjections.expectedYieldPerAcre} quintals
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-green-200">
+                          <p className="text-xs text-gray-600 mb-1">
+                            {language === 'english' ? 'Total Yield' : 'மொத்த விளைச்சல்'}
+                          </p>
+                          <p className="text-lg font-bold text-gray-800">
+                            {detailedBudgetPlan.financialProjections.totalYield} quintals
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-green-200">
+                          <p className="text-xs text-gray-600 mb-1">
+                            {language === 'english' ? 'Market Price' : 'சந்தை விலை'}
+                          </p>
+                          <p className="text-lg font-bold text-gray-800">
+                            ₹{detailedBudgetPlan.financialProjections.marketPricePerQuintal}/quintal
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-green-200">
+                          <p className="text-xs text-gray-600 mb-1">
+                            {language === 'english' ? 'Gross Revenue' : 'மொத்த வருமானம்'}
+                          </p>
+                          <p className="text-lg font-bold text-blue-600">
+                            ₹{detailedBudgetPlan.financialProjections.grossRevenue.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-green-200">
+                          <p className="text-xs text-gray-600 mb-1">
+                            {language === 'english' ? 'Net Profit' : 'நிகர லாபம்'}
+                          </p>
+                          <p className="text-lg font-bold text-green-600">
+                            ₹{detailedBudgetPlan.financialProjections.netProfit.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-green-200">
+                          <p className="text-xs text-gray-600 mb-1">
+                            {language === 'english' ? 'ROI' : 'முதலீட்டு வருவாய்'}
+                          </p>
+                          <p className="text-lg font-bold text-green-600">
+                            {detailedBudgetPlan.financialProjections.roi}%
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-yellow-200">
+                          <p className="text-xs text-gray-600 mb-1">
+                            {language === 'english' ? 'Break-even Yield' : 'சமநிலை விளைச்சல்'}
+                          </p>
+                          <p className="text-lg font-bold text-yellow-600">
+                            {detailedBudgetPlan.financialProjections.breakEvenYield.toFixed(1)} quintals
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Seed & Fertilizer Recommendations */}
+                    <div className="mb-5 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-indigo-900 mb-3 text-lg">
+                        {language === 'english' ? 'Agricultural Recommendations' : 'விவசாய பரிந்துரைகள்'}
+                      </h4>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-medium text-indigo-900 mb-1">
+                            {language === 'english' ? '🌾 Seed Variety:' : '🌾 விதை வகை:'}
+                          </p>
+                          <p className="text-sm text-indigo-800">{detailedBudgetPlan.recommendations.seedVariety}</p>
+                        </div>
+                        {detailedBudgetPlan.recommendations.fertilizerSchedule && detailedBudgetPlan.recommendations.fertilizerSchedule.length > 0 && (
+                          <div>
+                            <p className="font-medium text-indigo-900 mb-2">
+                              {language === 'english' ? '🌱 Fertilizer Schedule:' : '🌱 உர அட்டவணை:'}
+                            </p>
+                            <div className="space-y-2">
+                              {detailedBudgetPlan.recommendations.fertilizerSchedule.map((schedule: any, idx: number) => (
+                                <div key={idx} className="bg-white rounded p-2 text-sm">
+                                  <p className="font-medium text-gray-800">{schedule.stage}</p>
+                                  <p className="text-gray-700">{schedule.fertilizers} - {schedule.quantity}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-indigo-900 mb-1">
+                            {language === 'english' ? '💧 Irrigation:' : '💧 நீர்ப்பாசனம்:'}
+                          </p>
+                          <p className="text-sm text-indigo-800">{detailedBudgetPlan.recommendations.irrigationSchedule}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Critical Alerts */}
+                    {detailedBudgetPlan.recommendations.criticalAlerts && detailedBudgetPlan.recommendations.criticalAlerts.length > 0 && (
+                      <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
+                        <h4 className="font-semibold text-yellow-900 mb-2">
+                          {language === 'english' ? '⚡ Important Alerts' : '⚡ முக்கிய எச்சரிக்கைகள்'}
+                        </h4>
+                        <ul className="space-y-2">
+                          {detailedBudgetPlan.recommendations.criticalAlerts.map((alert: string, idx: number) => (
+                            <li key={idx} className="text-sm text-yellow-800 flex items-start gap-2">
+                              <span className="flex-shrink-0 mt-0.5">•</span>
+                              <span>{alert}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Cultivation Plan Timeline */}
+                    <div className="mb-5 bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-300 rounded-lg p-5">
+                      <h4 className="font-semibold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-blue-600" />
+                        {language === 'english' ? 'Cultivation Plan & Timeline' : 'சாகுபடி திட்டம் & காலவரிசை'}
+                      </h4>
+                      
+                      {/* Timeline Overview */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                        <div className="bg-white rounded-lg p-4 border border-blue-200">
+                          <p className="text-xs text-blue-700 mb-1 font-medium">
+                            {language === 'english' ? 'Start Date' : 'தொடக்க தேதி'}
+                          </p>
+                          <p className="text-lg font-bold text-blue-900">
+                            {new Date(formData.date).toLocaleDateString(language === 'english' ? 'en-IN' : 'ta-IN', { 
+                              day: 'numeric', 
+                              month: 'long', 
+                              year: 'numeric' 
+                            })}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-purple-200">
+                          <p className="text-xs text-purple-700 mb-1 font-medium">
+                            {language === 'english' ? 'Duration' : 'காலம்'}
+                          </p>
+                          <p className="text-lg font-bold text-purple-900">
+                            {formData.planningMonths} {language === 'english' ? 'months' : 'மாதங்கள்'}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-green-200">
+                          <p className="text-xs text-green-700 mb-1 font-medium">
+                            {language === 'english' ? 'Expected Harvest' : 'எதிர்பார்க்கப்படும் அறுவடை'}
+                          </p>
+                          <p className="text-lg font-bold text-green-900">
+                            {new Date(new Date(formData.date).setMonth(new Date(formData.date).getMonth() + parseInt(formData.planningMonths))).toLocaleDateString(language === 'english' ? 'en-IN' : 'ta-IN', { 
+                              month: 'long', 
+                              year: 'numeric' 
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Key Activities Timeline */}
+                      <div className="bg-white rounded-lg p-4 border border-blue-200">
+                        <h5 className="font-semibold text-gray-800 mb-3">
+                          {language === 'english' ? 'Key Activities & Milestones' : 'முக்கிய செயல்பாடுகள் & மைல்கற்கள்'}
+                        </h5>
+                        <div className="space-y-3">
+                          {/* Week 1-2: Land Preparation */}
+                          <div className="flex gap-3 items-start">
+                            <div className="flex-shrink-0 w-24 text-xs font-medium text-blue-700 bg-blue-100 rounded px-2 py-1">
+                              {language === 'english' ? 'Week 1-2' : 'வாரம் 1-2'}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800 text-sm">
+                                {language === 'english' ? '🚜 Land Preparation' : '🚜 நில தயாரிப்பு'}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {language === 'english' 
+                                  ? 'Plowing, leveling, and preparing soil. Apply basal fertilizers.'
+                                  : 'உழுதல், சமன் செய்தல், மண் தயாரித்தல். அடிப்படை உரம் பயன்படுத்துதல்.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Week 3: Sowing/Planting */}
+                          <div className="flex gap-3 items-start">
+                            <div className="flex-shrink-0 w-24 text-xs font-medium text-green-700 bg-green-100 rounded px-2 py-1">
+                              {language === 'english' ? 'Week 3' : 'வாரம் 3'}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800 text-sm">
+                                {language === 'english' ? '🌱 Sowing/Planting' : '🌱 விதைத்தல்/நடுதல்'}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {language === 'english' 
+                                  ? `Plant ${recommendation.recommended_crop} seeds. Ensure proper spacing and depth.`
+                                  : `${recommendation.recommended_crop} விதைகளை நடவு செய்யவும். சரியான இடைவெளி மற்றும் ஆழத்தை உறுதி செய்யவும்.`}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Month 1-2: Growth & Maintenance */}
+                          <div className="flex gap-3 items-start">
+                            <div className="flex-shrink-0 w-24 text-xs font-medium text-yellow-700 bg-yellow-100 rounded px-2 py-1">
+                              {language === 'english' ? 'Month 1-2' : 'மாதம் 1-2'}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800 text-sm">
+                                {language === 'english' ? '💧 Growth & Maintenance' : '💧 வளர்ச்சி & பராமரிப்பு'}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {language === 'english' 
+                                  ? 'Regular irrigation, weeding, pest monitoring. Apply top-dress fertilizers.'
+                                  : 'வழக்கமான நீர்ப்பாசனம், களை எடுத்தல், பூச்சி கண்காணிப்பு. மேல் உரம் பயன்படுத்துதல்.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Mid-Season */}
+                          {parseInt(formData.planningMonths) >= 4 && (
+                            <div className="flex gap-3 items-start">
+                              <div className="flex-shrink-0 w-24 text-xs font-medium text-purple-700 bg-purple-100 rounded px-2 py-1">
+                                {language === 'english' ? `Month ${Math.floor(parseInt(formData.planningMonths) / 2)}` : `மாதம் ${Math.floor(parseInt(formData.planningMonths) / 2)}`}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-800 text-sm">
+                                  {language === 'english' ? '🌿 Mid-Season Care' : '🌿 நடுப்பருவ பராமரிப்பு'}
+                                </p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  {language === 'english' 
+                                    ? 'Flowering/fruiting stage. Ensure adequate water. Monitor for diseases.'
+                                    : 'பூக்கும்/பழக்கும் நிலை. போதுமான நீர் உறுதி. நோய்களைக் கண்காணி.'}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Pre-Harvest */}
+                          <div className="flex gap-3 items-start">
+                            <div className="flex-shrink-0 w-24 text-xs font-medium text-orange-700 bg-orange-100 rounded px-2 py-1">
+                              {language === 'english' ? `Month ${parseInt(formData.planningMonths) - 1}` : `மாதம் ${parseInt(formData.planningMonths) - 1}`}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800 text-sm">
+                                {language === 'english' ? '📊 Pre-Harvest Prep' : '📊 அறுவடைக்கு முன் தயாரிப்பு'}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {language === 'english' 
+                                  ? 'Stop irrigation. Arrange labor and equipment for harvesting.'
+                                  : 'நீர்ப்பாசனம் நிறுத்துதல். அறுவடைக்கு தொழிலாளர் மற்றும் உபகரணங்களை ஏற்பாடு செய்தல்.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Harvest */}
+                          <div className="flex gap-3 items-start">
+                            <div className="flex-shrink-0 w-24 text-xs font-medium text-red-700 bg-red-100 rounded px-2 py-1">
+                              {language === 'english' ? `Month ${formData.planningMonths}` : `மாதம் ${formData.planningMonths}`}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800 text-sm">
+                                {language === 'english' ? '✂️ Harvesting' : '✂️ அறுவடை'}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {language === 'english' 
+                                  ? 'Harvest at right maturity. Record actual yield. Store properly.'
+                                  : 'சரியான முதிர்ச்சியில் அறுவடை. உண்மையான விளைச்சலைப் பதிவு செய்யவும். சரியாக சேமிக்கவும்.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Sale & Marketing */}
+                          <div className="flex gap-3 items-start">
+                            <div className="flex-shrink-0 w-24 text-xs font-medium text-indigo-700 bg-indigo-100 rounded px-2 py-1">
+                              {language === 'english' ? 'Final Step' : 'இறுதி படி'}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800 text-sm">
+                                {language === 'english' ? '💰 Sale & Marketing' : '💰 விற்பனை & சந்தைப்படுத்துதல்'}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {language === 'english' 
+                                  ? 'Find best buyers. Negotiate prices. Complete sale. Record revenue. Plan reaches 100% on sale completion!'
+                                  : 'சிறந்த வாங்குபவர்களைக் கண்டறியவும். விலைகளை பேசவும். விற்பனையை முடிக்கவும். வருவாயைப் பதிவு செய்யவும். விற்பனை முடியும்போது திட்டம் 100% அடையும்!'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Success Tips */}
+                      <div className="mt-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border-l-4 border-green-500">
+                        <p className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4" />
+                          {language === 'english' ? 'Success Tips' : 'வெற்றி குறிப்புகள்'}
+                        </p>
+                        <ul className="space-y-1 text-xs text-green-800">
+                          <li className="flex items-start gap-2">
+                            <span className="flex-shrink-0">✓</span>
+                            <span>
+                              {language === 'english' 
+                                ? 'Keep daily records of all activities, costs, and observations'
+                                : 'அனைத்து செயல்பாடுகள், செலவுகள் மற்றும் கவனிப்புகளின் தினசரி பதிவுகளை வைத்திருங்கள்'}
+                            </span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="flex-shrink-0">✓</span>
+                            <span>
+                              {language === 'english' 
+                                ? 'Monitor weather forecasts and adjust irrigation accordingly'
+                                : 'வானிலை முன்னறிவிப்புகளைக் கண்காணித்து அதற்கேற்ப நீர்ப்பாசனத்தை சரிசெய்யவும்'}
+                            </span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="flex-shrink-0">✓</span>
+                            <span>
+                              {language === 'english' 
+                                ? 'Join local farmer groups for knowledge sharing and market information'
+                                : 'அறிவு பகிர்வு மற்றும் சந்தை தகவலுக்காக உள்ளூர் விவசாயி குழுக்களில் சேரவும்'}
+                            </span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="flex-shrink-0">✓</span>
+                            <span>
+                              {language === 'english' 
+                                ? 'Use the AI assistant for real-time advice on pest/disease management'
+                                : 'பூச்சி/நோய் மேலாண்மை குறித்த நேரடி ஆலோசனைக்கு AI உதவியாளரைப் பயன்படுத்தவும்'}
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {loadingBudgetPlan && (
+                <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
+                  <p className="text-blue-800 font-medium">
+                    {language === 'english' 
+                      ? 'Generating detailed budget plan with AI...' 
+                      : 'AI மூலம் விரிவான பட்ஜெட் திட்டத்தை உருவாக்குகிறது...'}
+                  </p>
+                  <p className="text-sm text-blue-600 mt-1">
+                    {language === 'english' 
+                      ? 'Calculating optimal land allocation and cost breakdown' 
+                      : 'உகந்த நில ஒதுக்கீடு மற்றும் செலவு விவரங்களை கணக்கிடுகிறது'}
+                  </p>
+                </div>
+              )}
+
+              {/* Finalize Plan Button */}
+              <div className="mb-6 bg-gradient-to-r from-green-100 to-blue-100 border-2 border-green-300 rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-2">
+                      {language === 'english' ? 'Ready to Implement This Plan?' : 'இந்த திட்டத்தை செயல்படுத்த தயாரா?'}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {language === 'english' 
+                        ? 'Finalize this plan to start tracking activities, costs, and get AI-powered suggestions for next steps.'
+                        : 'செயல்பாடுகள், செலவுகளைக் கண்காணிக்க மற்றும் அடுத்த படிகளுக்கான AI பரிந்துரைகளைப் பெற இந்த திட்டத்தை இறுதி செய்யவும்.'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleFinalizePlan}
+                    disabled={finalizingPlan}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg"
+                  >
+                    {finalizingPlan ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {language === 'english' ? 'Creating...' : 'உருவாக்கப்படுகிறது...'}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5" />
+                        {language === 'english' ? 'Finalize Plan' : 'திட்டத்தை இறுதி செய்'}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
 
               {/* Alternative Crops */}
               {recommendation.alternative_crops && recommendation.alternative_crops.length > 0 && (

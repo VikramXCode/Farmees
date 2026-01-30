@@ -6,9 +6,12 @@ export default function AddLandPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check if we're in edit mode
+  const params = new URLSearchParams(location.search);
+  const editLandId = params.get('edit');
+
   const handleClose = (landId?: string) => {
     // Check if there's a returnTo parameter
-    const params = new URLSearchParams(location.search);
     const returnTo = params.get('returnTo');
     
     if (returnTo && landId) {
@@ -17,6 +20,9 @@ export default function AddLandPage() {
     } else if (returnTo) {
       // Return without land ID
       navigate(`/${returnTo}`);
+    } else if (editLandId) {
+      // If editing, return to My Lands page
+      navigate('/my-lands');
     } else {
       // Default behavior - go home
       navigate('/');
@@ -26,7 +32,7 @@ export default function AddLandPage() {
   return (
     <PageContainer>
       <Section>
-        <AddLandForm onClose={handleClose} />
+        <AddLandForm onClose={handleClose} editLandId={editLandId || undefined} />
       </Section>
     </PageContainer>
   );

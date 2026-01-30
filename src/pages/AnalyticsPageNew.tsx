@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   TrendingUp,
   TrendingDown,
@@ -31,9 +32,20 @@ import {
 
 export default function AnalyticsPageNew() {
   const { lands } = useFarm();
+  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [timeRange, setTimeRange] = useState('6months');
+  const [selectedLandId] = useState<string | null>(location.state?.landId || null);
+
+  // Clear location state after reading and optionally filter analytics by land
+  useEffect(() => {
+    if (location.state?.landId) {
+      window.history.replaceState({}, document.title);
+      // Here you can filter or customize analytics based on selectedLandId
+      console.log('Showing analytics for land:', selectedLandId);
+    }
+  }, [location.state, selectedLandId]);
 
   // Calculate totals
   const totalArea = lands.reduce((sum: number, l: any) => sum + (l.landSize?.value || 0), 0);

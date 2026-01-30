@@ -7,10 +7,12 @@ class WeatherService {
     this.currentKeyIndex = 0;
     this.availableKeys = [];
     this.baseURL = 'https://api.openweathermap.org/data/2.5';
-    this.loadKeys();
+    this.keysLoaded = false;
   }
 
   loadKeys() {
+    if (this.keysLoaded) return; // Prevent reloading
+    
     // Load keys and filter out obvious placeholders
     const rawKeys = getEnvKeys('OPENWEATHER');
     const isPlaceholder = (k) => /your[_-]?openweather[_-]?key/i.test(k);
@@ -18,6 +20,7 @@ class WeatherService {
 
     const skipped = rawKeys.length - filtered.length;
     this.availableKeys = filtered;
+    this.keysLoaded = true;
 
     console.log(`Loaded ${this.availableKeys.length} OpenWeather API keys${skipped > 0 ? ` (skipped ${skipped} placeholder${skipped > 1 ? 's' : ''})` : ''}`);
     if (this.availableKeys.length === 0) {
@@ -26,6 +29,7 @@ class WeatherService {
   }
 
   getCurrentKey() {
+    this.loadKeys(); // Lazy load on first use
     if (this.availableKeys.length === 0) {
       throw new Error('No OpenWeather API keys available');
     }
@@ -33,6 +37,7 @@ class WeatherService {
   }
 
   rotateKey() {
+    this.loadKeys(); // Ensure keys are loaded
     if (this.availableKeys.length <= 1) {
       console.warn('Cannot rotate: Only one or no OpenWeather API keys available');
       return false;
@@ -44,8 +49,9 @@ class WeatherService {
   }
 
   async getCurrentWeather(lat, lon, location = '') {
+    this.loadKeys(); // Ensure keys are loaded before attempting requests
     let attempts = 0;
-    const maxAttempts = this.availableKeys.length;
+    const maxAttempts = Math.max(this.availableKeys.length, 1); // At least 1 attempt even if no keys
 
     while (attempts < maxAttempts) {
       try {
@@ -121,8 +127,9 @@ class WeatherService {
   }
 
   async getForecast(lat, lon, location = '', days = 5) {
+    this.loadKeys(); // Ensure keys are loaded before attempting requests
     let attempts = 0;
-    const maxAttempts = this.availableKeys.length;
+    const maxAttempts = Math.max(this.availableKeys.length, 1); // At least 1 attempt even if no keys
 
     while (attempts < maxAttempts) {
       try {
@@ -268,8 +275,9 @@ class WeatherService {
   }
 
   async getWeatherByCity(cityName, countryCode = '') {
+    this.loadKeys(); // Ensure keys are loaded before attempting requests
     let attempts = 0;
-    const maxAttempts = this.availableKeys.length;
+    const maxAttempts = Math.max(this.availableKeys.length, 1); // At least 1 attempt even if no keys
 
     while (attempts < maxAttempts) {
       try {

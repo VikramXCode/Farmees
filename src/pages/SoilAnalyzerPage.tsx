@@ -41,7 +41,24 @@ export default function SoilAnalyzerPage() {
         const userLands = await landService.getAllUserLands(user.id);
         setLands(userLands);
         
-        // Check if returning from add-land page with a new landId
+        // Priority 1: Check if land was passed via location state (from LandDetailsPage or CropRecommendation)
+        const landIdFromState = location.state?.landId;
+        if (landIdFromState) {
+          setSelectedLandId(landIdFromState);
+          // Clear the state to prevent re-selection on subsequent renders
+          window.history.replaceState({}, document.title);
+          return;
+        }
+        
+        // Priority 2: Check if coming from crop recommendation with selected land
+        const landIdFromCropRec = sessionStorage.getItem('crop_recommendation_selected_land');
+        if (landIdFromCropRec) {
+          setSelectedLandId(landIdFromCropRec);
+          // Don't clear yet - need it to persist through phases
+          return;
+        }
+        
+        // Priority 3: Check if returning from add-land page with a new landId
         const landIdFromUrl = searchParams.get('landId');
         const returningFromAddLand = sessionStorage.getItem('soil_analyzer_return');
         
@@ -65,7 +82,7 @@ export default function SoilAnalyzerPage() {
       }
     };
     fetchLands();
-  }, [user, searchParams, navigate]);
+  }, [user, searchParams, navigate, location.state]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -162,6 +179,9 @@ export default function SoilAnalyzerPage() {
       const result = await response.json();
       setSavedLand(result.land);
       setStep('success');
+      
+      // Clear crop recommendation session storage after successful save
+      sessionStorage.removeItem('crop_recommendation_selected_land');
     } catch (err: any) {
       console.error('Confirmation error:', err);
       setError(err.message || 'Failed to save soil data');
@@ -425,7 +445,11 @@ export default function SoilAnalyzerPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep('select-land')}
+                onClick={() => {
+                  setStep('select-land');
+                  // If land was pre-selected from LandDetailsPage, keep it selected
+                  // Otherwise, allow user to select in phase 3
+                }}
                 className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-medium"
               >
                 {t.next}
@@ -598,7 +622,20 @@ export default function SoilAnalyzerPage() {
 
             <div className="space-y-3">
               <button
-                onClick={() => navigate('/crop-recommendation')}
+                onClick={() => {
+                  // Check if user came from crop recommendation
+                  const returnTo = location.state?.returnTo;
+                  if (returnTo === 'crop-recommendation') {
+                    // Return to crop recommendation with the saved land selected
+                    navigate('/crop-recommendation', { 
+                      state: { landId: savedLand.landId },
+                      replace: true 
+                    });
+                  } else {
+                    // Normal flow - go to crop recommendation
+                    navigate('/crop-recommendation');
+                  }
+                }}
                 className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-medium"
               >
                 <Sprout className="w-5 h-5" />

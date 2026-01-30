@@ -13,7 +13,8 @@
     "build": "echo 'No build required for backend'",
     "vercel-build": "echo 'No build required for backend'",
     "init:db": "node scripts/initMongoDB.js",
-    "seed:officers": "node scripts/seedOfficers.js"
+    "seed:officers": "node scripts/seedOfficers.js",
+    "seed:calendars": "node scripts/seedCropCalendars.js"
   },
   "dependencies": {
     "axios": "^1.13.4",
@@ -23,7 +24,8 @@
     "express": "^4.19.2",
     "groq-sdk": "^0.5.0",
     "mongoose": "^8.6.0",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

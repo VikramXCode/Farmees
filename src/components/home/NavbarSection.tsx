@@ -1,4 +1,5 @@
-import { Plus, Lightbulb, Bug, TrendingUp, Cloud, FileText } from 'lucide-react';
+import { Plus, Lightbulb, Bug, TrendingUp, Cloud, FileText, Sprout } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import FarmeesLogo from '../common/FarmeesLogo';
 
@@ -9,8 +10,10 @@ interface NavbarSectionProps {
 
 export default function NavbarSection({ activeSection, setActiveSection }: NavbarSectionProps) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   
   const sections = [
+    { id: 'farming-plans', name: 'Farming Plans', icon: Sprout, isLink: true },
     { id: 'add-land', name: t('add_land'), icon: Plus },
     { id: 'crop-rec', name: t('crop_recommendation'), icon: Lightbulb },
     { id: 'disease', name: t('disease_diagnosis'), icon: Bug },
@@ -50,7 +53,13 @@ export default function NavbarSection({ activeSection, setActiveSection }: Navba
           {sections.map((section) => (
             <button
               key={section.id}
-              onClick={() => setActiveSection(section.id)}
+              onClick={() => {
+                if (section.isLink) {
+                  navigate('/farming-plans');
+                } else {
+                  setActiveSection(section.id);
+                }
+              }}
               className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                 activeSection === section.id
                   ? 'bg-white text-green-600 shadow-md'

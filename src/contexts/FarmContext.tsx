@@ -7,8 +7,12 @@ export interface Land {
   id: string;
   name: string;
   location: string;
+  postalCode?: string;
+  district?: string;
+  country?: string;
   latitude?: number;
   longitude?: number;
+  coordinates?: { lat: number; lng: number };
   soilReport?: string;
   currentCrop: string;
   waterAvailability: 'high' | 'medium' | 'low';
@@ -89,6 +93,10 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             id: ld.landId || ld._id || '',
             name: ld.name,
             location: ld.location,
+            postalCode: ld.postalCode,
+            district: ld.district,
+            country: ld.country,
+            coordinates: ld.coordinates,
             currentCrop: ld.currentCrop,
             waterAvailability: ld.waterAvailability,
             soilType: ld.soilType,
@@ -141,6 +149,10 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         userId: user ? user.id : 'guest',
         name: landData.name,
         location: landData.location,
+        postalCode: (landData as any).postalCode,
+        district: (landData as any).district,
+        country: (landData as any).country,
+        coordinates: landData.coordinates,
         soilType: landData.soilType,
         currentCrop: landData.currentCrop,
         waterAvailability: landData.waterAvailability,
@@ -166,11 +178,23 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         isActive: true
       } as any;
 
+      console.log('📤 FarmContext sending to backend:', {
+        name: payload.name,
+        postalCode: payload.postalCode,
+        location: payload.location,
+        district: payload.district,
+        country: payload.country,
+      });
+
       const created = await landService.createLandData(payload);
       const newLand: Land = {
         id: created.landId || created._id || generatedLandId,
         name: created.name,
         location: created.location,
+        postalCode: created.postalCode,
+        district: created.district,
+        country: created.country,
+        coordinates: created.coordinates,
         currentCrop: created.currentCrop,
         waterAvailability: created.waterAvailability,
         soilType: created.soilType,

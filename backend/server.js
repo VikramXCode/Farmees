@@ -28,6 +28,9 @@ import connectRouter from './routes/connect.js';
 import labourRouter from './routes/labour.js';
 import analyticsRouter from './routes/analytics.js';
 import cropRecommendationRouter from './routes/crop-recommendation.js';
+import farmingPlansRouter from './routes/farming-plans.js';
+import expensesRouter from './routes/expenses.js'; // Phase 2.0: Expense tracking
+import notificationScheduler from './services/notificationScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -182,6 +185,8 @@ app.use('/api/connect', connectRouter);
 app.use('/api/labour', labourRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/crop-recommendation', cropRecommendationRouter);
+app.use('/api/farming-plans', farmingPlansRouter);
+app.use('/api/expenses', expensesRouter); // Phase 2.0: Expense tracking
 
 
 async function startServer() {
@@ -190,6 +195,10 @@ async function startServer() {
 
   try {
     await connectToDatabase();
+    
+    // Start notification scheduler for cron jobs
+    notificationScheduler.start();
+    console.log('✅ Notification scheduler started');
 
     const server = app.listen(PORT, () => {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -207,6 +216,19 @@ async function startServer() {
       }
       console.error('❌ Server listen error:', err);
       process.exit(1);
+    });
+    
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM signal received: closing HTTP server');
+      notificationScheduler.stop();
+      server.close(() => {
+        console.log('HTTP server closed');
+        mongoose.connection.close(false, () => {
+          console.log('MongoDB connection closed');
+          process.exit(0);
+        });
+      });
     });
   } catch (err) {
     console.error('❌ Failed to start server:', err.message);

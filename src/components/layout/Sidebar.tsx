@@ -30,8 +30,9 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: MapPin, label: 'My Lands', path: '/add-land' },
+  { icon: LayoutDashboard, label: 'Home', path: '/' },
+  { icon: MapPin, label: 'My Lands', path: '/my-lands' },
+  { icon: Sprout, label: 'Farming Plans', path: '/farming-plans' },
   { icon: Leaf, label: 'Crop Advice', path: '/crop-recommendation' },
   { icon: Camera, label: 'Diagnose', path: '/diagnose' },
   { icon: Sparkles, label: 'AI Assistant', path: '/ai' },

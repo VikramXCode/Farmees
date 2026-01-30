@@ -127,75 +127,127 @@ export async function geocodePincode(pincode: string): Promise<{
     return null;
   }
 
-  try {
+  const queryNominatim = async (params: Record<string, string>) => {
     const url = new URL('https://nominatim.openstreetmap.org/search');
-    url.searchParams.set('postalcode', pincode);
-    url.searchParams.set('country', 'India');
+    // Common required params
     url.searchParams.set('format', 'json');
     url.searchParams.set('addressdetails', '1');
-    url.searchParams.set('limit', '1');
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
 
     const response = await fetch(url.toString(), {
       headers: {
-        'User-Agent': 'Farmees/1.0'
+        'User-Agent': 'Farmees/1.0 (contact: support@farmees.app)'
       }
     });
 
     if (!response.ok) {
-      return null;
+      return [] as any[];
     }
 
-    const data = await response.json();
+    return response.json();
+  };
+
+  const parseResult = (item: any) => {
+    const address = item?.address || {};
+
+    const area = address.suburb ||
+                 address.neighbourhood ||
+                 address.locality ||
+                 address.hamlet ||
+                 address.quarter ||
+                 '';
+
+    const city = address.city ||
+                 address.town ||
+                 address.village ||
+                 address.municipality ||
+                 address.county ||
+                 address.district ||
+                 '';
+
+    const state = address.state || address.region || address.province || '';
+
+    // Build displayName avoiding duplicates
+    let displayName = '';
+    const parts: string[] = [];
     
-    if (data && data.length > 0) {
-      const item = data[0];
-      const address = item.address || {};
+    // Add area only if it's different from city
+    if (area && area.toLowerCase() !== city.toLowerCase()) {
+      parts.push(area);
+    }
+    
+    // Add city
+    if (city) {
+      parts.push(city);
+    }
+    
+    // Add state only if different from city
+    if (state && state.toLowerCase() !== city.toLowerCase()) {
+      parts.push(state);
+    }
+    
+    displayName = parts.length > 0 ? parts.join(', ') : item.display_name;
+
+    return {
+      lat: parseFloat(item.lat),
+      lng: parseFloat(item.lon),
+      area,
+      city,
+      state,
+      displayName
+    };
+  };
+
+  try {
+    // Primary lookup using postalcode param (most accurate)
+    const primaryResults = await queryNominatim({
+      postalcode: pincode,
+      countrycodes: 'in',
+      limit: '1'
+    });
+
+    if (primaryResults && primaryResults.length > 0) {
+      return parseResult(primaryResults[0]);
+    }
+
+    // Fallback 1: Try with 'in' as country parameter instead of countrycodes
+    const fallback1Results = await queryNominatim({
+      postalcode: pincode,
+      country: 'India',
+      limit: '1'
+    });
+
+    if (fallback1Results && fallback1Results.length > 0) {
+      return parseResult(fallback1Results[0]);
+    }
+
+    // Fallback 2: Broader search by query string (helps with pincodes missing postalcode index)
+    const fallback2Results = await queryNominatim({
+      q: `${pincode} India`,
+      countrycodes: 'in',
+      limit: '5'
+    });
+
+    if (fallback2Results && fallback2Results.length > 0) {
+      // Find the best match (prefer results with postalcode in address)
+      const bestMatch = fallback2Results.find((r: any) => 
+        r.address?.postcode === pincode || 
+        r.address?.postal_code === pincode
+      ) || fallback2Results[0];
       
-      // Extract area/locality/suburb (specific area name under the pincode)
-      const area = address.suburb ||
-                   address.neighbourhood ||
-                   address.locality ||
-                   address.hamlet ||
-                   address.quarter ||
-                   '';
-      
-      // Extract city/town/village
-      const city = address.city || 
-                   address.town || 
-                   address.village || 
-                   address.municipality || 
-                   address.county ||
-                   address.state_district ||
-                   '';
-      
-      const state = address.state || '';
-      
-      // Build displayName with area name first if available
-      let displayName = '';
-      if (area && city && state) {
-        displayName = `${area}, ${city}, ${state}`;
-      } else if (area && state) {
-        displayName = `${area}, ${state}`;
-      } else if (city && state) {
-        displayName = `${city}, ${state}`;
-      } else if (area) {
-        displayName = area;
-      } else if (city) {
-        displayName = city;
-      } else if (state) {
-        displayName = state;
-      } else {
-        displayName = item.display_name;
-      }
-      
-      return {
-        lat: parseFloat(item.lat),
-        lng: parseFloat(item.lon),
-        area,
-        city,
-        state,
-        displayName
-      };
+      return parseResult(bestMatch);
+    }
+
+    // Fallback 3: Try without countrycodes restriction
+    const fallback3Results = await queryNominatim({
+      postalcode: pincode,
+      limit: '1'
+    });
+
+    if (fallback3Results && fallback3Results.length > 0) {
+      return parseResult(fallback3Results[0]);
     }
 
     return null;
